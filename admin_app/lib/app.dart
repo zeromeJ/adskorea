@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'constants/colors.dart';
+import 'models/admin_user.dart';
 import 'screens/inquiry_list_screen.dart';
 import 'screens/inquiry_detail_screen.dart';
 import 'screens/login_screen.dart';
 import 'services/api_client.dart';
+import 'services/admin_management_service.dart';
 import 'services/auth_service.dart';
 import 'services/inquiry_service.dart';
 import 'services/notification_service.dart';
@@ -19,6 +21,8 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
   final ApiClient _apiClient = ApiClient();
   late final AuthService _authService = AuthService(_apiClient);
   late final InquiryService _inquiryService = InquiryService(_apiClient);
+  late final AdminManagementService _adminManagementService =
+      AdminManagementService(_apiClient);
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   late final NotificationService _notificationService = NotificationService(
     _apiClient,
@@ -26,6 +30,7 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
   );
   bool _isLoading = true;
   bool _isLoggedIn = false;
+  AdminUser? _currentAdmin;
 
   @override
   void initState() {
@@ -42,12 +47,18 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
     if (!mounted) return;
     setState(() {
       _isLoggedIn = admin != null;
+      _currentAdmin = admin;
       _isLoading = false;
     });
   }
 
-  void _setLoggedIn(bool value) {
-    setState(() => _isLoggedIn = value);
+  Future<void> _setLoggedIn(bool value) async {
+    final admin = value ? await _authService.me() : null;
+    if (!mounted) return;
+    setState(() {
+      _isLoggedIn = value && admin != null;
+      _currentAdmin = admin;
+    });
     if (value) _notificationService.initialize();
   }
 
@@ -99,7 +110,9 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
           ? const Scaffold(body: Center(child: CircularProgressIndicator()))
           : _isLoggedIn
               ? InquiryListScreen(
+                  currentAdmin: _currentAdmin!,
                   authService: _authService,
+                  adminManagementService: _adminManagementService,
                   inquiryService: _inquiryService,
                   onLogout: () => _setLoggedIn(false),
                 )

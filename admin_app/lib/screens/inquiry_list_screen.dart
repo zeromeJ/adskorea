@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/inquiry.dart';
+import '../models/admin_user.dart';
+import '../screens/activity_log_screen.dart';
+import '../screens/admin_create_screen.dart';
+import '../screens/admin_list_screen.dart';
 import '../screens/inquiry_detail_screen.dart';
 import '../services/auth_service.dart';
+import '../services/admin_management_service.dart';
 import '../services/inquiry_service.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_view.dart';
@@ -12,12 +17,16 @@ import '../widgets/loading_view.dart';
 class InquiryListScreen extends StatefulWidget {
   const InquiryListScreen({
     required this.authService,
+    required this.adminManagementService,
+    required this.currentAdmin,
     required this.inquiryService,
     required this.onLogout,
     super.key,
   });
 
   final AuthService authService;
+  final AdminManagementService adminManagementService;
+  final AdminUser currentAdmin;
   final InquiryService inquiryService;
   final VoidCallback onLogout;
 
@@ -78,17 +87,83 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: Drawer(
+        child: SafeArea(
+          child: Column(
+            children: [
+              ListTile(
+                leading: const CircleAvatar(child: Icon(Icons.person)),
+                title: Text(widget.currentAdmin.displayName ?? '관리자'),
+                subtitle: Text(
+                  widget.currentAdmin.isSuperAdmin
+                      ? '${widget.currentAdmin.username} · 최고 관리자'
+                      : widget.currentAdmin.username,
+                ),
+              ),
+              const Divider(),
+              if (widget.currentAdmin.isSuperAdmin) ...[
+                ListTile(
+                  leading: const Icon(Icons.person_add_alt_1),
+                  title: const Text('신규 관리자 추가'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => AdminCreateScreen(
+                          service: widget.adminManagementService,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.manage_accounts),
+                  title: const Text('관리자 목록'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => AdminListScreen(
+                          service: widget.adminManagementService,
+                          currentAdmin: widget.currentAdmin,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+              ListTile(
+                leading: const Icon(Icons.history),
+                title: const Text('완료 처리 로그'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ActivityLogScreen(
+                        adminService: widget.adminManagementService,
+                        inquiryService: widget.inquiryService,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const Spacer(),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.logout),
+                title: const Text('로그아웃'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await widget.authService.logout();
+                  widget.onLogout();
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
       appBar: AppBar(
         title: const Text('ADS 문의관리'),
-        actions: [
-          IconButton(
-            onPressed: () async {
-              await widget.authService.logout();
-              widget.onLogout();
-            },
-            icon: const Icon(Icons.logout),
-          ),
-        ],
       ),
       body: Column(
         children: [

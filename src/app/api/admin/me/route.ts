@@ -11,8 +11,10 @@ export async function GET(request: Request) {
   return NextResponse.json({
     success: true,
     admin: {
+      id: admin.id,
       username: admin.username,
       displayName: admin.displayName || "관리자",
+      isSuperAdmin: admin.isSuperAdmin,
     },
   });
 }

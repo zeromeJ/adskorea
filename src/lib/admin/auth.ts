@@ -46,6 +46,7 @@ export async function getAdminFromRequest(request: Request) {
         id: true,
         username: true,
         displayName: true,
+        isSuperAdmin: true,
       },
     });
 
@@ -53,6 +54,13 @@ export async function getAdminFromRequest(request: Request) {
   } catch {
     return null;
   }
+}
+
+export function forbiddenResponse(message = "최고 관리자 권한이 필요합니다.") {
+  return NextResponse.json(
+    { success: false, message },
+    { status: 403 },
+  );
 }
 
 export function unauthorizedResponse() {

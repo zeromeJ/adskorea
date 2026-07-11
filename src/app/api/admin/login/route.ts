@@ -44,8 +44,10 @@ export async function POST(request: Request) {
     success: true,
     token,
     admin: {
+      id: admin.id,
       username: admin.username,
       displayName: admin.displayName || "관리자",
+      isSuperAdmin: admin.isSuperAdmin,
     },
   });
 }
