@@ -12,24 +12,23 @@ flutter pub get
 flutter run
 ```
 
-Before testing, update `lib/constants/api.dart`.
+The API address is selected automatically:
 
-Android emulator local backend:
+- Debug default: `http://10.0.2.2:3000`
+- Release default: `https://adskorea.co.kr`
 
-```dart
-static const apiBaseUrl = 'http://10.0.2.2:3000';
-```
+To use another deployed backend, inject its HTTPS origin at build time:
 
-Production:
-
-```dart
-static const apiBaseUrl = 'https://your-domain.com';
+```bash
+flutter build apk --release \
+  --dart-define=API_BASE_URL=https://your-domain.com
 ```
 
 Build APK:
 
 ```bash
-flutter build apk --release
+flutter build apk --release \
+  --dart-define=API_BASE_URL=https://adskorea.co.kr
 ```
 
 Initial login:

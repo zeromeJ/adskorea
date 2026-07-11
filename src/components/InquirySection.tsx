@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button, LinkButton } from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import SectionTitle from "@/components/ui/SectionTitle";
 import {
   currentPalletTypeOptions,
+  company,
   industryOptions,
   productInterestOptions,
 } from "@/lib/constants";
@@ -89,7 +90,7 @@ export default function InquirySection() {
         <div className="lg:sticky lg:top-28">
           <SectionTitle
             dark
-            eyebrow="도입 상담"
+            eyebrow="Inquiry"
             title="도입 상담 및 견적 문의"
             description="회사명, 담당자명, 연락처를 남겨주시면 담당자가 확인 후 연락드립니다."
           />
@@ -113,6 +114,25 @@ export default function InquirySection() {
               <li>2. 제품 사양 및 조건 검토</li>
               <li>3. 담당자 견적 및 상담 회신(문자/전화 중 택)</li>
             </ol>
+            <LinkButton
+              className="mt-6 w-full gap-2"
+              href={company.phoneHref}
+              variant="light"
+            >
+              <svg
+                aria-hidden="true"
+                className="h-[18px] w-[18px] fill-none stroke-current"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.63a2 2 0 0 1-.45 2.11L8 9.73a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.85.29 1.73.5 2.63.62A2 2 0 0 1 22 16.92Z"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2.6"
+                />
+              </svg>
+              전화하기
+            </LinkButton>
           </div>
         </div>
 
