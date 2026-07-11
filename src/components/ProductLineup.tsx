@@ -14,6 +14,7 @@ export default function ProductLineup() {
         <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {products.map((product) => (
             <ProductCard
+              className={product.title.includes("3D") ? "lg:col-span-2" : ""}
               featured={product.title.includes("3D")}
               key={product.title}
               {...product}

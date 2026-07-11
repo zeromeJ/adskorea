@@ -6,6 +6,7 @@ type ProductCardProps = {
   description: string;
   specs: string[];
   featured?: boolean;
+  className?: string;
 };
 
 export default function ProductCard({
@@ -14,6 +15,7 @@ export default function ProductCard({
   description,
   specs,
   featured = false,
+  className = "",
 }: ProductCardProps) {
   return (
     <article
@@ -21,7 +23,7 @@ export default function ProductCard({
         featured
           ? "grid gap-6 border-[var(--sub-sage)] bg-[var(--muted-surface)] md:grid-cols-[0.9fr_1.1fr] md:items-center"
           : "border-[var(--line)] bg-white"
-      }`}
+      } ${className}`}
     >
       <PalletVisual compact={!featured} />
       <div>

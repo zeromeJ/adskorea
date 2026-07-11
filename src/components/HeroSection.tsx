@@ -35,7 +35,6 @@ export default function HeroSection() {
       </div>
 
       <div className="relative">
-        <div className="absolute -right-4 -top-4 hidden h-28 w-28 border border-[var(--accent-gold)] md:block" />
         <PalletVisual />
         <div className="mt-4 grid grid-cols-2 gap-4">
           <div className="rounded-lg bg-[var(--primary-deep)] p-5 text-white">
