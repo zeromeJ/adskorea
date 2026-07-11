@@ -11,7 +11,7 @@ export default function VideoSection({ variant }: VideoSectionProps) {
 
   return (
     <section className={`${isProduct ? "bg-[var(--muted-surface)]" : "bg-white"} px-5 py-16 lg:px-8 lg:py-24`}>
-      <div className="mx-auto grid max-w-[1200px] gap-10 lg:grid-cols-[1fr_0.8fr] lg:items-start">
+      <div className="mx-auto grid max-w-[1200px] gap-10 lg:grid-cols-[1fr_0.8fr] lg:items-center">
         <VideoCard
           description={
             isProduct

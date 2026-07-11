@@ -1,6 +1,7 @@
 import AboutSection from "@/components/AboutSection";
 import BenefitsSection from "@/components/BenefitsSection";
 import EcoDataSection from "@/components/EcoDataSection";
+import FloatingContactButtons from "@/components/FloatingContactButtons";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
@@ -30,6 +31,7 @@ export default function Home() {
         <VideoSection variant="company" />
         <InquirySection />
       </main>
+      <FloatingContactButtons />
       <Footer />
     </>
   );

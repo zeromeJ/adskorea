@@ -2,18 +2,19 @@ export const company = {
   name: "ADS 아델슨",
   email: "hello@adskorea.co.kr",
   phone: "+82-2-0000-0000",
+  phoneHref: "tel:+8220000000",
   address: "Address placeholder, Republic of Korea",
 };
 
 export const navItems = [
-  { label: "Problem", href: "#problem" },
-  { label: "Product", href: "#product" },
-  { label: "Benefits", href: "#benefits" },
-  { label: "Performance", href: "#performance" },
-  { label: "Products", href: "#products" },
-  { label: "Industries", href: "#industries" },
-  { label: "About", href: "#about" },
-  { label: "Contact", href: "#contact" },
+  { label: "제품 소개", href: "#product" },
+  { label: "핵심 장점", href: "#benefits" },
+  { label: "성능/사양", href: "#performance" },
+  { label: "친환경 데이터", href: "#eco" },
+  { label: "제품군", href: "#products" },
+  { label: "적용 산업", href: "#industries" },
+  { label: "회사 소개", href: "#about" },
+  { label: "문의하기", href: "#contact" },
 ];
 
 export const heroMetrics = [
@@ -139,33 +140,33 @@ export const products = [
     title: "단면 몰드 팔레트",
     englishLabel: "Single-Sided Molded Pallet",
     description: "수출 포장과 일반 보관 조건에 대응하는 목재 기반 성형 팔레트입니다.",
-    specs: ["Export-ready", "Nestable", "Model-specific"],
+    specs: ["수출 포장 대응", "적층 보관 가능", "모델별 사양 상이"],
   },
   {
     title: "양면 몰드 팔레트",
     englishLabel: "Double-Sided Molded Pallet",
     description: "상하 구조 안정성이 필요한 운송 환경에 맞춰 검토할 수 있는 제품군입니다.",
-    specs: ["Stable structure", "B2B logistics", "Model-specific"],
+    specs: ["안정적인 구조", "B2B 물류 대응", "모델별 사양 상이"],
   },
   {
-    title: "川자형 압축 목재 팔레트",
+    title: "川자형 몰드 팔레트",
     englishLabel: "Chuan Design Compressed Wood Pallet",
     description: "적재 안정성과 운송 효율을 함께 고려한 압축 목재 팔레트입니다.",
-    specs: ["Compressed wood", "Storage efficiency", "Export packaging"],
+    specs: ["압축 목재 구조", "보관 효율 개선", "수출 포장 대응"],
   },
   {
     title: "특수 몰드 팔레트",
     englishLabel: "Special Molded Pallet",
     description: "제품 특성, 보관 환경, 수출 조건에 따라 특수 규격을 상담할 수 있습니다.",
-    specs: ["Special use", "Technical fit", "Consult required"],
+    specs: ["특수 용도 대응", "기술 적합성 검토", "상담 필요"],
   },
-  {
-    title: "맞춤형 3D 몰드 팔레트",
-    englishLabel: "Customized 3D Molded Pallet",
-    description:
-      "고객 제품의 규격과 물류 환경에 맞춘 3D 맞춤 설계를 지원합니다. 제품 특성에 맞는 구조 설계를 통해 운송 중 흔들림과 손상 위험을 줄이고 안정적인 적재 환경을 제공합니다.",
-    specs: ["3D mold", "Custom design", "Damage risk reduction"],
-  },
+  // {
+  //   title: "맞춤형 3D 몰드 팔레트",
+  //   englishLabel: "Customized 3D Molded Pallet",
+  //   description:
+  //     "고객 제품의 규격과 물류 환경에 맞춘 3D 맞춤 설계를 지원합니다. 제품 특성에 맞는 구조 설계를 통해 운송 중 흔들림과 손상 위험을 줄이고 안정적인 적재 환경을 제공합니다.",
+  //   specs: ["3D 몰드 설계", "맞춤형 구조 설계", "손상 위험 감소"],
+  // },
 ];
 
 export const industries = [
@@ -189,17 +190,17 @@ export const industries = [
     title: "수출 제조 기업",
     description: "훈증·열처리 부담을 줄여 글로벌 수출 물류에 적합",
   },
-  {
-    title: "맞춤형 포장",
-    description: "제품 형상과 물류 조건에 맞춘 3D 몰드 설계 지원",
-  },
+  // {
+  //   title: "맞춤형 포장",
+  //   description: "제품 형상과 물류 조건에 맞춘 3D 몰드 설계 지원",
+  // },
 ];
 
 export const caseReferences = [
-  "Haier air conditioner",
-  "Sealed compressor transport",
-  "Steel drum molded pallet",
-  "High rack and unmanned 3D automated warehouse use cases",
+  "하이얼 에어컨 포장",
+  "밀폐형 압축기 운송",
+  "스틸 드럼 전용 팔레트",
+  "고층 랙·무인 3D 자동화 창고",
 ];
 
 export const companyStats = [
@@ -220,38 +221,30 @@ export const companyNetwork = [
 ];
 
 export const industryOptions = [
-  "Export Manufacturing",
-  "Automotive Parts",
-  "Electronics / Home Appliances",
-  "Chemical / Drum Packaging",
-  "Warehouse & Logistics Center",
-  "Industrial Materials",
-  "Customized Packaging",
-  "Other",
+  "수출 제조",
+  "자동차 부품",
+  "전자·가전",
+  "화학·드럼 포장",
+  "창고·물류센터",
+  "산업 자재",
+  "맞춤형 포장",
+  "기타",
 ];
 
 export const currentPalletTypeOptions = [
-  "Wooden Pallet",
-  "Plastic Pallet",
-  "Molded Pallet",
-  "Mixed Use",
-  "Not Sure Yet",
+  "목재 팔레트",
+  "플라스틱 팔레트",
+  "몰드 팔레트",
+  "혼합 사용",
+  "잘 모르겠음",
+  "없음",
 ];
 
 export const productInterestOptions = [
-  "Single-Sided Molded Pallet",
-  "Double-Sided Molded Pallet",
-  "Chuan Design Compressed Wood Pallet",
-  "Special Molded Pallet",
-  "Customized 3D Molded Pallet",
-  "Not Sure Yet",
-];
-
-export const quantityOptions = [
-  "Under 100",
-  "100-500",
-  "500-1,000",
-  "1,000-5,000",
-  "Over 5,000",
-  "Not Sure Yet",
+  "단면 몰드 팔레트",
+  "양면 몰드 팔레트",
+  "川자형 압축 목재 팔레트",
+  "특수 몰드 팔레트",
+  "맞춤형 3D 몰드 팔레트",
+  "아직 정하지 않음",
 ];

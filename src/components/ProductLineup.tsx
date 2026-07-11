@@ -4,7 +4,7 @@ import { modelSpecs, products } from "@/lib/constants";
 
 export default function ProductLineup() {
   return (
-    <section id="products" className="bg-white px-5 py-16 lg:px-8 lg:py-24">
+    <section id="products" className="bg-white px-5 pt-10 pb-16 lg:px-8 lg:pt-14 lg:pb-20">
       <div className="mx-auto max-w-[1200px]">
         <SectionTitle
           eyebrow="Product Lineup"
@@ -14,6 +14,7 @@ export default function ProductLineup() {
         <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {products.map((product) => (
             <ProductCard
+              className={product.title.includes("3D") ? "lg:col-span-2" : ""}
               featured={product.title.includes("3D")}
               key={product.title}
               {...product}
@@ -33,7 +34,7 @@ export default function ProductLineup() {
             </thead>
             <tbody>
               {modelSpecs.map((spec) => (
-                <tr className="border-t border-[var(--line)]" key={spec.model}>
+                <tr className=" border-t border-[var(--line)]" key={spec.model}>
                   <td className="p-4 font-bold text-[var(--primary-dark)]">{spec.model}</td>
                   <td className="p-4 text-[var(--sub-text)]">{spec.size}</td>
                   <td className="number p-4 font-bold">{spec.dynamicLoad}</td>

@@ -12,12 +12,12 @@ export default function SectionTitle({
   dark = false,
 }: SectionTitleProps) {
   return (
-    <div className="max-w-3xl">
+    <div className="max-w-4xl">
       <p className="en text-sm font-bold uppercase tracking-[0.12em] text-[var(--accent-gold)]">
         {eyebrow}
       </p>
       <h2
-        className={`mt-3 text-3xl font-bold leading-tight sm:text-4xl ${
+        className={`mt-3 break-words text-3xl font-bold leading-tight [word-break:keep-all] sm:text-4xl ${
           dark ? "text-white" : "text-[var(--text)]"
         }`}
       >

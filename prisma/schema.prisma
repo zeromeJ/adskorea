@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum InquiryStatus {
+  PENDING
+  COMPLETED
+}
+
+enum ResponseMethod {
+  PHONE
+  TEXT
+  BOTH
+}
+
+model Inquiry {
+  id                 String        @id @default(cuid())
+  companyName        String
+  contactPerson      String
+  email              String?
+  phone              String?
+  responseMethod     ResponseMethod @default(BOTH)
+  country            String?
+  industry           String?
+  currentPalletType  String?
+  productInterest    String?
+  estimatedQuantity  String?
+  exportCountry      String?
+  message            String?
+  status             InquiryStatus @default(PENDING)
+  adminMemo          String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  displayName  String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  devices      AdminDevice[]
+}
+
+model AdminDevice {
+  id          String    @id @default(cuid())
+  adminUserId String
+  token       String    @unique
+  platform    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId])
+}

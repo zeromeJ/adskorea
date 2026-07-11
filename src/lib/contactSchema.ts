@@ -3,13 +3,10 @@ export type ContactFormData = {
   contactPerson: string;
   email: string;
   phone: string;
-  country: string;
+  responseMethod: "PHONE" | "TEXT" | "BOTH";
   industry: string;
   currentPalletType: string;
   productInterest: string;
-  estimatedQuantity: string;
-  exportCountry: string;
-  message: string;
   privacyAgreed: boolean;
   website: string;
 };
@@ -19,13 +16,10 @@ export const initialContactFormData: ContactFormData = {
   contactPerson: "",
   email: "",
   phone: "",
-  country: "",
+  responseMethod: "BOTH",
   industry: "",
   currentPalletType: "",
   productInterest: "",
-  estimatedQuantity: "",
-  exportCountry: "",
-  message: "",
   privacyAgreed: false,
   website: "",
 };
@@ -43,16 +37,16 @@ export function validateContactForm(data: ContactFormData) {
     return "담당자명을 입력해 주세요.";
   }
 
-  if (!data.email.trim()) {
-    return "이메일을 입력해 주세요.";
+  if (!data.phone.trim()) {
+    return "연락처를 입력해 주세요.";
   }
 
-  if (!isValidEmail(data.email)) {
+  if (!data.responseMethod) {
+    return "회신 방법을 선택해 주세요.";
+  }
+
+  if (data.email.trim() && !isValidEmail(data.email)) {
     return "올바른 이메일 형식을 입력해 주세요.";
-  }
-
-  if (!data.message.trim()) {
-    return "문의 내용을 입력해 주세요.";
   }
 
   if (!data.privacyAgreed) {
