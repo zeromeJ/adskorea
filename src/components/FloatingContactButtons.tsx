@@ -15,10 +15,7 @@ export default function FloatingContactButtons() {
           scrollToSection("contact");
         }}
       >
-        {/* <span className="block text-[11px] font-semibold text-[var(--sub-text)]">
-          도입 상담
-        </span> */}
-      견적 문의하기
+        견적 문의하기
       </a>
       <a
         aria-label="전화 상담 바로 연결"
