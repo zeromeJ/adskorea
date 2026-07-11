@@ -62,9 +62,36 @@ export async function PATCH(request: Request, context: RouteContext) {
     data.adminMemo = body.adminMemo.trim() || null;
   }
 
-  const item = await prisma.inquiry.update({
-    where: { id },
-    data,
+  const currentItem = await prisma.inquiry.findUnique({ where: { id } });
+
+  if (!currentItem) {
+    return NextResponse.json(
+      { success: false, message: "문의를 찾을 수 없습니다." },
+      { status: 404 },
+    );
+  }
+
+  const shouldLogCompletion =
+    data.status === "COMPLETED" && currentItem.status !== "COMPLETED";
+
+  const item = await prisma.$transaction(async (tx) => {
+    const updated = await tx.inquiry.update({
+      where: { id },
+      data,
+    });
+
+    if (shouldLogCompletion) {
+      await tx.inquiryCompletionLog.create({
+        data: {
+          inquiryId: id,
+          adminUserId: admin.id,
+          adminUsername: admin.username,
+          adminDisplayName: admin.displayName,
+        },
+      });
+    }
+
+    return updated;
   });
 
   return NextResponse.json({ success: true, item });

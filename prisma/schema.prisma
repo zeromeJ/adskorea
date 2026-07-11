@@ -37,6 +37,7 @@ model Inquiry {
   adminMemo          String?
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
+  completionLogs     InquiryCompletionLog[]
 }
 
 model AdminUser {
@@ -45,9 +46,26 @@ model AdminUser {
   passwordHash String
   displayName  String?
   isActive     Boolean  @default(true)
+  isSuperAdmin Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   devices      AdminDevice[]
+  completionLogs InquiryCompletionLog[]
+}
+
+model InquiryCompletionLog {
+  id               String     @id @default(cuid())
+  inquiryId        String
+  adminUserId      String?
+  adminUsername    String
+  adminDisplayName String?
+  completedAt      DateTime   @default(now())
+  inquiry          Inquiry    @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  adminUser        AdminUser? @relation(fields: [adminUserId], references: [id], onDelete: SetNull)
+
+  @@index([completedAt])
+  @@index([inquiryId])
+  @@index([adminUserId])
 }
 
 model AdminDevice {
