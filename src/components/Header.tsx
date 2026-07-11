@@ -110,7 +110,7 @@ export default function Header() {
         <button
           aria-expanded={isOpen}
           aria-label="Toggle navigation"
-          className="flex h-11 w-11 items-center justify-center rounded-md border border-[var(--line)] lg:hidden"
+          className="flex h-11 w-11 items-center justify-center rounded-md lg:hidden"
           onClick={() => setIsOpen((value) => !value)}
           type="button"
         >
@@ -124,16 +124,16 @@ export default function Header() {
 
       {isOpen ? (
         <div className="border-t border-[var(--line)] bg-[var(--background)] px-5 py-5 lg:hidden">
-          <nav className="mx-auto grid max-w-[1200px] gap-3">
+          <nav className="mx-auto grid max-w-[1200px] grid-cols-2 gap-2">
             {navItems.map((item) => (
               <a
                 aria-current={
                   activeSection === item.href.slice(1) ? "page" : undefined
                 }
-                className={`rounded-md px-3 py-3 text-sm text-[var(--text)] hover:bg-white ${
+                className={`rounded-md px-3 py-3 text-center text-sm transition ${
                   activeSection === item.href.slice(1)
-                    ? "bg-white font-extrabold text-[var(--primary)]"
-                    : "font-medium"
+                    ? "font-extrabold text-[var(--primary)] border-[var(--primary)] border-2"
+                    : "font-medium text-[var(--text)] hover:bg-white"
                 }`}
                 href={item.href}
                 key={item.href}
@@ -143,7 +143,7 @@ export default function Header() {
               </a>
             ))}
             <LinkButton
-              className="mt-2 w-full"
+              className="col-span-2 mt-2 w-full"
               href="#contact"
               onClick={(event) => handleMobileNavigation(event, "#contact")}
             >
