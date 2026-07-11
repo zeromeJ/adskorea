@@ -169,14 +169,15 @@ export default function InquirySection() {
               options={productInterestOptions}
               value={formData.productInterest}
             />
-            <Input
+            <input
               aria-hidden="true"
               autoComplete="off"
               className="hidden"
               id="website"
-              label="Website"
+              name="website"
               onChange={(event) => updateField("website", event.target.value)}
               tabIndex={-1}
+              type="text"
               value={formData.website}
             />
           </div>
