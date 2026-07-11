@@ -13,13 +13,9 @@ export async function POST(request: Request) {
       contactPerson,
       email,
       phone,
-      country,
       industry,
       currentPalletType,
       productInterest,
-      estimatedQuantity,
-      exportCountry,
-      message,
       privacyAgreed,
       website,
     } = body;
@@ -35,14 +31,14 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!companyName || !contactPerson || !email || !message) {
+    if (!companyName || !contactPerson || !phone) {
       return NextResponse.json(
         { success: false, message: "Required fields are missing." },
         { status: 400 },
       );
     }
 
-    if (!isValidEmail(email)) {
+    if (email && !isValidEmail(email)) {
       return NextResponse.json(
         { success: false, message: "Invalid email format." },
         { status: 400 },
@@ -69,7 +65,7 @@ export async function POST(request: Request) {
     await resend.emails.send({
       from: senderEmail,
       to: receiverEmail,
-      replyTo: email,
+      ...(email ? { replyTo: email } : {}),
       subject: `[ADS Website Inquiry] New B2B Inquiry from ${companyName}`,
       text: `
 새로운 문의가 접수되었습니다.
@@ -78,17 +74,11 @@ export async function POST(request: Request) {
 
 회사명: ${companyName}
 담당자명: ${contactPerson}
-이메일: ${email}
+이메일: ${email || "-"}
 연락처: ${phone || "-"}
-국가/지역: ${country || "-"}
 산업 분야: ${industry || "-"}
 현재 사용 중인 팔레트: ${currentPalletType || "-"}
 관심 제품: ${productInterest || "-"}
-예상 수량: ${estimatedQuantity || "-"}
-주요 수출 국가: ${exportCountry || "-"}
-
-문의 내용:
-${message}
       `,
     });
 

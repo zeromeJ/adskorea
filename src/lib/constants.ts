@@ -222,38 +222,30 @@ export const companyNetwork = [
 ];
 
 export const industryOptions = [
-  "Export Manufacturing",
-  "Automotive Parts",
-  "Electronics / Home Appliances",
-  "Chemical / Drum Packaging",
-  "Warehouse & Logistics Center",
-  "Industrial Materials",
-  "Customized Packaging",
-  "Other",
+  "수출 제조",
+  "자동차 부품",
+  "전자·가전",
+  "화학·드럼 포장",
+  "창고·물류센터",
+  "산업 자재",
+  "맞춤형 포장",
+  "기타",
 ];
 
 export const currentPalletTypeOptions = [
-  "Wooden Pallet",
-  "Plastic Pallet",
-  "Molded Pallet",
-  "Mixed Use",
-  "Not Sure Yet",
+  "없음",
+  "목재 팔레트",
+  "플라스틱 팔레트",
+  "몰드 팔레트",
+  "혼합 사용",
+  "잘 모르겠음",
 ];
 
 export const productInterestOptions = [
-  "Single-Sided Molded Pallet",
-  "Double-Sided Molded Pallet",
-  "Chuan Design Compressed Wood Pallet",
-  "Special Molded Pallet",
-  "Customized 3D Molded Pallet",
-  "Not Sure Yet",
-];
-
-export const quantityOptions = [
-  "Under 100",
-  "100-500",
-  "500-1,000",
-  "1,000-5,000",
-  "Over 5,000",
-  "Not Sure Yet",
+  "단면 몰드 팔레트",
+  "양면 몰드 팔레트",
+  "川자형 압축 목재 팔레트",
+  "특수 몰드 팔레트",
+  "맞춤형 3D 몰드 팔레트",
+  "아직 정하지 않음",
 ];

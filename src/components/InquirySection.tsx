@@ -4,13 +4,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
-import Textarea from "@/components/ui/Textarea";
 import SectionTitle from "@/components/ui/SectionTitle";
 import {
   currentPalletTypeOptions,
   industryOptions,
   productInterestOptions,
-  quantityOptions,
 } from "@/lib/constants";
 import {
   ContactFormData,
@@ -91,13 +89,13 @@ export default function InquirySection() {
         <div className="lg:sticky lg:top-28">
           <SectionTitle
             dark
-            eyebrow="Quote Inquiry"
+            eyebrow="도입 상담"
             title="도입 상담 및 견적 문의"
-            description="제품 규격, 예상 수량, 수출 국가를 남겨주시면 담당자가 확인 후 연락드립니다."
+            description="회사명, 담당자명, 연락처를 남겨주시면 담당자가 확인 후 연락드립니다."
           />
           <div className="mt-8 rounded-lg border border-white/12 bg-white/[0.04] p-5 text-white">
-            <p className="en text-sm font-bold text-[var(--accent-gold)]">
-              B2B Inquiry Process
+            <p className="text-sm font-bold text-[var(--accent-gold)]">
+              상담 진행 방식
             </p>
             <ol className="mt-4 grid gap-3 text-sm leading-6 text-white/72">
               <li>1. 문의 내용 접수</li>
@@ -114,55 +112,48 @@ export default function InquirySection() {
           <div className="grid gap-5 md:grid-cols-2">
             <Input
               id="companyName"
-              label="Company Name / 회사명"
+              label="회사명 (필수)"
               onChange={(event) => updateField("companyName", event.target.value)}
-              placeholder="ABC Logistics"
+              placeholder="회사명을 입력해 주세요"
               required
               value={formData.companyName}
             />
             <Input
               id="contactPerson"
-              label="Contact Person / 담당자명"
+              label="담당자명 (필수)"
               onChange={(event) =>
                 updateField("contactPerson", event.target.value)
               }
-              placeholder="Kim"
+              placeholder="담당자명을 입력해 주세요"
               required
               value={formData.contactPerson}
             />
             <Input
               id="email"
-              label="Email / 이메일"
+              label="이메일 (선택)"
               onChange={(event) => updateField("email", event.target.value)}
-              placeholder="kim@example.com"
-              required
+              placeholder="이메일을 입력해 주세요"
               type="email"
               value={formData.email}
             />
             <Input
               id="phone"
-              label="Phone / 연락처"
+              label="연락처 (필수)"
               onChange={(event) => updateField("phone", event.target.value)}
-              placeholder="+82 10 0000 0000"
+              placeholder="연락처를 입력해 주세요"
+              required
               value={formData.phone}
-            />
-            <Input
-              id="country"
-              label="Country / Region / 국가·지역"
-              onChange={(event) => updateField("country", event.target.value)}
-              placeholder="Korea"
-              value={formData.country}
             />
             <Select
               id="industry"
-              label="Industry / 산업 분야"
+              label="산업 분야 (선택)"
               onChange={(event) => updateField("industry", event.target.value)}
               options={industryOptions}
               value={formData.industry}
             />
             <Select
               id="currentPalletType"
-              label="Current Pallet Type / 현재 사용 중인 팔레트"
+              label="현재 사용 중인 팔레트 (선택)"
               onChange={(event) =>
                 updateField("currentPalletType", event.target.value)
               }
@@ -171,30 +162,12 @@ export default function InquirySection() {
             />
             <Select
               id="productInterest"
-              label="Product Interest / 관심 제품"
+              label="관심 제품 (선택)"
               onChange={(event) =>
                 updateField("productInterest", event.target.value)
               }
               options={productInterestOptions}
               value={formData.productInterest}
-            />
-            <Select
-              id="estimatedQuantity"
-              label="Estimated Quantity / 예상 수량"
-              onChange={(event) =>
-                updateField("estimatedQuantity", event.target.value)
-              }
-              options={quantityOptions}
-              value={formData.estimatedQuantity}
-            />
-            <Input
-              id="exportCountry"
-              label="Export Country / 주요 수출 국가"
-              onChange={(event) =>
-                updateField("exportCountry", event.target.value)
-              }
-              placeholder="USA, Japan, EU"
-              value={formData.exportCountry}
             />
             <Input
               aria-hidden="true"
@@ -205,17 +178,6 @@ export default function InquirySection() {
               onChange={(event) => updateField("website", event.target.value)}
               tabIndex={-1}
               value={formData.website}
-            />
-          </div>
-
-          <div className="mt-5">
-            <Textarea
-              id="message"
-              label="Message / 문의 내용"
-              onChange={(event) => updateField("message", event.target.value)}
-              placeholder="견적 문의드립니다."
-              required
-              value={formData.message}
             />
           </div>
 

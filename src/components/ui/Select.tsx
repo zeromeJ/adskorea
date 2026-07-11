@@ -22,7 +22,7 @@ export default function Select({
         id={id}
         {...props}
       >
-        <option value="">Select option</option>
+        <option value="">선택해 주세요</option>
         {options.map((option) => (
           <option key={option} value={option}>
             {option}
