@@ -2,6 +2,7 @@ export const company = {
   name: "ADS 아델슨",
   email: "hello@adskorea.co.kr",
   phone: "+82-2-0000-0000",
+  phoneHref: "tel:+8220000000",
   address: "Address placeholder, Republic of Korea",
 };
 
