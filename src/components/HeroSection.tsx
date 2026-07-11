@@ -1,7 +1,7 @@
 import PalletVisual from "@/components/ui/PalletVisual";
 import StatCard from "@/components/ui/StatCard";
 import { LinkButton } from "@/components/ui/Button";
-import { trustNumbers } from "@/lib/constants";
+import { heroMetrics } from "@/lib/constants";
 
 export default function HeroSection() {
   return (
@@ -24,11 +24,11 @@ export default function HeroSection() {
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <LinkButton href="#contact">견적 문의하기</LinkButton>
           <LinkButton href="#comparison" variant="secondary">
-            제품 비교 보기
+            제품 장점 보기
           </LinkButton>
         </div>
         <div className="mt-10 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {trustNumbers.map((stat) => (
+          {heroMetrics.map((stat) => (
             <StatCard key={stat.label} {...stat} />
           ))}
         </div>
@@ -43,7 +43,7 @@ export default function HeroSection() {
               Export Packaging
             </p>
             <p className="mt-2 text-sm leading-6 text-white/72">
-              훈증 부담을 낮춘 글로벌 수출 포장 대응
+              훈증·열처리 부담을 줄이는 데 도움을 주는 글로벌 수출 포장 대응
             </p>
           </div>
           <div className="rounded-lg bg-white p-5">

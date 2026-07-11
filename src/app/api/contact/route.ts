@@ -14,8 +14,11 @@ export async function POST(request: Request) {
       email,
       phone,
       country,
+      industry,
+      currentPalletType,
       productInterest,
       estimatedQuantity,
+      exportCountry,
       message,
       privacyAgreed,
       website,
@@ -67,7 +70,7 @@ export async function POST(request: Request) {
       from: senderEmail,
       to: receiverEmail,
       replyTo: email,
-      subject: `[Adson Website Inquiry] New B2B Inquiry from ${companyName}`,
+      subject: `[ADS Website Inquiry] New B2B Inquiry from ${companyName}`,
       text: `
 새로운 문의가 접수되었습니다.
 
@@ -78,8 +81,11 @@ export async function POST(request: Request) {
 이메일: ${email}
 연락처: ${phone || "-"}
 국가/지역: ${country || "-"}
+산업 분야: ${industry || "-"}
+현재 사용 중인 팔레트: ${currentPalletType || "-"}
 관심 제품: ${productInterest || "-"}
 예상 수량: ${estimatedQuantity || "-"}
+주요 수출 국가: ${exportCountry || "-"}
 
 문의 내용:
 ${message}

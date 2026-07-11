@@ -22,7 +22,7 @@ export default function Header() {
           />
         </a>
 
-        <nav className="hidden items-center gap-7 text-sm font-bold text-[var(--sub-text)] lg:flex">
+        <nav className="hidden items-center gap-4 text-sm font-bold text-[var(--sub-text)] xl:gap-6 lg:flex">
           {navItems.map((item) => (
             <a
               className="transition hover:text-[var(--primary)]"
@@ -38,7 +38,7 @@ export default function Header() {
           <LinkButton href="#contact" variant="secondary">
             카탈로그 다운로드
           </LinkButton>
-          <LinkButton href="#contact">Inquiry</LinkButton>
+          <LinkButton href="#contact">견적 문의하기</LinkButton>
         </div>
 
         <button

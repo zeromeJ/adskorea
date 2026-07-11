@@ -6,104 +6,236 @@ export const company = {
 };
 
 export const navItems = [
+  { label: "Problem", href: "#problem" },
+  { label: "Product", href: "#product" },
   { label: "Benefits", href: "#benefits" },
+  { label: "Performance", href: "#performance" },
   { label: "Products", href: "#products" },
-  { label: "Comparison", href: "#comparison" },
   { label: "Industries", href: "#industries" },
   { label: "About", href: "#about" },
   { label: "Contact", href: "#contact" },
 ];
 
-export const trustNumbers = [
-  { value: "20+", label: "Years", description: "logistics packaging" },
-  { value: "50+", label: "Countries", description: "global export network" },
-  { value: "12M", label: "Capacity", description: "annual production" },
-  { value: "33", label: "Pallets = 1m", description: "stacking efficiency" },
+export const heroMetrics = [
+  { value: "20+", label: "Years", description: "20년 이상 물류 포장 산업 경험" },
+  { value: "50+", label: "Countries", description: "50개국 이상 글로벌 판매" },
+  { value: "12M", label: "Annual Capacity", description: "연간 1,200만 대 설계 생산 능력" },
+  { value: "MDI", label: "Molded Pallet", description: "MDI 친환경 성형 팔레트" },
+];
+
+export const problemCards = [
+  {
+    title: "수출 절차 부담",
+    description:
+      "목재 팔레트는 수출 시 훈증, 열처리, 검역 관련 절차가 필요할 수 있습니다. 서류 누락이나 국가별 기준 차이는 통관 지연과 납기 리스크로 이어질 수 있습니다.",
+  },
+  {
+    title: "보관 공간 비효율",
+    description:
+      "부피가 크고 적층 효율이 낮은 팔레트는 창고 공간을 빠르게 차지합니다. 보관 비용과 운송 효율은 팔레트 구조에서부터 달라집니다.",
+  },
+  {
+    title: "파손 및 안전 리스크",
+    description:
+      "못, 균열, 습기, 변형은 제품 손상과 작업 사고의 원인이 될 수 있습니다. 고가 제품, 정밀 부품, 중량물 운송에서는 팔레트 품질 편차가 클레임 리스크가 될 수 있습니다.",
+  },
+  {
+    title: "숨은 물류 비용",
+    description:
+      "팔레트 비용은 구매 단가만으로 판단하기 어렵습니다. 교체 주기, 보관 공간, 운송 효율, 파손 클레임, 수출 처리 비용까지 함께 고려해야 합니다.",
+  },
+];
+
+export const processSteps = [
+  "원료 선별",
+  "파쇄",
+  "분쇄",
+  "건조",
+  "MDI 접착제 혼합",
+  "고온·고압 성형",
+  "완제품",
+];
+
+export const videoLearningPoints = [
+  "MDI 친환경 몰드 팔레트의 제조 방식",
+  "기존 목재 팔레트 대비 수출·보관 효율",
+  "하중 지지 성능과 안전한 일체형 구조",
+  "글로벌 생산·R&D 네트워크",
 ];
 
 export const benefits = [
   {
-    eyebrow: "01",
-    title: "Export-ready",
-    description: "훈증 및 검역 부담을 줄인 수출 최적화 구조",
+    eyebrow: "Export-ready",
+    title: "수출은 더 간편하게",
+    description:
+      "고온·고압으로 가공된 목재 기반 성형 제품으로, 수출 포장재 운영 시 훈증·열처리 부담을 줄이는 데 도움을 줍니다. 복잡한 수출 포장재 관리와 통관 지연 리스크를 낮추고, 글로벌 물류 운영을 더 안정적으로 설계할 수 있습니다.",
+    points: ["ISPM 15 기준 대응", "훈증·열처리 부담 감소", "수출 포장재 관리 간소화"],
   },
   {
-    eyebrow: "02",
-    title: "Space-saving",
-    description: "33개 적층 시 약 1m 높이로 보관 효율 향상",
+    eyebrow: "Space-saving",
+    title: "보관은 더 효율적으로",
+    description:
+      "균일한 규격과 적층에 유리한 구조를 통해 창고 공간 활용도를 높입니다. 대량 보관과 수출 선적이 반복되는 기업일수록 팔레트 보관 공간과 운송 효율 차이는 곧 비용 차이로 이어집니다.",
+    points: ["적층 효율 개선", "창고 공간 활용도 향상", "자료 기준 33개 적층 시 약 1m"],
   },
   {
-    eyebrow: "03",
-    title: "High Load",
-    description: "동하중 2.5T 이상, 정하중 8~10T 지원",
+    eyebrow: "Cost-efficient",
+    title: "물류 비용은 더 낮게",
+    description:
+      "팔레트 비용은 개당 구매가만으로 판단하기 어렵습니다. 보관 공간, 운송 효율, 교체 주기, 제품 파손, 수출 처리 부담까지 고려하면 팔레트는 물류 총비용에 직접 영향을 미칩니다. MDI 친환경 몰드 팔레트는 안정적인 구조와 높은 내구성으로 기업의 물류 비용 절감에 기여합니다.",
+    points: ["보관 비용 절감 기여", "운송 효율 개선", "파손·교체 비용 감소"],
+  },
+];
+
+export const performanceFeatures = [
+  "고온·고압 일체형 성형",
+  "높은 방수·방습 성능",
+  "못 없는 안전 구조",
+  "안정적인 하중 지지 성능",
+  "자동화 물류 라인 대응 가능",
+  "모델별 고중량 적재 대응",
+];
+
+export const modelSpecs = [
+  {
+    model: "AD 계열",
+    size: "1200×1000×130mm 등",
+    dynamicLoad: "2,000kg",
+    staticLoad: "8,000kg",
+    usage: "일반 수출·보관",
   },
   {
-    eyebrow: "04",
-    title: "Eco Material",
-    description: "소경목과 농림 부산물을 활용한 친환경 소재",
+    model: "AC 계열",
+    size: "1000×1000×145mm 등",
+    dynamicLoad: "2,500kg",
+    staticLoad: "9,000kg",
+    usage: "고중량 적재",
   },
   {
-    eyebrow: "05",
-    title: "No Nails",
-    description: "못 없는 일체형 구조로 작업자와 화물 보호",
+    model: "AS 계열",
+    size: "1100×1100×145mm 등",
+    dynamicLoad: "2,800kg",
+    staticLoad: "10,000kg",
+    usage: "중량물·산업재",
   },
-  {
-    eyebrow: "06",
-    title: "Custom 3D Mold",
-    description: "제품 형상에 맞춘 높은 밀착성과 고정력",
-  },
+];
+
+export const carbonData = [
+  { label: "플라스틱 팔레트", value: 68.234 },
+  { label: "원목 팔레트", value: 24.116 },
+  { label: "기존 성형 팔레트", value: 18.542 },
+  { label: "MDI 성형 트레이", value: 5.967 },
+];
+
+export const ecoCards = [
+  "농림 부산물 활용",
+  "MDI 친환경 접착제",
+  "저탄소 물류 전환",
+  "제품 탄소발자국 인증",
 ];
 
 export const products = [
   {
-    title: "Single-Sided Molded Pallet",
-    description: "수출 포장과 일반 물류에 적합한 경량 일체형 팔레트",
-    specs: ["Nestable", "Export-ready", "Cost efficient"],
+    title: "단면 몰드 팔레트",
+    englishLabel: "Single-Sided Molded Pallet",
+    description: "수출 포장과 일반 보관 조건에 대응하는 목재 기반 성형 팔레트입니다.",
+    specs: ["Export-ready", "Nestable", "Model-specific"],
   },
   {
-    title: "Double-Sided Molded Pallet",
-    description: "상하 양면 사용성을 고려한 고하중 운송 솔루션",
-    specs: ["Stable loading", "Reusable flow", "Heavy duty"],
+    title: "양면 몰드 팔레트",
+    englishLabel: "Double-Sided Molded Pallet",
+    description: "상하 구조 안정성이 필요한 운송 환경에 맞춰 검토할 수 있는 제품군입니다.",
+    specs: ["Stable structure", "B2B logistics", "Model-specific"],
   },
   {
-    title: "Chuan Design Compressed Wood Pallet",
-    description: "적재 안정성과 공간 효율을 동시에 고려한 압축 목재 타입",
-    specs: ["Compressed wood", "Dimensional stability", "B2B logistics"],
+    title: "川자형 압축 목재 팔레트",
+    englishLabel: "Chuan Design Compressed Wood Pallet",
+    description: "적재 안정성과 운송 효율을 함께 고려한 압축 목재 팔레트입니다.",
+    specs: ["Compressed wood", "Storage efficiency", "Export packaging"],
   },
   {
-    title: "Special Molded Pallet",
-    description: "산업별 규격과 운송 환경에 맞춘 특수 몰드 팔레트",
-    specs: ["Custom size", "Technical fit", "Export packaging"],
+    title: "특수 몰드 팔레트",
+    englishLabel: "Special Molded Pallet",
+    description: "제품 특성, 보관 환경, 수출 조건에 따라 특수 규격을 상담할 수 있습니다.",
+    specs: ["Special use", "Technical fit", "Consult required"],
   },
-];
-
-export const comparisonRows = [
-  ["Export Convenience", "훈증/검역 절차 필요 가능", "반복 회수 체계에 적합", "수출 포장 부담을 줄인 구조"],
-  ["Storage Efficiency", "적층 효율 제한", "규격별 보관 공간 필요", "33개 적층 시 약 1m"],
-  ["Cost Efficiency", "상태 편차에 따른 교체 비용", "초기 단가가 높을 수 있음", "대량 수출 포장에 효율적"],
-  ["Eco-friendliness", "목재 사용량과 처리 이슈", "장수명 순환 사용에 강점", "부산물 활용 친환경 소재"],
-  ["Safety", "못, 파손, 목재 가시 가능", "위생 산업에 강점", "못 없는 일체형 구조"],
-  ["Dimensional Stability", "습도와 충격에 영향", "정밀 성형 가능", "압축 성형으로 규격 안정성 확보"],
-  ["Load Performance", "제품별 편차 큼", "고하중 제품군 강점", "동하중 2.5T 이상 지원"],
-  ["Customization", "가공 대응 가능", "금형 비용 고려 필요", "3D 몰드 맞춤 설계 가능"],
-];
-
-export const performanceSpecs = [
-  { value: "≥ 2.5T", label: "Dynamic Load" },
-  { value: "8-10T", label: "Static Load" },
-  { value: "+30%", label: "Load Capacity" },
-  { value: "33 = 1m", label: "Pallet Stacking" },
-  { value: "-40°C", label: "Cold Resistance Test" },
-  { value: "FR", label: "Flame Retardancy" },
+  {
+    title: "맞춤형 3D 몰드 팔레트",
+    englishLabel: "Customized 3D Molded Pallet",
+    description:
+      "고객 제품의 규격과 물류 환경에 맞춘 3D 맞춤 설계를 지원합니다. 제품 특성에 맞는 구조 설계를 통해 운송 중 흔들림과 손상 위험을 줄이고 안정적인 적재 환경을 제공합니다.",
+    specs: ["3D mold", "Custom design", "Damage risk reduction"],
+  },
 ];
 
 export const industries = [
+  {
+    title: "전자·가전 제품",
+    description: "제품 손상과 흔들림을 줄이는 안정적인 운송 구조",
+  },
+  {
+    title: "화학·드럼 포장",
+    description: "원형 용기와 중량물 운송에 맞춘 맞춤형 팔레트 설계",
+  },
+  {
+    title: "자동차·산업 부품",
+    description: "고중량 부품과 반복 운송에 대응하는 하중 성능",
+  },
+  {
+    title: "자동화 물류창고",
+    description: "균일한 규격과 안정적인 구조로 자동화 라인 대응",
+  },
+  {
+    title: "수출 제조 기업",
+    description: "훈증·열처리 부담을 줄여 글로벌 수출 물류에 적합",
+  },
+  {
+    title: "맞춤형 포장",
+    description: "제품 형상과 물류 조건에 맞춘 3D 몰드 설계 지원",
+  },
+];
+
+export const caseReferences = [
+  "Haier air conditioner",
+  "Sealed compressor transport",
+  "Steel drum molded pallet",
+  "High rack and unmanned 3D automated warehouse use cases",
+];
+
+export const companyStats = [
+  { value: "20+", label: "Years", description: "물류 포장 산업 경험" },
+  { value: "2.2억", label: "RMB", description: "총 투자액 자료 기준" },
+  { value: "40,000㎡", label: "Area", description: "총 토지 면적" },
+  { value: "12M", label: "Capacity", description: "설계 연간 생산 능력" },
+  { value: "50+", label: "Countries", description: "글로벌 판매" },
+  { value: "30+", label: "IP / Tech", description: "특허 및 기술 인증 자료 기준" },
+];
+
+export const companyNetwork = [
+  "중국 내 주요 생산 기지",
+  "상하이·허페이 주요 마케팅 중심지",
+  "독일 뒤셀도르프 국제 R&D 센터",
+  "독일 TOGREEN과의 전략적 협력",
+  "독일 품질 기준을 지향",
+];
+
+export const industryOptions = [
   "Export Manufacturing",
   "Automotive Parts",
-  "Electronics",
-  "General Consumer Goods",
-  "Warehouse & Logistics Centers",
+  "Electronics / Home Appliances",
+  "Chemical / Drum Packaging",
+  "Warehouse & Logistics Center",
+  "Industrial Materials",
   "Customized Packaging",
+  "Other",
+];
+
+export const currentPalletTypeOptions = [
+  "Wooden Pallet",
+  "Plastic Pallet",
+  "Molded Pallet",
+  "Mixed Use",
+  "Not Sure Yet",
 ];
 
 export const productInterestOptions = [

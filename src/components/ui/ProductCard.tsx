@@ -2,6 +2,7 @@ import PalletVisual from "@/components/ui/PalletVisual";
 
 type ProductCardProps = {
   title: string;
+  englishLabel?: string;
   description: string;
   specs: string[];
   featured?: boolean;
@@ -9,6 +10,7 @@ type ProductCardProps = {
 
 export default function ProductCard({
   title,
+  englishLabel,
   description,
   specs,
   featured = false,
@@ -23,7 +25,12 @@ export default function ProductCard({
     >
       <PalletVisual compact={!featured} />
       <div>
-        <h3 className="en text-xl font-bold text-[var(--text)]">{title}</h3>
+        {englishLabel ? (
+          <p className="en mb-2 text-xs font-bold uppercase tracking-[0.1em] text-[var(--accent-gold)]">
+            {englishLabel}
+          </p>
+        ) : null}
+        <h3 className="text-xl font-bold text-[var(--text)]">{title}</h3>
         <p className="mt-3 leading-7 text-[var(--sub-text)]">{description}</p>
         <div className="mt-5 flex flex-wrap gap-2">
           {specs.map((spec) => (

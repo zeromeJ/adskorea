@@ -4,8 +4,11 @@ export type ContactFormData = {
   email: string;
   phone: string;
   country: string;
+  industry: string;
+  currentPalletType: string;
   productInterest: string;
   estimatedQuantity: string;
+  exportCountry: string;
   message: string;
   privacyAgreed: boolean;
   website: string;
@@ -17,8 +20,11 @@ export const initialContactFormData: ContactFormData = {
   email: "",
   phone: "",
   country: "",
+  industry: "",
+  currentPalletType: "",
   productInterest: "",
   estimatedQuantity: "",
+  exportCountry: "",
   message: "",
   privacyAgreed: false,
   website: "",

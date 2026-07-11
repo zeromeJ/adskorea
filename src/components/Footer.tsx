@@ -14,8 +14,8 @@ export default function Footer() {
             width={966}
           />
           <p className="mt-5 max-w-md text-sm leading-7 text-white/68">
-            ADS 아델슨은 친환경 몰드 팔레트로 글로벌 수출 포장과 B2B
-            물류 효율을 개선하는 제조 파트너입니다.
+            친환경 MDI 몰드 팔레트를 통해 수출, 보관, 물류 비용 효율을
+            높이는 B2B 물류 포장 솔루션을 제공합니다.
           </p>
         </div>
         <nav>

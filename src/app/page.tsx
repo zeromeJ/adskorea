@@ -1,14 +1,16 @@
 import AboutSection from "@/components/AboutSection";
 import BenefitsSection from "@/components/BenefitsSection";
-import ComparisonSection from "@/components/ComparisonSection";
+import EcoDataSection from "@/components/EcoDataSection";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import IndustriesSection from "@/components/IndustriesSection";
 import InquirySection from "@/components/InquirySection";
 import PerformanceSection from "@/components/PerformanceSection";
+import ProblemSection from "@/components/ProblemSection";
+import ProductIntroSection from "@/components/ProductIntroSection";
 import ProductLineup from "@/components/ProductLineup";
-import TrustNumbers from "@/components/TrustNumbers";
+import VideoSection from "@/components/VideoSection";
 
 export default function Home() {
   return (
@@ -16,13 +18,16 @@ export default function Home() {
       <Header />
       <main>
         <HeroSection />
-        <TrustNumbers />
+        <ProblemSection />
+        <ProductIntroSection />
+        <VideoSection variant="product" />
         <BenefitsSection />
-        <ProductLineup />
-        <ComparisonSection />
         <PerformanceSection />
+        <EcoDataSection />
+        <ProductLineup />
         <IndustriesSection />
         <AboutSection />
+        <VideoSection variant="company" />
         <InquirySection />
       </main>
       <Footer />

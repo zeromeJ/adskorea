@@ -7,6 +7,8 @@ import Select from "@/components/ui/Select";
 import Textarea from "@/components/ui/Textarea";
 import SectionTitle from "@/components/ui/SectionTitle";
 import {
+  currentPalletTypeOptions,
+  industryOptions,
   productInterestOptions,
   quantityOptions,
 } from "@/lib/constants";
@@ -89,9 +91,9 @@ export default function InquirySection() {
         <div className="lg:sticky lg:top-28">
           <SectionTitle
             dark
-            eyebrow="Request a Quote"
-            title="제품 사양, 예상 수량, 수출 국가를 남겨주세요."
-            description="담당자가 확인 후 적합한 제품과 견적 상담 방향을 회신드립니다."
+            eyebrow="Quote Inquiry"
+            title="도입 상담 및 견적 문의"
+            description="제품 규격, 예상 수량, 수출 국가를 남겨주시면 담당자가 확인 후 연락드립니다."
           />
           <div className="mt-8 rounded-lg border border-white/12 bg-white/[0.04] p-5 text-white">
             <p className="en text-sm font-bold text-[var(--accent-gold)]">
@@ -112,7 +114,7 @@ export default function InquirySection() {
           <div className="grid gap-5 md:grid-cols-2">
             <Input
               id="companyName"
-              label="Company Name"
+              label="Company Name / 회사명"
               onChange={(event) => updateField("companyName", event.target.value)}
               placeholder="ABC Logistics"
               required
@@ -120,7 +122,7 @@ export default function InquirySection() {
             />
             <Input
               id="contactPerson"
-              label="Contact Person"
+              label="Contact Person / 담당자명"
               onChange={(event) =>
                 updateField("contactPerson", event.target.value)
               }
@@ -130,7 +132,7 @@ export default function InquirySection() {
             />
             <Input
               id="email"
-              label="Email"
+              label="Email / 이메일"
               onChange={(event) => updateField("email", event.target.value)}
               placeholder="kim@example.com"
               required
@@ -139,21 +141,37 @@ export default function InquirySection() {
             />
             <Input
               id="phone"
-              label="Phone"
+              label="Phone / 연락처"
               onChange={(event) => updateField("phone", event.target.value)}
               placeholder="+82 10 0000 0000"
               value={formData.phone}
             />
             <Input
               id="country"
-              label="Country / Region"
+              label="Country / Region / 국가·지역"
               onChange={(event) => updateField("country", event.target.value)}
               placeholder="Korea"
               value={formData.country}
             />
             <Select
+              id="industry"
+              label="Industry / 산업 분야"
+              onChange={(event) => updateField("industry", event.target.value)}
+              options={industryOptions}
+              value={formData.industry}
+            />
+            <Select
+              id="currentPalletType"
+              label="Current Pallet Type / 현재 사용 중인 팔레트"
+              onChange={(event) =>
+                updateField("currentPalletType", event.target.value)
+              }
+              options={currentPalletTypeOptions}
+              value={formData.currentPalletType}
+            />
+            <Select
               id="productInterest"
-              label="Product Interest"
+              label="Product Interest / 관심 제품"
               onChange={(event) =>
                 updateField("productInterest", event.target.value)
               }
@@ -162,12 +180,21 @@ export default function InquirySection() {
             />
             <Select
               id="estimatedQuantity"
-              label="Estimated Quantity"
+              label="Estimated Quantity / 예상 수량"
               onChange={(event) =>
                 updateField("estimatedQuantity", event.target.value)
               }
               options={quantityOptions}
               value={formData.estimatedQuantity}
+            />
+            <Input
+              id="exportCountry"
+              label="Export Country / 주요 수출 국가"
+              onChange={(event) =>
+                updateField("exportCountry", event.target.value)
+              }
+              placeholder="USA, Japan, EU"
+              value={formData.exportCountry}
             />
             <Input
               aria-hidden="true"
@@ -184,7 +211,7 @@ export default function InquirySection() {
           <div className="mt-5">
             <Textarea
               id="message"
-              label="Message"
+              label="Message / 문의 내용"
               onChange={(event) => updateField("message", event.target.value)}
               placeholder="견적 문의드립니다."
               required
@@ -202,8 +229,7 @@ export default function InquirySection() {
               type="checkbox"
             />
             <span>
-              개인정보 수집 및 이용에 동의합니다. 문의 응대와 견적 상담을
-              위해 입력 정보가 사용됩니다.
+              개인정보 수집 및 이용에 동의합니다.
             </span>
           </label>
 
