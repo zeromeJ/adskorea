@@ -5,8 +5,8 @@ import { heroMetrics } from "@/lib/constants";
 
 export default function HeroSection() {
   return (
-    <section id="hero" className="mx-auto grid w-full max-w-[1200px] gap-10 px-5 py-14 md:grid-cols-[7fr_3fr] md:items-end lg:px-8 lg:py-24">
-      <div>
+    <section id="hero" className="mx-auto grid w-full max-w-[1200px] gap-x-10 gap-y-10 px-5 py-14 md:grid-cols-[7fr_3fr] md:grid-rows-[1fr_auto] lg:px-8 lg:py-24">
+      <div className="order-1 md:order-none md:col-start-1 md:row-start-1">
         <p className="en mb-5 text-sm font-bold uppercase tracking-[0.12em] text-[var(--accent-gold)]">
           Eco-tech Molded Pallet
         </p>
@@ -27,32 +27,34 @@ export default function HeroSection() {
             제품 사양 확인하기
           </LinkButton>
         </div>
-        <div className="mt-10 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {heroMetrics.map((stat) => (
-            <StatCard key={stat.label} {...stat} />
-          ))}
-        </div>
       </div>
 
-      <div className="relative">
+      <div className="relative order-3 md:order-none md:col-start-2 md:row-start-1 md:self-end">
         <PalletVisual />
-        <div className="mt-10 grid grid-cols-2 gap-4">
-          <div className="rounded-lg bg-[var(--primary-deep)] p-5 text-white">
-            <p className="en text-sm font-bold text-[var(--accent-gold)]">
-              Export Packaging
-            </p>
-            <p className="mt-2 text-sm leading-6 text-white/72">
-              훈증·열처리 부담을 줄이는 데 도움을 주는 글로벌 수출 포장 대응
-            </p>
-          </div>
-          <div className="rounded-lg bg-white p-5">
-            <p className="en text-sm font-bold text-[var(--primary)]">
-              Molded Precision
-            </p>
-            <p className="mt-2 text-sm leading-6 text-[var(--sub-text)]">
-              제품 형상에 맞춘 안정적인 적재 설계
-            </p>
-          </div>
+      </div>
+
+      <div className="order-2 grid grid-cols-2 gap-3 md:order-none md:col-start-1 md:row-start-2 lg:grid-cols-4">
+        {heroMetrics.map((stat) => (
+          <StatCard key={stat.label} {...stat} />
+        ))}
+      </div>
+
+      <div className="order-4 grid grid-cols-2 gap-4 md:order-none md:col-start-2 md:row-start-2">
+        <div className="h-full rounded-lg bg-[var(--primary-deep)] p-5 text-white">
+          <p className="en text-sm font-bold text-[var(--accent-gold)]">
+            Export Packaging
+          </p>
+          <p className="mt-2 text-sm leading-6 text-white/72">
+            훈증·열처리 부담을 줄이는 데 도움을 주는 글로벌 수출 포장 대응
+          </p>
+        </div>
+        <div className="h-full rounded-lg bg-white p-5">
+          <p className="en text-sm font-bold text-[var(--primary)]">
+            Molded Precision
+          </p>
+          <p className="mt-2 text-sm leading-6 text-[var(--sub-text)]">
+            제품 형상에 맞춘 안정적인 적재 설계
+          </p>
         </div>
       </div>
     </section>
