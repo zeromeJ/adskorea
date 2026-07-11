@@ -1,10 +1,11 @@
 import PalletVisual from "@/components/ui/PalletVisual";
 import SectionTitle from "@/components/ui/SectionTitle";
+import { LinkButton } from "@/components/ui/Button";
 import { processSteps } from "@/lib/constants";
 
 export default function ProductIntroSection() {
   return (
-    <section id="product" className="px-5 py-16 lg:px-8 lg:py-24">
+    <section id="product" className="px-5 pt-10 pb-16 lg:px-8 lg:pt-14 lg:pb-20">
       <div className="mx-auto grid max-w-[1200px] gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
         <div>
           <PalletVisual />
@@ -41,6 +42,9 @@ export default function ProductIntroSection() {
               모델별 성능과 적용 조건은 제품 규격, 사용 환경, 시험 조건에 따라
               달라질 수 있습니다. 상세 사양은 문의를 통해 확인 가능합니다.
             </p>
+          </div>
+          <div className="mt-6 flex justify-end">
+            <LinkButton href="#products">제품군 확인하기</LinkButton>
           </div>
         </div>
       </div>

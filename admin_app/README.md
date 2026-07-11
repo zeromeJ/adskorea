@@ -38,3 +38,16 @@ Initial login:
 - PW: `1234`
 
 Change the default admin password before production.
+
+## Firebase push notifications
+
+1. Create an Android app in Firebase with package name
+   `com.example.ads_inquiry_admin`.
+2. Download `google-services.json` and place it at
+   `android/app/google-services.json`.
+3. Create a Firebase service account key and set its complete JSON as the
+   backend `FIREBASE_SERVICE_ACCOUNT_JSON` environment variable.
+4. Apply the Prisma migration and deploy the backend before opening the app.
+
+The app registers its FCM token after a successful admin login. Tapping a new
+inquiry notification opens the matching inquiry detail screen.

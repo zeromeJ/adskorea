@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { ResponseMethod } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
   ContactRequestBody,
@@ -7,8 +8,15 @@ import {
   validateContactBody,
 } from "@/lib/contactValidation";
 import { isRateLimited } from "@/lib/rateLimit";
+import { sendNewInquiryPush } from "@/lib/firebaseAdmin";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+const responseMethodLabels: Record<ResponseMethod, string> = {
+  PHONE: "전화",
+  TEXT: "문자",
+  BOTH: "둘 다 괜찮음",
+};
 
 function getClientKey(request: Request) {
   return (
@@ -49,6 +57,7 @@ export async function POST(request: Request) {
         contactPerson: data.contactPerson,
         email: data.email || null,
         phone: data.phone || null,
+        responseMethod: data.responseMethod as ResponseMethod,
         country: data.country || null,
         industry: data.industry || null,
         currentPalletType: data.currentPalletType || null,
@@ -83,6 +92,7 @@ export async function POST(request: Request) {
 담당자명: ${data.contactPerson}
 이메일: ${data.email || "-"}
 연락처: ${data.phone || "-"}
+회신 방법: ${responseMethodLabels[data.responseMethod as ResponseMethod]}
 국가/지역: ${data.country || "-"}
 산업 분야: ${data.industry || "-"}
 현재 사용 중인 팔레트: ${data.currentPalletType || "-"}
@@ -101,6 +111,12 @@ ${data.message || "-"}
       }
     } else {
       console.warn("Contact backup email skipped: email environment variables are missing.");
+    }
+
+    try {
+      await sendNewInquiryPush(inquiry.id);
+    } catch (pushError) {
+      console.error("Inquiry push notification failed:", pushError);
     }
 
     return NextResponse.json({ success: true, inquiryId: inquiry.id });

@@ -37,12 +37,14 @@ class ApiClient {
     };
   }
 
-  Future<Map<String, dynamic>> get(String path, [Map<String, String?>? query]) async {
+  Future<Map<String, dynamic>> get(String path,
+      [Map<String, String?>? query]) async {
     final response = await http.get(uri(path, query), headers: headers);
     return _decode(response);
   }
 
-  Future<Map<String, dynamic>> post(String path, Map<String, dynamic> body) async {
+  Future<Map<String, dynamic>> post(
+      String path, Map<String, dynamic> body) async {
     final response = await http.post(
       uri(path),
       headers: headers,
@@ -51,7 +53,8 @@ class ApiClient {
     return _decode(response);
   }
 
-  Future<Map<String, dynamic>> patch(String path, Map<String, dynamic> body) async {
+  Future<Map<String, dynamic>> patch(
+      String path, Map<String, dynamic> body) async {
     final response = await http.patch(
       uri(path),
       headers: headers,

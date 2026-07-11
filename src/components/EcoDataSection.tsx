@@ -5,8 +5,8 @@ const maxCarbonValue = Math.max(...carbonData.map((item) => item.value));
 
 export default function EcoDataSection() {
   return (
-    <section id="eco" className="bg-[var(--primary-deep)] px-5 py-16 lg:px-8 lg:py-24">
-      <div className="mx-auto grid max-w-[1200px] gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+    <section id="eco" className="bg-[var(--primary-deep)] px-5 pt-10 pb-16 lg:px-8 lg:pt-14 lg:pb-20">
+      <div className="mx-auto grid max-w-[1200px] gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch">
         <div>
           <SectionTitle
             dark
@@ -27,7 +27,7 @@ export default function EcoDataSection() {
             제품 탄소발자국 인증서 유효기간: 2026년 6월 12일까지.
           </p>
         </div>
-        <div>
+        <div className="flex flex-col">
           <div className="rounded-lg border border-white/12 bg-white/[0.04] p-5">
             <p className="en mb-6 text-sm font-bold text-[var(--accent-gold)]">
               Carbon Comparison / kg CO₂e
@@ -49,7 +49,7 @@ export default function EcoDataSection() {
               ))}
             </div>
           </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:mt-auto lg:pt-4">
             {ecoCards.map((card) => (
               <div
                 className="rounded-lg border border-white/12 bg-white/[0.04] p-4 text-sm font-bold text-white"

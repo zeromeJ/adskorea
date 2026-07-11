@@ -93,7 +93,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     Text(_error!, style: const TextStyle(color: Colors.red)),
                   ],
                   const SizedBox(height: 20),
-                  PrimaryButton(label: '로그인', onPressed: _login, isLoading: _isLoading),
+                  PrimaryButton(
+                      label: '로그인', onPressed: _login, isLoading: _isLoading),
                 ],
               ),
             ),

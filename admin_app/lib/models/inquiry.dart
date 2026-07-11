@@ -22,6 +22,7 @@ class Inquiry {
     required this.updatedAt,
     this.email,
     this.phone,
+    this.responseMethod,
     this.country,
     this.industry,
     this.currentPalletType,
@@ -37,6 +38,7 @@ class Inquiry {
   final String contactPerson;
   final String? email;
   final String? phone;
+  final String? responseMethod;
   final String? country;
   final String? industry;
   final String? currentPalletType;
@@ -56,6 +58,7 @@ class Inquiry {
       contactPerson: json['contactPerson'] as String? ?? '',
       email: json['email'] as String?,
       phone: json['phone'] as String?,
+      responseMethod: json['responseMethod'] as String?,
       country: json['country'] as String?,
       industry: json['industry'] as String?,
       currentPalletType: json['currentPalletType'] as String?,

@@ -26,7 +26,7 @@ class InquiryListScreen extends StatefulWidget {
 }
 
 class _InquiryListScreenState extends State<InquiryListScreen> {
-  String _status = 'PENDING';
+  String _status = 'ALL';
   bool _isLoading = true;
   String? _error;
   List<Inquiry> _items = [];
@@ -44,7 +44,8 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
     });
 
     try {
-      final result = await widget.inquiryService.fetchInquiries(status: _status);
+      final result =
+          await widget.inquiryService.fetchInquiries(status: _status);
       setState(() => _items = result.items);
     } catch (error) {
       setState(() => _error = '문의 목록을 불러오지 못했습니다.');
@@ -95,10 +96,11 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
             padding: const EdgeInsets.all(12),
             child: SegmentedButton<String>(
               segments: const [
+                ButtonSegment(value: 'ALL', label: Text('전체')),
                 ButtonSegment(value: 'PENDING', label: Text('처리 전')),
                 ButtonSegment(value: 'COMPLETED', label: Text('처리 완료')),
-                ButtonSegment(value: 'ALL', label: Text('전체')),
               ],
+              showSelectedIcon: false,
               selected: {_status},
               onSelectionChanged: (value) {
                 setState(() => _status = value.first);
@@ -135,12 +137,14 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
                                   onCall: inquiry.phone?.isNotEmpty == true
                                       ? () => _openPhone(inquiry.phone)
                                       : null,
-                                  onComplete: inquiry.status == InquiryStatus.pending
-                                      ? () => _markCompleted(inquiry)
-                                      : null,
+                                  onComplete:
+                                      inquiry.status == InquiryStatus.pending
+                                          ? () => _markCompleted(inquiry)
+                                          : null,
                                 );
                               },
-                              separatorBuilder: (_, __) => const SizedBox(height: 10),
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: 10),
                               itemCount: _items.length,
                             ),
                           ),

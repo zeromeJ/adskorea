@@ -20,7 +20,8 @@ class InquiryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final date = DateFormat('yyyy.MM.dd HH:mm').format(inquiry.createdAt.toLocal());
+    final date =
+        DateFormat('yyyy.MM.dd HH:mm').format(inquiry.createdAt.toLocal());
 
     return Card(
       color: AppColors.surface,
@@ -38,7 +39,9 @@ class InquiryCard extends StatelessWidget {
               children: [
                 StatusChip(status: inquiry.status),
                 const Spacer(),
-                Text(date, style: const TextStyle(color: AppColors.subText, fontSize: 12)),
+                Text(date,
+                    style: const TextStyle(
+                        color: AppColors.subText, fontSize: 12)),
               ],
             ),
             const SizedBox(height: 12),
@@ -52,7 +55,8 @@ class InquiryCard extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text('담당자: ${inquiry.contactPerson}'),
-            Text('연락처: ${inquiry.phone?.isNotEmpty == true ? inquiry.phone : "연락처 없음"}'),
+            Text(
+                '연락처: ${inquiry.phone?.isNotEmpty == true ? inquiry.phone : "연락처 없음"}'),
             if (inquiry.productInterest?.isNotEmpty == true)
               Text('관심 제품: ${inquiry.productInterest}'),
             if (inquiry.estimatedQuantity?.isNotEmpty == true)
@@ -77,7 +81,8 @@ class InquiryCard extends StatelessWidget {
                 ),
                 OutlinedButton(onPressed: onOpen, child: const Text('상세 보기')),
                 if (onComplete != null)
-                  FilledButton(onPressed: onComplete, child: const Text('처리 완료')),
+                  FilledButton(
+                      onPressed: onComplete, child: const Text('처리 완료')),
               ],
             ),
           ],

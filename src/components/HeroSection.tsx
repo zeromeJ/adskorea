@@ -5,7 +5,7 @@ import { heroMetrics } from "@/lib/constants";
 
 export default function HeroSection() {
   return (
-    <section id="hero" className="mx-auto grid w-full max-w-[1200px] gap-10 px-5 py-14 md:grid-cols-[1.1fr_0.9fr] md:items-center lg:px-8 lg:py-24">
+    <section id="hero" className="mx-auto grid w-full max-w-[1200px] gap-10 px-5 py-14 md:grid-cols-[0.85fr_1.15fr] md:items-end lg:px-8 lg:py-24">
       <div>
         <p className="en mb-5 text-sm font-bold uppercase tracking-[0.12em] text-[var(--accent-gold)]">
           Eco-tech Molded Pallet
@@ -22,9 +22,9 @@ export default function HeroSection() {
           제공합니다.
         </p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <LinkButton href="#contact">견적 문의하기</LinkButton>
-          <LinkButton href="#comparison" variant="secondary">
-            제품 장점 보기
+          <LinkButton href="#contact">도입 문의하기</LinkButton>
+          <LinkButton href="#performance" variant="secondary">
+            제품 사양 확인하기
           </LinkButton>
         </div>
         <div className="mt-10 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -36,7 +36,7 @@ export default function HeroSection() {
 
       <div className="relative">
         <PalletVisual />
-        <div className="mt-4 grid grid-cols-2 gap-4">
+        <div className="mt-10 grid grid-cols-2 gap-4">
           <div className="rounded-lg bg-[var(--primary-deep)] p-5 text-white">
             <p className="en text-sm font-bold text-[var(--accent-gold)]">
               Export Packaging

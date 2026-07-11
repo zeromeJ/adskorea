@@ -4,7 +4,7 @@ import { caseReferences, industries } from "@/lib/constants";
 
 export default function IndustriesSection() {
   return (
-    <section id="industries" className="bg-[var(--muted-surface)] px-5 py-16 lg:px-8 lg:py-24">
+    <section id="industries" className="bg-[var(--muted-surface)] px-5 pt-10 pb-16 lg:px-8 lg:pt-14 lg:pb-20">
       <div className="mx-auto max-w-[1200px]">
         <SectionTitle
           eyebrow="Industries"
@@ -18,7 +18,7 @@ export default function IndustriesSection() {
         </div>
         <div className="mt-8 rounded-lg border border-[var(--line)] bg-white p-5">
           <p className="en text-sm font-bold text-[var(--accent-gold)]">
-            Material-based case references
+            제품 적용 사례
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             {caseReferences.map((item) => (

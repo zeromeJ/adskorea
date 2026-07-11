@@ -50,6 +50,7 @@ export async function GET(request: Request) {
         contactPerson: true,
         email: true,
         phone: true,
+        responseMethod: true,
         industry: true,
         productInterest: true,
         estimatedQuantity: true,

@@ -8,9 +8,9 @@ export default function Footer() {
         <div>
           <Image
             alt="ADS 아델슨 logo"
-            className="h-12 w-auto object-contain brightness-0 invert"
+            className="h-12 w-auto object-contain"
             height={540}
-            src="/images/logo-white.png"
+            src="/images/logo_white_new.png"
             width={966}
           />
           <p className="mt-5 max-w-md text-sm leading-7 text-white/68">

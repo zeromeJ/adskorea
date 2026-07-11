@@ -19,7 +19,7 @@
   --accent-gold-dark: #9a7a2f;
   --alert: #b95c45;
   --font-kr: "Paperlogy", sans-serif;
-  --font-en: "Space Grotesk", sans-serif;
+  --font-en: "Space Grotesk", "Paperlogy", sans-serif;
 }
 
 @theme inline {
@@ -27,10 +27,6 @@
   --color-foreground: var(--text);
   --font-sans: var(--font-kr);
   --font-mono: var(--font-en);
-}
-
-html {
-  scroll-behavior: smooth;
 }
 
 body {
@@ -42,6 +38,32 @@ body {
 
 section {
   scroll-margin-top: 80px;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+h1,
+h2,
+h3 {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .en,

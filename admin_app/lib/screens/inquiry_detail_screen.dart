@@ -83,7 +83,8 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
   }
 
   void _showSnack(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _launch(String scheme, String? value) async {
@@ -124,12 +125,26 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
         children: [
           SizedBox(
             width: 110,
-            child: Text(label, style: const TextStyle(color: AppColors.subText)),
+            child:
+                Text(label, style: const TextStyle(color: AppColors.subText)),
           ),
           Expanded(child: Text(value?.isNotEmpty == true ? value! : '-')),
         ],
       ),
     );
+  }
+
+  String _responseMethodLabel(String? value) {
+    switch (value) {
+      case 'PHONE':
+        return '전화';
+      case 'TEXT':
+        return '문자';
+      case 'BOTH':
+        return '둘 다 괜찮음';
+      default:
+        return '-';
+    }
   }
 
   @override
@@ -144,7 +159,10 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
               padding: const EdgeInsets.all(16),
               children: [
                 _section('기본 정보', [
-                  _row('접수 시간', DateFormat('yyyy.MM.dd HH:mm').format(inquiry.createdAt.toLocal())),
+                  _row(
+                      '접수 시간',
+                      DateFormat('yyyy.MM.dd HH:mm')
+                          .format(inquiry.createdAt.toLocal())),
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Row(
@@ -158,24 +176,25 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
                   _row('담당자명', inquiry.contactPerson),
                   _row('이메일', inquiry.email),
                   _row('연락처', inquiry.phone),
+                  _row('회신 방법', _responseMethodLabel(inquiry.responseMethod)),
                 ]),
                 _section('문의 조건', [
-                  _row('국가/지역', inquiry.country),
                   _row('산업 분야', inquiry.industry),
                   _row('현재 팔레트', inquiry.currentPalletType),
                   _row('관심 제품', inquiry.productInterest),
-                  _row('예상 수량', inquiry.estimatedQuantity),
-                  _row('수출 국가', inquiry.exportCountry),
                 ]),
                 _section('문의 내용', [
-                  Text(inquiry.message?.isNotEmpty == true ? inquiry.message! : '-'),
+                  Text(inquiry.message?.isNotEmpty == true
+                      ? inquiry.message!
+                      : '-'),
                 ]),
                 _section('관리자 메모', [
                   TextField(
                     controller: _memoController,
                     minLines: 3,
                     maxLines: 6,
-                    decoration: const InputDecoration(hintText: '관리자 메모를 입력하세요.'),
+                    decoration:
+                        const InputDecoration(hintText: '관리자 메모를 입력하세요.'),
                   ),
                   const SizedBox(height: 12),
                   FilledButton(

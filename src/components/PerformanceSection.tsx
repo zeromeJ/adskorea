@@ -5,14 +5,13 @@ import { modelSpecs, performanceFeatures } from "@/lib/constants";
 
 export default function PerformanceSection() {
   return (
-    <section id="performance" className="px-5 py-16 lg:px-8 lg:py-24">
+    <section id="performance" className="bg-white px-5 pt-10 pb-16 lg:px-8 lg:pt-14 lg:pb-20">
       <div className="mx-auto max-w-[1200px]">
         <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <div>
             <PalletVisual />
-            <p className="mt-4 rounded-md border border-[var(--line)] bg-white p-4 text-sm leading-6 text-[var(--sub-text)]">
-              실제 성능은 제품 모델, 사용 환경, 시험 조건에 따라 달라질 수
-              있습니다.
+            <p className="mt-4 rounded-md text-sm leading-6 text-[var(--sub-text)]">
+              실제 성능은 제품 모델, 사용 환경, 시험 조건에 따라 달라질 수 있습니다.
             </p>
           </div>
           <div>

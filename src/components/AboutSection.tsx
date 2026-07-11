@@ -5,7 +5,7 @@ import { companyNetwork, companyStats } from "@/lib/constants";
 
 export default function AboutSection() {
   return (
-    <section id="about" className="px-5 py-16 lg:px-8 lg:py-24">
+    <section id="about" className="px-5 pt-10 pb-16 lg:px-8 lg:pt-14 lg:pb-20">
       <div className="mx-auto max-w-[1200px]">
         <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
           <div className="overflow-hidden rounded-lg bg-[var(--primary-deep)] p-5">
@@ -27,7 +27,7 @@ export default function AboutSection() {
             />
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
               {companyStats.map((stat) => (
-                <StatCard key={stat.label} {...stat} />
+                <StatCard inlineValueLabel key={stat.label} {...stat} />
               ))}
             </div>
           </div>

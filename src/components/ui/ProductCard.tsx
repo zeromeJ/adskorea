@@ -26,7 +26,7 @@ export default function ProductCard({
       } ${className}`}
     >
       <PalletVisual compact={!featured} />
-      <div>
+      <div className="pt-3">
         {englishLabel ? (
           <p className="en mb-2 text-xs font-bold uppercase tracking-[0.1em] text-[var(--accent-gold)]">
             {englishLabel}

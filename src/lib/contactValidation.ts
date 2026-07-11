@@ -5,6 +5,7 @@ export type ContactRequestBody = {
   contactPerson?: string;
   email?: string;
   phone?: string;
+  responseMethod?: string;
   country?: string;
   industry?: string;
   currentPalletType?: string;
@@ -20,12 +21,17 @@ function trimValue(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function normalizeResponseMethod(value: unknown): "PHONE" | "TEXT" | "BOTH" | "" {
+  return value === "PHONE" || value === "TEXT" || value === "BOTH" ? value : "";
+}
+
 export function normalizeContactBody(body: ContactRequestBody) {
   return {
     companyName: trimValue(body.companyName),
     contactPerson: trimValue(body.contactPerson),
     email: trimValue(body.email),
     phone: trimValue(body.phone),
+    responseMethod: normalizeResponseMethod(body.responseMethod),
     country: trimValue(body.country),
     industry: trimValue(body.industry),
     currentPalletType: trimValue(body.currentPalletType),
@@ -52,6 +58,10 @@ export function validateContactBody(data: ReturnType<typeof normalizeContactBody
   }
 
   if (!data.phone || data.phone.length > 30) {
+    return "입력값을 확인해 주세요.";
+  }
+
+  if (!['PHONE', 'TEXT', 'BOTH'].includes(data.responseMethod)) {
     return "입력값을 확인해 주세요.";
   }
 

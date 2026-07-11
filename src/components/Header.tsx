@@ -3,21 +3,44 @@
 import Image from "next/image";
 import { useState } from "react";
 import { navItems } from "@/lib/constants";
+import { scrollToSection } from "@/lib/scrollToSection";
 import { LinkButton } from "@/components/ui/Button";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
 
+  function handleNavigation(
+    event: React.MouseEvent<HTMLAnchorElement>,
+    href: string,
+  ) {
+    event.preventDefault();
+    scrollToSection(href.slice(1));
+  }
+
+  function handleMobileNavigation(
+    event: React.MouseEvent<HTMLAnchorElement>,
+    href: string,
+  ) {
+    event.preventDefault();
+    setIsOpen(false);
+    requestAnimationFrame(() => scrollToSection(href.slice(1)));
+  }
+
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[rgba(247,245,239,0.88)] backdrop-blur-xl">
       <div className="mx-auto flex h-20 w-full max-w-[1200px] items-center justify-between px-5 lg:px-8">
-        <a className="flex items-center" href="#hero" aria-label="ADS 아델슨 home">
+        <a
+          className="flex items-center"
+          href="#hero"
+          aria-label="ADS 아델슨 home"
+          onClick={(event) => handleNavigation(event, "#hero")}
+        >
           <Image
             alt="ADS 아델슨 logo"
-            className="h-11 w-auto object-contain mix-blend-multiply"
+            className="h-11 w-auto object-contain"
             height={540}
             priority
-            src="/images/logo-green.png"
+            src="/images/logo_new.png"
             width={966}
           />
         </a>
@@ -28,6 +51,7 @@ export default function Header() {
               className="transition hover:text-[var(--primary)]"
               href={item.href}
               key={item.href}
+              onClick={(event) => handleNavigation(event, item.href)}
             >
               {item.label}
             </a>
@@ -64,12 +88,16 @@ export default function Header() {
                 className="rounded-md px-3 py-3 text-sm font-bold text-[var(--text)] hover:bg-white"
                 href={item.href}
                 key={item.href}
-                onClick={() => setIsOpen(false)}
+                onClick={(event) => handleMobileNavigation(event, item.href)}
               >
                 {item.label}
               </a>
             ))}
-            <LinkButton className="mt-2 w-full" href="#contact">
+            <LinkButton
+              className="mt-2 w-full"
+              href="#contact"
+              onClick={(event) => handleMobileNavigation(event, "#contact")}
+            >
               견적 문의하기
             </LinkButton>
           </nav>

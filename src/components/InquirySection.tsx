@@ -83,7 +83,7 @@ export default function InquirySection() {
   return (
     <section
       id="contact"
-      className="bg-[var(--primary-dark)] px-5 py-16 lg:px-8 lg:py-24"
+      className="bg-[var(--primary-dark)] px-5 pt-10 pb-16 lg:px-8 lg:pt-14 lg:pb-20"
     >
       <div className="mx-auto grid max-w-[1200px] gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
         <div className="lg:sticky lg:top-28">
@@ -95,18 +95,30 @@ export default function InquirySection() {
           />
           <div className="mt-8 rounded-lg border border-white/12 bg-white/[0.04] p-5 text-white">
             <p className="text-sm font-bold text-[var(--accent-gold)]">
-              상담 진행 방식
+              빠른 상담 (전화 상담)
             </p>
             <ol className="mt-4 grid gap-3 text-sm leading-6 text-white/72">
+              <li>1. 전화로 문의 내용 접수</li>
+              <li>3. 즉각적인 상담 회신</li>
+            </ol>
+
+            <br/>
+
+            <p className="text-sm font-bold text-[var(--accent-gold)]">
+              견적 상담
+            </p>
+
+            <ol className="mt-4 grid gap-3 text-sm leading-6 text-white/72">
               <li>1. 문의 내용 접수</li>
-              <li>2. 제품 사양 및 수출 조건 검토</li>
-              <li>3. 담당자 견적 및 상담 회신</li>
+              <li>2. 제품 사양 및 조건 검토</li>
+              <li>3. 담당자 견적 및 상담 회신(문자/전화 중 택)</li>
             </ol>
           </div>
         </div>
 
         <form
-          className="rounded-lg bg-white p-5 shadow-2xl shadow-black/20 sm:p-8"
+          className="rounded-lg bg-white p-5 shadow-none sm:p-8"
+          noValidate
           onSubmit={handleSubmit}
         >
           <div className="grid gap-5 md:grid-cols-2">
@@ -129,14 +141,6 @@ export default function InquirySection() {
               value={formData.contactPerson}
             />
             <Input
-              id="email"
-              label="이메일 (선택)"
-              onChange={(event) => updateField("email", event.target.value)}
-              placeholder="이메일을 입력해 주세요"
-              type="email"
-              value={formData.email}
-            />
-            <Input
               id="phone"
               label="연락처 (필수)"
               onChange={(event) => updateField("phone", event.target.value)}
@@ -144,6 +148,49 @@ export default function InquirySection() {
               required
               value={formData.phone}
             />
+            <Input
+              id="email"
+              label="이메일 (선택)"
+              onChange={(event) => updateField("email", event.target.value)}
+              placeholder="이메일을 입력해 주세요"
+              type="email"
+              value={formData.email}
+            />
+            <fieldset className="md:col-span-2">
+              <legend className="mb-2 block text-sm font-bold text-[var(--text)]">
+                회신 방법 (필수)
+              </legend>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { value: "PHONE", label: "전화" },
+                  { value: "TEXT", label: "문자" },
+                  { value: "BOTH", label: "둘 다 괜찮음" },
+                ].map((option) => {
+                  const selected = formData.responseMethod === option.value;
+
+                  return (
+                    <button
+                      aria-pressed={selected}
+                      className={`min-h-12 rounded-lg border px-3 text-sm font-bold transition ${
+                        selected
+                          ? "border-[var(--primary)] bg-[var(--primary)] text-white"
+                          : "border-[var(--line)] bg-white text-[var(--text)] hover:border-[var(--primary)]"
+                      }`}
+                      key={option.value}
+                      onClick={() =>
+                        updateField(
+                          "responseMethod",
+                          option.value as ContactFormData["responseMethod"],
+                        )
+                      }
+                      type="button"
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
             <Select
               id="industry"
               label="산업 분야 (선택)"
@@ -197,7 +244,7 @@ export default function InquirySection() {
           </label>
 
           {error ? (
-            <p className="mt-5 rounded-md bg-[rgba(185,92,69,0.12)] p-4 text-sm font-bold text-[var(--alert)]">
+            <p className="mt-5 rounded-lg border border-[var(--alert)] bg-[rgba(185,92,69,0.12)] p-4 text-sm font-bold text-[var(--alert)] shadow-none">
               {error}
             </p>
           ) : null}

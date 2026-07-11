@@ -3,6 +3,7 @@ export type ContactFormData = {
   contactPerson: string;
   email: string;
   phone: string;
+  responseMethod: "PHONE" | "TEXT" | "BOTH";
   industry: string;
   currentPalletType: string;
   productInterest: string;
@@ -15,6 +16,7 @@ export const initialContactFormData: ContactFormData = {
   contactPerson: "",
   email: "",
   phone: "",
+  responseMethod: "BOTH",
   industry: "",
   currentPalletType: "",
   productInterest: "",
@@ -37,6 +39,10 @@ export function validateContactForm(data: ContactFormData) {
 
   if (!data.phone.trim()) {
     return "연락처를 입력해 주세요.";
+  }
+
+  if (!data.responseMethod) {
+    return "회신 방법을 선택해 주세요.";
   }
 
   if (data.email.trim() && !isValidEmail(data.email)) {

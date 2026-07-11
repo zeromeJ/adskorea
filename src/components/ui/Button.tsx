@@ -1,4 +1,7 @@
+"use client";
+
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
+import { scrollToSection } from "@/lib/scrollToSection";
 
 type ButtonProps = {
   children: ReactNode;
@@ -39,12 +42,27 @@ export function Button({
 export function LinkButton({
   children,
   className = "",
+  href,
+  onClick,
   variant = "primary",
   ...props
 }: LinkButtonProps) {
   return (
     <a
       className={`inline-flex min-h-12 items-center justify-center rounded-md px-5 py-3 text-sm font-bold transition ${variants[variant]} ${className}`}
+      href={href}
+      onClick={(event) => {
+        onClick?.(event);
+
+        if (event.defaultPrevented || !href?.startsWith("#")) return;
+
+        const id = href.slice(1);
+
+        if (!document.getElementById(id)) return;
+
+        event.preventDefault();
+        scrollToSection(id);
+      }}
       {...props}
     >
       {children}
