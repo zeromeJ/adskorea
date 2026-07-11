@@ -21,13 +21,13 @@ export default function StatCard({
           : "border-[var(--line)] bg-white"
       }`}
     >
-      <div className={inlineValueLabel ? "flex items-end gap-3" : ""}>
+      <div className={inlineValueLabel ? "flex items-center gap-3" : ""}>
         <p className="stat-value text-3xl font-bold text-[var(--accent-gold)]">
           {value}
         </p>
         <p
-          className={`en ${inlineValueLabel ? "pb-0.5" : "mt-2"} text-sm font-bold ${
-            dark ? "text-white" : ""
+          className={`en ${inlineValueLabel ? "" : "mt-2"} text-sm font-bold ${
+            dark ? "text-white" : "text-[var(--text)]"
           }`}
         >
           {label}

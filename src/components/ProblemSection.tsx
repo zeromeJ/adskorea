@@ -16,8 +16,8 @@ export default function ProblemSection() {
               className="rounded-lg border border-[var(--line)] bg-[var(--background)] p-6"
               key={card.title}
             >
-              <div className="mb-6 flex h-11 w-11 items-center justify-center rounded-md border border-[var(--sub-sage)]">
-                <span className="number text-sm font-bold text-[var(--primary)]">
+              <div className="mb-5 flex h-9 w-9 items-center justify-center rounded-md border border-[var(--sub-sage)] bg-[var(--primary)]">
+                <span className="number text-xs font-extrabold text-white">
                   0{index + 1}
                 </span>
               </div>
