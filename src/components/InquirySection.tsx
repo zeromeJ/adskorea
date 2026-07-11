@@ -91,7 +91,7 @@ export default function InquirySection() {
           <SectionTitle
             dark
             eyebrow="Inquiry"
-            title="도입 상담 및 견적 문의"
+            title="견적 문의하기"
             description="회사명, 담당자명, 연락처를 남겨주시면 담당자가 확인 후 연락드립니다."
           />
           <div className="mt-8 rounded-lg border border-white/12 bg-white/[0.04] p-5 text-white">
@@ -106,7 +106,7 @@ export default function InquirySection() {
             <br/>
 
             <p className="text-sm font-bold text-[var(--accent-gold)]">
-              견적 상담
+              견적 문의하기
             </p>
 
             <ol className="mt-4 grid gap-3 text-sm leading-6 text-white/72">
