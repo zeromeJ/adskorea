@@ -6,14 +6,15 @@ export const company = {
 };
 
 export const navItems = [
-  { label: "Problem", href: "#problem" },
-  { label: "Product", href: "#product" },
-  { label: "Benefits", href: "#benefits" },
-  { label: "Performance", href: "#performance" },
-  { label: "Products", href: "#products" },
-  { label: "Industries", href: "#industries" },
-  { label: "About", href: "#about" },
-  { label: "Contact", href: "#contact" },
+  { label: "문제 인식", href: "#problem" },
+  { label: "제품 소개", href: "#product" },
+  { label: "핵심 장점", href: "#benefits" },
+  { label: "성능 사양", href: "#performance" },
+  { label: "친환경 데이터", href: "#eco" },
+  { label: "제품군", href: "#products" },
+  { label: "적용 산업", href: "#industries" },
+  { label: "회사 역량", href: "#about" },
+  { label: "문의", href: "#contact" },
 ];
 
 export const heroMetrics = [

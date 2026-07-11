@@ -22,7 +22,7 @@ export default function Header() {
           />
         </a>
 
-        <nav className="hidden items-center gap-4 text-sm font-bold text-[var(--sub-text)] xl:gap-6 lg:flex">
+        <nav className="hidden items-center gap-3 text-[13px] font-bold text-[var(--sub-text)] xl:gap-5 xl:text-sm lg:flex">
           {navItems.map((item) => (
             <a
               className="transition hover:text-[var(--primary)]"
