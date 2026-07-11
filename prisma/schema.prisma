@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum InquiryStatus {
+  PENDING
+  COMPLETED
+}
+
+model Inquiry {
+  id                 String        @id @default(cuid())
+  companyName        String
+  contactPerson      String
+  email              String?
+  phone              String?
+  country            String?
+  industry           String?
+  currentPalletType  String?
+  productInterest    String?
+  estimatedQuantity  String?
+  exportCountry      String?
+  message            String?
+  status             InquiryStatus @default(PENDING)
+  adminMemo          String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  displayName  String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

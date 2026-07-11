@@ -1,93 +1,114 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
-import { isValidEmail } from "@/lib/contactSchema";
+import { prisma } from "@/lib/prisma";
+import {
+  ContactRequestBody,
+  normalizeContactBody,
+  validateContactBody,
+} from "@/lib/contactValidation";
+import { isRateLimited } from "@/lib/rateLimit";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+function getClientKey(request: Request) {
+  return (
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "unknown"
+  );
+}
+
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    if (isRateLimited(getClientKey(request))) {
+      return NextResponse.json(
+        { success: false, message: "잠시 후 다시 시도해 주세요." },
+        { status: 429 },
+      );
+    }
 
-    const {
-      companyName,
-      contactPerson,
-      email,
-      phone,
-      industry,
-      currentPalletType,
-      productInterest,
-      privacyAgreed,
-      website,
-    } = body;
+    const body = (await request.json()) as ContactRequestBody;
+    const data = normalizeContactBody(body);
 
-    if (website) {
+    if (data.website) {
       return NextResponse.json({ success: true });
     }
 
-    if (!privacyAgreed) {
+    const validationMessage = validateContactBody(data);
+
+    if (validationMessage) {
       return NextResponse.json(
-        { success: false, message: "Privacy agreement is required." },
+        { success: false, message: validationMessage },
         { status: 400 },
       );
     }
 
-    if (!companyName || !contactPerson || !phone) {
-      return NextResponse.json(
-        { success: false, message: "Required fields are missing." },
-        { status: 400 },
-      );
-    }
-
-    if (email && !isValidEmail(email)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid email format." },
-        { status: 400 },
-      );
-    }
+    const inquiry = await prisma.inquiry.create({
+      data: {
+        companyName: data.companyName,
+        contactPerson: data.contactPerson,
+        email: data.email || null,
+        phone: data.phone || null,
+        country: data.country || null,
+        industry: data.industry || null,
+        currentPalletType: data.currentPalletType || null,
+        productInterest: data.productInterest || null,
+        estimatedQuantity: data.estimatedQuantity || null,
+        exportCountry: data.exportCountry || null,
+        message: data.message || null,
+      },
+    });
 
     const receiverEmail = process.env.CONTACT_RECEIVER_EMAIL;
     const senderEmail = process.env.CONTACT_SENDER_EMAIL;
 
-    if (!receiverEmail || !senderEmail || !process.env.RESEND_API_KEY) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Email environment variables are missing.",
-        },
-        { status: 500 },
-      );
-    }
+    if (receiverEmail && senderEmail && process.env.RESEND_API_KEY) {
+      const submittedAt = new Date(inquiry.createdAt).toLocaleString("ko-KR", {
+        timeZone: "Asia/Seoul",
+      });
 
-    const submittedAt = new Date().toLocaleString("ko-KR", {
-      timeZone: "Asia/Seoul",
-    });
-
-    await resend.emails.send({
-      from: senderEmail,
-      to: receiverEmail,
-      ...(email ? { replyTo: email } : {}),
-      subject: `[ADS Website Inquiry] New B2B Inquiry from ${companyName}`,
-      text: `
-새로운 문의가 접수되었습니다.
+      try {
+        // To change the inquiry notification receiver, update CONTACT_RECEIVER_EMAIL in .env.local and production environment variables.
+        await resend.emails.send({
+          from: senderEmail,
+          to: receiverEmail,
+          ...(data.email ? { replyTo: data.email } : {}),
+          subject: `[ADS Website Inquiry] New B2B Inquiry from ${data.companyName}`,
+          text: `
+새로운 홈페이지 문의가 접수되었습니다.
 
 접수 시간: ${submittedAt}
 
-회사명: ${companyName}
-담당자명: ${contactPerson}
-이메일: ${email || "-"}
-연락처: ${phone || "-"}
-산업 분야: ${industry || "-"}
-현재 사용 중인 팔레트: ${currentPalletType || "-"}
-관심 제품: ${productInterest || "-"}
-      `,
-    });
+회사명: ${data.companyName}
+담당자명: ${data.contactPerson}
+이메일: ${data.email || "-"}
+연락처: ${data.phone || "-"}
+국가/지역: ${data.country || "-"}
+산업 분야: ${data.industry || "-"}
+현재 사용 중인 팔레트: ${data.currentPalletType || "-"}
+관심 제품: ${data.productInterest || "-"}
+예상 수량: ${data.estimatedQuantity || "-"}
+주요 수출 국가: ${data.exportCountry || "-"}
 
-    return NextResponse.json({ success: true });
+문의 내용:
+${data.message || "-"}
+
+관리자 앱에서 처리 상태를 확인하고 업데이트하세요.
+          `,
+        });
+      } catch (emailError) {
+        console.error("Contact backup email failed:", emailError);
+      }
+    } else {
+      console.warn("Contact backup email skipped: email environment variables are missing.");
+    }
+
+    return NextResponse.json({ success: true, inquiryId: inquiry.id });
   } catch (error) {
     console.error("Contact form error:", error);
 
     return NextResponse.json(
-      { success: false, message: "Failed to send inquiry." },
+      { success: false, message: "문의 접수 중 문제가 발생했습니다." },
       { status: 500 },
     );
   }
