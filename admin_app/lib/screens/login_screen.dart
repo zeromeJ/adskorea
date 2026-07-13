@@ -19,8 +19,9 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _usernameController = TextEditingController(text: 'admin');
-  final _passwordController = TextEditingController(text: '1234');
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _obscurePassword = true;
   bool _isLoading = false;
   String? _error;
 
@@ -32,6 +33,13 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _login() async {
+    if (_usernameController.text.trim().isEmpty ||
+        _passwordController.text.isEmpty) {
+      setState(() => _error = '아이디와 비밀번호를 입력해 주세요.');
+      return;
+    }
+
+    FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
       _isLoading = true;
       _error = null;
@@ -64,8 +72,17 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Center(
+                    child: Image.asset(
+                      'assets/app_logo.png',
+                      width: 116,
+                      height: 116,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                   const Text(
-                    'ADS 문의관리',
+                    '아델슨 관리자 앱',
                     style: TextStyle(
                       color: AppColors.primaryDeep,
                       fontSize: 24,
@@ -80,13 +97,33 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 28),
                   TextField(
                     controller: _usernameController,
-                    decoration: const InputDecoration(labelText: '아이디'),
+                    autofillHints: const [AutofillHints.username],
+                    textInputAction: TextInputAction.next,
+                    decoration: const InputDecoration(hintText: '아이디'),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _passwordController,
-                    decoration: const InputDecoration(labelText: '비밀번호'),
-                    obscureText: true,
+                    autofillHints: const [AutofillHints.password],
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) {
+                      if (!_isLoading) _login();
+                    },
+                    decoration: InputDecoration(
+                      hintText: '비밀번호',
+                      suffixIcon: IconButton(
+                        tooltip: _obscurePassword ? '비밀번호 보기' : '비밀번호 숨기기',
+                        onPressed: () => setState(
+                          () => _obscurePassword = !_obscurePassword,
+                        ),
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                        ),
+                      ),
+                    ),
+                    obscureText: _obscurePassword,
                   ),
                   if (_error != null) ...[
                     const SizedBox(height: 12),

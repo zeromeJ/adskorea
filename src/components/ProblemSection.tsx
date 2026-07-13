@@ -3,7 +3,7 @@ import { problemCards } from "@/lib/constants";
 
 export default function ProblemSection() {
   return (
-    <section id="problem" className="bg-white px-5 pt-10 pb-16 lg:px-8 lg:pt-14 lg:pb-20">
+    <section id="problem" className="bg-white px-5 pt-14 pb-16 lg:px-8 lg:pb-20">
       <div className="mx-auto max-w-[1200px]">
         <SectionTitle
           eyebrow="Operational Risk"
@@ -13,18 +13,20 @@ export default function ProblemSection() {
         <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {problemCards.map((card, index) => (
             <article
-              className="rounded-lg border border-[var(--line)] bg-[var(--background)] p-6"
+              className="rounded-lg border border-[var(--line)] bg-[var(--background)] p-6 transition duration-300 hover:border-[var(--primary)] hover:shadow-[0_8px_20px_rgba(16,37,29,0.06)]"
               key={card.title}
             >
-              <div className="mb-5 flex h-9 w-9 items-center justify-center rounded-md border border-[var(--sub-sage)] bg-[var(--primary)]">
-                <span className="number text-xs font-extrabold text-white">
-                  0{index + 1}
-                </span>
+              <div className="flex items-center gap-3.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[var(--sub-sage)] bg-[var(--primary)]">
+                  <span className="number text-[11px] font-extrabold text-white">
+                    0{index + 1}
+                  </span>
+                </div>
+                <h3 className="text-xl font-bold text-[var(--text)]">
+                  {card.title}
+                </h3>
               </div>
-              <h3 className="text-xl font-bold text-[var(--text)]">
-                {card.title}
-              </h3>
-              <p className="mt-4 text-sm leading-7 text-[var(--sub-text)]">
+              <p className="mt-3 text-sm leading-7 text-[var(--sub-text)]">
                 {card.description}
               </p>
             </article>

@@ -55,7 +55,14 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
     try {
       final result =
           await widget.inquiryService.fetchInquiries(status: _status);
-      setState(() => _items = result.items);
+      final sortedItems = [...result.items]..sort((a, b) {
+          final aStatus = a.status == InquiryStatus.pending ? 0 : 1;
+          final bStatus = b.status == InquiryStatus.pending ? 0 : 1;
+          final statusOrder = aStatus.compareTo(bStatus);
+          if (statusOrder != 0) return statusOrder;
+          return a.createdAt.compareTo(b.createdAt);
+        });
+      if (mounted) setState(() => _items = sortedItems);
     } catch (error) {
       setState(() => _error = '문의 목록을 불러오지 못했습니다.');
     } finally {
@@ -71,11 +78,43 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
   }
 
   Future<void> _markCompleted(Inquiry inquiry) async {
-    await widget.inquiryService.updateInquiry(
-      inquiry.id,
-      status: InquiryStatus.completed,
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('처리 완료로 변경할까요?'),
+        content: Text(
+          '${inquiry.companyName} 문의를 처리 완료 목록으로 이동합니다.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('처리 완료'),
+          ),
+        ],
+      ),
     );
-    await _load();
+    if (confirmed != true) return;
+
+    try {
+      await widget.inquiryService.updateInquiry(
+        inquiry.id,
+        status: InquiryStatus.completed,
+      );
+      await _load();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('처리 완료로 변경했습니다.')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('상태를 변경하지 못했습니다. 다시 시도해 주세요.')),
+      );
+    }
   }
 
   String get _emptyMessage {
@@ -163,68 +202,76 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
         ),
       ),
       appBar: AppBar(
-        title: const Text('ADS 문의관리'),
+        title: const Text('아델슨 문의관리'),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'ALL', label: Text('전체')),
-                ButtonSegment(value: 'PENDING', label: Text('처리 전')),
-                ButtonSegment(value: 'COMPLETED', label: Text('처리 완료')),
-              ],
-              showSelectedIcon: false,
-              selected: {_status},
-              onSelectionChanged: (value) {
-                setState(() => _status = value.first);
-                _load();
-              },
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
+              child: SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(value: 'ALL', label: Text('전체 목록')),
+                    ButtonSegment(value: 'PENDING', label: Text('처리 전')),
+                    ButtonSegment(value: 'COMPLETED', label: Text('처리 완료')),
+                  ],
+                  showSelectedIcon: false,
+                  selected: {_status},
+                  onSelectionChanged: (value) {
+                    setState(() => _status = value.first);
+                    _load();
+                  },
+                ),
+              ),
             ),
-          ),
-          Expanded(
-            child: _isLoading
-                ? const LoadingView()
-                : _error != null
-                    ? ErrorView(message: _error!, onRetry: _load)
-                    : _items.isEmpty
-                        ? EmptyState(message: _emptyMessage)
-                        : RefreshIndicator(
-                            onRefresh: _load,
-                            child: ListView.separated(
-                              padding: const EdgeInsets.all(12),
-                              itemBuilder: (context, index) {
-                                final inquiry = _items[index];
-                                return InquiryCard(
-                                  inquiry: inquiry,
-                                  onOpen: () async {
-                                    await Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => InquiryDetailScreen(
-                                          inquiryId: inquiry.id,
-                                          inquiryService: widget.inquiryService,
+            Expanded(
+              child: _isLoading
+                  ? const LoadingView()
+                  : _error != null
+                      ? ErrorView(message: _error!, onRetry: _load)
+                      : _items.isEmpty
+                          ? EmptyState(message: _emptyMessage)
+                          : RefreshIndicator(
+                              onRefresh: _load,
+                              child: ListView.separated(
+                                padding:
+                                    const EdgeInsets.fromLTRB(12, 4, 12, 24),
+                                itemBuilder: (context, index) {
+                                  final inquiry = _items[index];
+                                  return InquiryCard(
+                                    inquiry: inquiry,
+                                    onOpen: () async {
+                                      await Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => InquiryDetailScreen(
+                                            inquiryId: inquiry.id,
+                                            inquiryService:
+                                                widget.inquiryService,
+                                          ),
                                         ),
-                                      ),
-                                    );
-                                    _load();
-                                  },
-                                  onCall: inquiry.phone?.isNotEmpty == true
-                                      ? () => _openPhone(inquiry.phone)
-                                      : null,
-                                  onComplete:
-                                      inquiry.status == InquiryStatus.pending
-                                          ? () => _markCompleted(inquiry)
-                                          : null,
-                                );
-                              },
-                              separatorBuilder: (_, __) =>
-                                  const SizedBox(height: 10),
-                              itemCount: _items.length,
+                                      );
+                                      _load();
+                                    },
+                                    onCall: inquiry.phone?.isNotEmpty == true
+                                        ? () => _openPhone(inquiry.phone)
+                                        : null,
+                                    onComplete:
+                                        inquiry.status == InquiryStatus.pending
+                                            ? () => _markCompleted(inquiry)
+                                            : null,
+                                  );
+                                },
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(height: 12),
+                                itemCount: _items.length,
+                              ),
                             ),
-                          ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

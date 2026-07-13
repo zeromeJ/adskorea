@@ -1,4 +1,4 @@
-import { isValidEmail } from "@/lib/contactSchema";
+import { isValidEmail, isValidPhone } from "@/lib/contactSchema";
 
 export type ContactRequestBody = {
   companyName?: string;
@@ -57,8 +57,8 @@ export function validateContactBody(data: ReturnType<typeof normalizeContactBody
     return "입력값을 확인해 주세요.";
   }
 
-  if (!data.phone || data.phone.length > 30) {
-    return "입력값을 확인해 주세요.";
+  if (!data.phone || data.phone.length > 30 || !isValidPhone(data.phone)) {
+    return "올바른 전화번호 형식으로 입력해 주세요.";
   }
 
   if (!['PHONE', 'TEXT', 'BOTH'].includes(data.responseMethod)) {
@@ -69,8 +69,8 @@ export function validateContactBody(data: ReturnType<typeof normalizeContactBody
     return "입력값을 확인해 주세요.";
   }
 
-  if (data.message.length > 3000) {
-    return "입력값을 확인해 주세요.";
+  if (data.message.length > 300) {
+    return "문의 내용은 최대 300자까지 입력해 주세요.";
   }
 
   return "";

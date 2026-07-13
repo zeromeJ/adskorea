@@ -18,6 +18,28 @@ class InquiryCard extends StatelessWidget {
   final VoidCallback? onCall;
   final VoidCallback? onComplete;
 
+  Widget _info(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 3),
+      child: Text.rich(
+        TextSpan(
+          style: const TextStyle(
+            color: AppColors.text,
+            fontSize: 15,
+            height: 1.45,
+          ),
+          children: [
+            TextSpan(
+              text: '$label  ',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            TextSpan(text: value),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final date =
@@ -27,7 +49,7 @@ class InquiryCard extends StatelessWidget {
       color: AppColors.surface,
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         side: const BorderSide(color: AppColors.line),
       ),
       child: Padding(
@@ -54,13 +76,15 @@ class InquiryCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 6),
-            Text('담당자: ${inquiry.contactPerson}'),
-            Text(
-                '연락처: ${inquiry.phone?.isNotEmpty == true ? inquiry.phone : "연락처 없음"}'),
+            _info('담당자', inquiry.contactPerson),
+            _info(
+              '연락처',
+              inquiry.phone?.isNotEmpty == true ? inquiry.phone! : '연락처 없음',
+            ),
             if (inquiry.productInterest?.isNotEmpty == true)
-              Text('관심 제품: ${inquiry.productInterest}'),
+              _info('관심 제품', inquiry.productInterest!),
             if (inquiry.estimatedQuantity?.isNotEmpty == true)
-              Text('예상 수량: ${inquiry.estimatedQuantity}'),
+              _info('예상 수량', inquiry.estimatedQuantity!),
             if (inquiry.message?.isNotEmpty == true) ...[
               const SizedBox(height: 8),
               Text(
@@ -77,12 +101,26 @@ class InquiryCard extends StatelessWidget {
               children: [
                 OutlinedButton(
                   onPressed: onCall,
-                  child: Text(onCall == null ? '연락처 없음' : '전화하기'),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.phone, size: 22),
+                      const SizedBox(width: 6),
+                      Text(onCall == null ? '연락처 없음' : '전화하기'),
+                    ],
+                  ),
                 ),
-                OutlinedButton(onPressed: onOpen, child: const Text('상세 보기')),
+                OutlinedButton.icon(
+                  onPressed: onOpen,
+                  icon: const Icon(Icons.description_outlined, size: 20),
+                  label: const Text('상세 보기'),
+                ),
                 if (onComplete != null)
-                  FilledButton(
-                      onPressed: onComplete, child: const Text('처리 완료')),
+                  FilledButton.icon(
+                    onPressed: onComplete,
+                    icon: const Icon(Icons.check, size: 21),
+                    label: const Text('처리 완료'),
+                  ),
               ],
             ),
           ],

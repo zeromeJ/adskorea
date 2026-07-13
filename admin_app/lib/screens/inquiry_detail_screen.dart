@@ -153,84 +153,91 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('문의 상세')),
-      body: _isLoading || inquiry == null
-          ? const LoadingView()
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                _section('기본 정보', [
-                  _row(
-                      '접수 시간',
-                      DateFormat('yyyy.MM.dd HH:mm')
-                          .format(inquiry.createdAt.toLocal())),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        const SizedBox(width: 110, child: Text('처리 상태')),
-                        StatusChip(status: inquiry.status),
-                      ],
-                    ),
-                  ),
-                  _row('회사명', inquiry.companyName),
-                  _row('담당자명', inquiry.contactPerson),
-                  _row('이메일', inquiry.email),
-                  _row('연락처', inquiry.phone),
-                  _row('회신 방법', _responseMethodLabel(inquiry.responseMethod)),
-                ]),
-                _section('문의 조건', [
-                  _row('산업 분야', inquiry.industry),
-                  _row('현재 팔레트', inquiry.currentPalletType),
-                  _row('관심 제품', inquiry.productInterest),
-                ]),
-                _section('문의 내용', [
-                  Text(inquiry.message?.isNotEmpty == true
-                      ? inquiry.message!
-                      : '-'),
-                ]),
-                _section('관리자 메모', [
-                  TextField(
-                    controller: _memoController,
-                    minLines: 3,
-                    maxLines: 6,
-                    decoration:
-                        const InputDecoration(hintText: '관리자 메모를 입력하세요.'),
-                  ),
-                  const SizedBox(height: 12),
-                  FilledButton(
-                    onPressed: _isSaving ? null : _saveMemo,
-                    child: Text(_isSaving ? '저장 중...' : '메모 저장'),
-                  ),
-                ]),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    OutlinedButton(
-                      onPressed: inquiry.phone?.isNotEmpty == true
-                          ? () => _launch('tel', inquiry.phone)
-                          : null,
-                      child: const Text('전화하기'),
-                    ),
-                    OutlinedButton(
-                      onPressed: inquiry.email?.isNotEmpty == true
-                          ? () => _launch('mailto', inquiry.email)
-                          : null,
-                      child: const Text('이메일 보내기'),
-                    ),
-                    FilledButton(
-                      onPressed: _updateStatus,
-                      child: Text(
-                        inquiry.status == InquiryStatus.pending
-                            ? '처리 완료로 변경'
-                            : '처리 전으로 되돌리기',
+      body: SafeArea(
+        top: false,
+        child: _isLoading || inquiry == null
+            ? const LoadingView()
+            : ListView(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                children: [
+                  _section('기본 정보', [
+                    _row(
+                        '접수 시간',
+                        DateFormat('yyyy.MM.dd HH:mm')
+                            .format(inquiry.createdAt.toLocal())),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 110, child: Text('처리 상태')),
+                          StatusChip(status: inquiry.status),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ],
-            ),
+                    _row('회사명', inquiry.companyName),
+                    _row('담당자명', inquiry.contactPerson),
+                    _row('이메일', inquiry.email),
+                    _row('연락처', inquiry.phone),
+                    _row('회신 방법', _responseMethodLabel(inquiry.responseMethod)),
+                  ]),
+                  _section('문의 조건', [
+                    _row('산업 분야', inquiry.industry),
+                    _row('현재 팔레트', inquiry.currentPalletType),
+                    _row('관심 제품', inquiry.productInterest),
+                  ]),
+                  _section('문의 내용', [
+                    Text(inquiry.message?.isNotEmpty == true
+                        ? inquiry.message!
+                        : '-'),
+                  ]),
+                  _section('관리자 메모', [
+                    TextField(
+                      controller: _memoController,
+                      minLines: 3,
+                      maxLines: 6,
+                      decoration:
+                          const InputDecoration(hintText: '관리자 메모를 입력하세요.'),
+                    ),
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: FilledButton(
+                        onPressed: _isSaving ? null : _saveMemo,
+                        child: Text(_isSaving ? '저장 중...' : '메모 저장'),
+                      ),
+                    ),
+                  ]),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: inquiry.phone?.isNotEmpty == true
+                            ? () => _launch('tel', inquiry.phone)
+                            : null,
+                        icon: const Icon(Icons.phone, size: 22),
+                        label: const Text('전화하기'),
+                      ),
+                      OutlinedButton(
+                        onPressed: inquiry.email?.isNotEmpty == true
+                            ? () => _launch('mailto', inquiry.email)
+                            : null,
+                        child: const Text('이메일 보내기'),
+                      ),
+                      FilledButton(
+                        onPressed: _updateStatus,
+                        child: Text(
+                          inquiry.status == InquiryStatus.pending
+                              ? '처리 완료로 변경'
+                              : '처리 전으로 되돌리기',
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+      ),
     );
   }
 }

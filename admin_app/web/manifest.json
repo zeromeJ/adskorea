@@ -1,11 +1,11 @@
 {
-    "name": "ads_inquiry_admin",
-    "short_name": "ads_inquiry_admin",
+    "name": "아델슨 관리자 앱",
+    "short_name": "아델슨 관리자",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "아델슨 홈페이지 견적 문의 관리자 앱",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
