@@ -64,77 +64,92 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Image.asset(
-                      'assets/app_logo.png',
-                      width: 116,
-                      height: 116,
-                      fit: BoxFit.contain,
-                    ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 20, right: 4),
+                child: Align(
+                  alignment: Alignment.topRight,
+                  child: Image.asset(
+                    'assets/web_logo.png',
+                    width: 104,
+                    fit: BoxFit.contain,
                   ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    '아델슨 관리자 앱',
-                    style: TextStyle(
-                      color: AppColors.primaryDeep,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '관리자 계정으로 로그인해 홈페이지 문의를 확인하세요.',
-                    style: TextStyle(color: AppColors.subText),
-                  ),
-                  const SizedBox(height: 28),
-                  TextField(
-                    controller: _usernameController,
-                    autofillHints: const [AutofillHints.username],
-                    textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(hintText: '아이디'),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _passwordController,
-                    autofillHints: const [AutofillHints.password],
-                    textInputAction: TextInputAction.done,
-                    onSubmitted: (_) {
-                      if (!_isLoading) _login();
-                    },
-                    decoration: InputDecoration(
-                      hintText: '비밀번호',
-                      suffixIcon: IconButton(
-                        tooltip: _obscurePassword ? '비밀번호 보기' : '비밀번호 숨기기',
-                        onPressed: () => setState(
-                          () => _obscurePassword = !_obscurePassword,
-                        ),
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                        ),
+                ),
+              ),
+              Expanded(
+                child: Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 420),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '아델슨 관리자 앱',
+                            style: TextStyle(
+                              color: AppColors.primaryDeep,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            '관리자 계정으로 로그인해 홈페이지 문의를 확인하세요.',
+                            style: TextStyle(color: AppColors.subText),
+                          ),
+                          const SizedBox(height: 28),
+                          TextField(
+                            controller: _usernameController,
+                            autofillHints: const [AutofillHints.username],
+                            textInputAction: TextInputAction.next,
+                            decoration: const InputDecoration(hintText: '아이디'),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: _passwordController,
+                            autofillHints: const [AutofillHints.password],
+                            textInputAction: TextInputAction.done,
+                            onSubmitted: (_) {
+                              if (!_isLoading) _login();
+                            },
+                            decoration: InputDecoration(
+                              hintText: '비밀번호',
+                              suffixIcon: IconButton(
+                                tooltip:
+                                    _obscurePassword ? '비밀번호 보기' : '비밀번호 숨기기',
+                                onPressed: () => setState(
+                                  () => _obscurePassword = !_obscurePassword,
+                                ),
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                ),
+                              ),
+                            ),
+                            obscureText: _obscurePassword,
+                          ),
+                          if (_error != null) ...[
+                            const SizedBox(height: 12),
+                            Text(_error!,
+                                style: const TextStyle(color: Colors.red)),
+                          ],
+                          const SizedBox(height: 20),
+                          PrimaryButton(
+                              label: '로그인',
+                              onPressed: _login,
+                              isLoading: _isLoading),
+                        ],
                       ),
                     ),
-                    obscureText: _obscurePassword,
                   ),
-                  if (_error != null) ...[
-                    const SizedBox(height: 12),
-                    Text(_error!, style: const TextStyle(color: Colors.red)),
-                  ],
-                  const SizedBox(height: 20),
-                  PrimaryButton(
-                      label: '로그인', onPressed: _login, isLoading: _isLoading),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),

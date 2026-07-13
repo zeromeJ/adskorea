@@ -18,6 +18,7 @@ class InquiryService {
 
   Future<InquiryListResult> fetchInquiries({
     String status = 'PENDING',
+    String search = '',
     int page = 1,
     int limit = 30,
   }) async {
@@ -25,6 +26,7 @@ class InquiryService {
       'status': status,
       'page': '$page',
       'limit': '$limit',
+      'search': search,
     });
 
     final items = (json['items'] as List<dynamic>)

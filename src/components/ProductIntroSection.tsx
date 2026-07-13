@@ -43,7 +43,7 @@ export default function ProductIntroSection() {
               달라질 수 있습니다. 상세 사양은 문의를 통해 확인 가능합니다.
             </p>
           </div>
-          <div className="mt-6 flex justify-end">
+          <div className="mt-10 flex justify-center">
             <LinkButton href="#products">제품군 확인하기</LinkButton>
           </div>
         </div>
