@@ -146,7 +146,7 @@ export default function InquirySection() {
               required
               value={formData.contactPerson}
             />
-            <div>
+            <div className="col-span-full md:col-span-1">
               <Input
                 id="phone"
                 label="연락처 (필수)"
@@ -172,7 +172,7 @@ export default function InquirySection() {
                 </p>
               ) : null}
             </div>
-            <div>
+            <div className="col-span-full md:col-span-1">
               <span className="mb-2 block text-sm font-bold text-[var(--text)]">
                 이메일 (선택)
               </span>
