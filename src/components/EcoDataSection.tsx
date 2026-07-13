@@ -5,7 +5,7 @@ const maxCarbonValue = Math.max(...carbonData.map((item) => item.value));
 
 export default function EcoDataSection() {
   return (
-    <section id="eco" className="bg-[var(--primary-deep)] px-5 pt-10 pb-16 lg:px-8 lg:pt-14 lg:pb-20">
+    <section id="eco" className="bg-[var(--primary-deep)] px-5 pt-14 pb-16 lg:px-8 lg:pb-20">
       <div className="mx-auto grid max-w-[1200px] gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch">
         <div>
           <SectionTitle

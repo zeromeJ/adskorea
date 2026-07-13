@@ -104,23 +104,51 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: _navigatorKey,
-      title: 'ADS 문의관리',
+      title: '아델슨 관리자 앱',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
         scaffoldBackgroundColor: AppColors.background,
+        textTheme: const TextTheme(
+          bodyMedium: TextStyle(fontSize: 16, height: 1.4),
+          bodyLarge: TextStyle(fontSize: 17, height: 1.4),
+          labelLarge: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+        ),
         appBarTheme: const AppBarTheme(
           backgroundColor: AppColors.primaryDeep,
           foregroundColor: Colors.white,
           centerTitle: false,
+          toolbarHeight: 60,
+          titleTextStyle: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+          ),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
             borderSide: const BorderSide(color: AppColors.line),
           ),
+        ),
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            minimumSize: const Size(0, 48),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size(0, 48),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(minimumSize: const Size(0, 48)),
         ),
       ),
       home: _isLoading

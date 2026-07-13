@@ -8,7 +8,7 @@ export function scrollToSection(id: string, headerOffset?: number) {
   const prefersReducedMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)",
   ).matches;
-  const defaultOffset = 80;
+  const defaultOffset = 56;
   const offset = headerOffset ?? defaultOffset;
   const top = target.getBoundingClientRect().top + window.scrollY - offset;
 

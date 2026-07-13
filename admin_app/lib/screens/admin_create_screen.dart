@@ -16,6 +16,8 @@ class _AdminCreateScreenState extends State<AdminCreateScreen> {
   final _displayNameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
+  bool _obscurePassword = true;
+  bool _obscureConfirm = true;
   bool _isSaving = false;
   String? _error;
 
@@ -62,46 +64,73 @@ class _AdminCreateScreenState extends State<AdminCreateScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('신규 관리자 추가')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          TextField(
-            controller: _usernameController,
-            decoration: const InputDecoration(
-              labelText: '아이디',
-              helperText: '영문, 숫자, . _ - 조합 3~30자',
+      body: SafeArea(
+        top: false,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          children: [
+            TextField(
+              controller: _usernameController,
+              decoration: const InputDecoration(
+                labelText: '아이디',
+                helperText: '영문, 숫자, . _ - 조합 3~30자',
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _displayNameController,
-            decoration: const InputDecoration(labelText: '표시 이름 (선택)'),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _passwordController,
-            decoration: const InputDecoration(
-              labelText: '임시 비밀번호',
-              helperText: '8자 이상',
-            ),
-            obscureText: true,
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _confirmController,
-            decoration: const InputDecoration(labelText: '비밀번호 확인'),
-            obscureText: true,
-          ),
-          if (_error != null) ...[
             const SizedBox(height: 12),
-            Text(_error!, style: const TextStyle(color: Colors.red)),
+            TextField(
+              controller: _displayNameController,
+              decoration: const InputDecoration(labelText: '표시 이름 (선택)'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _passwordController,
+              decoration: InputDecoration(
+                labelText: '임시 비밀번호',
+                helperText: '8자 이상',
+                suffixIcon: IconButton(
+                  tooltip: _obscurePassword ? '비밀번호 보기' : '비밀번호 숨기기',
+                  onPressed: () => setState(
+                    () => _obscurePassword = !_obscurePassword,
+                  ),
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
+                ),
+              ),
+              obscureText: _obscurePassword,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _confirmController,
+              decoration: InputDecoration(
+                labelText: '비밀번호 확인',
+                suffixIcon: IconButton(
+                  tooltip: _obscureConfirm ? '비밀번호 보기' : '비밀번호 숨기기',
+                  onPressed: () => setState(
+                    () => _obscureConfirm = !_obscureConfirm,
+                  ),
+                  icon: Icon(
+                    _obscureConfirm
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
+                ),
+              ),
+              obscureText: _obscureConfirm,
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 12),
+              Text(_error!, style: const TextStyle(color: Colors.red)),
+            ],
+            const SizedBox(height: 20),
+            FilledButton(
+              onPressed: _isSaving ? null : _save,
+              child: Text(_isSaving ? '추가 중...' : '관리자 추가'),
+            ),
           ],
-          const SizedBox(height: 20),
-          FilledButton(
-            onPressed: _isSaving ? null : _save,
-            child: Text(_isSaving ? '추가 중...' : '관리자 추가'),
-          ),
-        ],
+        ),
       ),
     );
   }

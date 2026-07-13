@@ -5,7 +5,7 @@ import { processSteps } from "@/lib/constants";
 
 export default function ProductIntroSection() {
   return (
-    <section id="product" className="px-5 pt-10 pb-16 lg:px-8 lg:pt-14 lg:pb-20">
+    <section id="product" className="px-5 pt-14 pb-16 lg:px-8 lg:pb-20">
       <div className="mx-auto grid max-w-[1200px] gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
         <div>
           <PalletVisual />

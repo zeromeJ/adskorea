@@ -25,7 +25,7 @@ export default function SectionTitle({
       </h2>
       {description ? (
         <p
-          className={`mt-4 max-w-2xl text-base leading-8 ${
+          className={`mt-4 max-w-4xl text-base leading-8 ${
             dark ? "text-white/72" : "text-[var(--sub-text)]"
           }`}
         >

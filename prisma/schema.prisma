@@ -32,7 +32,7 @@ model Inquiry {
   productInterest    String?
   estimatedQuantity  String?
   exportCountry      String?
-  message            String?
+  message            String?       @db.VarChar(300)
   status             InquiryStatus @default(PENDING)
   adminMemo          String?
   createdAt          DateTime      @default(now())

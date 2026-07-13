@@ -104,7 +104,7 @@ export default function Header() {
           <LinkButton href="#contact" variant="secondary">
             카탈로그 다운로드
           </LinkButton>
-          <LinkButton href="#contact">견적 문의하기</LinkButton>
+          <LinkButton href="#contact">견적 문의</LinkButton>
         </div>
 
         <button
@@ -147,7 +147,7 @@ export default function Header() {
               href="#contact"
               onClick={(event) => handleMobileNavigation(event, "#contact")}
             >
-              견적 문의하기
+              견적 문의
             </LinkButton>
           </nav>
         </div>

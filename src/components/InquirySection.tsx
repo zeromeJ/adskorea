@@ -14,8 +14,20 @@ import {
 import {
   ContactFormData,
   initialContactFormData,
+  isValidPhone,
   validateContactForm,
 } from "@/lib/contactSchema";
+
+const emailDomainOptions = [
+  { label: "직접 입력", value: "" },
+  { label: "gmail.com", value: "gmail.com" },
+  { label: "naver.com", value: "naver.com" },
+  { label: "kakao.com", value: "kakao.com" },
+  { label: "daum.net", value: "daum.net" },
+  { label: "hanmail.net", value: "hanmail.net" },
+  { label: "hotmail.com", value: "hotmail.com" },
+  { label: "outlook.com", value: "outlook.com" },
+];
 
 export default function InquirySection() {
   const [formData, setFormData] = useState<ContactFormData>(
@@ -24,6 +36,10 @@ export default function InquirySection() {
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [emailLocalPart, setEmailLocalPart] = useState("");
+  const [emailDomain, setEmailDomain] = useState("");
+  const [showEmailDomains, setShowEmailDomains] = useState(false);
+  const [phoneTouched, setPhoneTouched] = useState(false);
 
   function updateField(
     field: keyof ContactFormData,
@@ -32,6 +48,12 @@ export default function InquirySection() {
     setFormData((current) => ({ ...current, [field]: value }));
     setSuccess("");
     setError("");
+  }
+
+  function updateEmail(localPart: string, domain: string) {
+    setEmailLocalPart(localPart);
+    setEmailDomain(domain);
+    updateField("email", localPart || domain ? `${localPart}@${domain}` : "");
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -44,6 +66,7 @@ export default function InquirySection() {
     const validationMessage = validateContactForm(formData);
 
     if (validationMessage) {
+      setPhoneTouched(true);
       setError(validationMessage);
       return;
     }
@@ -74,6 +97,9 @@ export default function InquirySection() {
         "문의가 접수되었습니다. 담당자가 확인 후 입력하신 연락처로 회신드리겠습니다.",
       );
       setFormData(initialContactFormData);
+      setEmailLocalPart("");
+      setEmailDomain("");
+      setPhoneTouched(false);
     } catch {
       setError("문의 접수 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.");
     } finally {
@@ -84,14 +110,14 @@ export default function InquirySection() {
   return (
     <section
       id="contact"
-      className="bg-[var(--primary-dark)] px-5 pt-10 pb-16 lg:px-8 lg:pt-14 lg:pb-20"
+      className="bg-[var(--primary-dark)] px-5 pt-14 pb-16 lg:px-8 lg:pb-20"
     >
       <div className="mx-auto grid max-w-[1200px] gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:grid-rows-[auto_1fr] lg:items-start lg:gap-10">
         <div className="order-1 lg:col-start-1 lg:row-start-1">
           <SectionTitle
             dark
             eyebrow="Inquiry"
-            title="견적 문의하기"
+            title="견적 문의"
             description="회사명, 담당자명, 연락처를 남겨주시면 담당자가 확인 후 연락드립니다."
           />
         </div>
@@ -120,22 +146,92 @@ export default function InquirySection() {
               required
               value={formData.contactPerson}
             />
-            <Input
-              id="phone"
-              label="연락처 (필수)"
-              onChange={(event) => updateField("phone", event.target.value)}
-              placeholder="연락처를 입력해 주세요"
-              required
-              value={formData.phone}
-            />
-            <Input
-              id="email"
-              label="이메일 (선택)"
-              onChange={(event) => updateField("email", event.target.value)}
-              placeholder="이메일을 입력해 주세요"
-              type="email"
-              value={formData.email}
-            />
+            <div>
+              <Input
+                id="phone"
+                label="연락처 (필수)"
+                onChange={(event) => updateField("phone", event.target.value)}
+                onBlur={() => setPhoneTouched(true)}
+                placeholder="010-1234-5678"
+                required
+                aria-invalid={
+                  phoneTouched && formData.phone.length > 0
+                    ? !isValidPhone(formData.phone)
+                    : undefined
+                }
+                inputMode="tel"
+                maxLength={30}
+                type="tel"
+                value={formData.phone}
+              />
+              {phoneTouched &&
+              formData.phone.length > 0 &&
+              !isValidPhone(formData.phone) ? (
+                <p className="mt-2 text-sm font-bold text-[var(--alert)]">
+                  전화번호 형식을 확인해 주세요. 예: 010-1234-5678
+                </p>
+              ) : null}
+            </div>
+            <div>
+              <span className="mb-2 block text-sm font-bold text-[var(--text)]">
+                이메일 (선택)
+              </span>
+              <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
+                <input
+                  aria-label="이메일 아이디"
+                  autoComplete="off"
+                  className="min-h-12 w-full rounded-md border border-[var(--line)] bg-white px-3 text-sm outline-none transition placeholder:text-[#95a29a] focus:border-[var(--primary)] focus:ring-4 focus:ring-[rgba(46,92,69,0.12)]"
+                  onChange={(event) =>
+                    updateEmail(event.target.value, emailDomain)
+                  }
+                  type="text"
+                  value={emailLocalPart}
+                />
+                <span className="font-bold text-[var(--sub-text)]">@</span>
+                <div className="relative">
+                  <input
+                    aria-autocomplete="list"
+                    aria-controls="email-domain-options"
+                    aria-expanded={showEmailDomains}
+                    aria-label="이메일 도메인"
+                    className="min-h-12 w-full rounded-md border border-[var(--line)] bg-white px-3 text-sm outline-none transition placeholder:text-[#95a29a] focus:border-[var(--primary)] focus:ring-4 focus:ring-[rgba(46,92,69,0.12)]"
+                    onBlur={() => setShowEmailDomains(false)}
+                    onChange={(event) =>
+                      updateEmail(emailLocalPart, event.target.value)
+                    }
+                    onFocus={() => setShowEmailDomains(true)}
+                    placeholder="직접 입력"
+                    role="combobox"
+                    type="text"
+                    value={emailDomain}
+                  />
+                  {showEmailDomains ? (
+                    <div
+                      className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-md border border-[var(--line)] bg-white py-1 shadow-lg"
+                      id="email-domain-options"
+                      role="listbox"
+                    >
+                      {emailDomainOptions.map((option) => (
+                        <button
+                          aria-selected={emailDomain === option.value}
+                          className="block min-h-10 w-full px-3 text-left text-sm text-[var(--text)] hover:bg-[var(--sub-mint)] focus:bg-[var(--sub-mint)] focus:outline-none"
+                          key={option.label}
+                          onPointerDown={(event) => event.preventDefault()}
+                          onClick={() => {
+                            updateEmail(emailLocalPart, option.value);
+                            setShowEmailDomains(false);
+                          }}
+                          role="option"
+                          type="button"
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </div>
             <fieldset className="md:col-span-2">
               <legend className="mb-2 block text-sm font-bold text-[var(--text)]">
                 회신 방법 (필수)
@@ -196,6 +292,22 @@ export default function InquirySection() {
               options={productInterestOptions}
               value={formData.productInterest}
             />
+            <label className="md:col-span-2" htmlFor="message">
+              <span className="mb-2 flex items-center justify-between gap-3 text-sm font-bold text-[var(--text)]">
+                <span>문의 내용 (선택)</span>
+                <span className="font-medium text-[var(--sub-text)]">
+                  {formData.message.length}/300자
+                </span>
+              </span>
+              <textarea
+                className="min-h-32 w-full resize-y rounded-md border border-[var(--line)] bg-white px-4 py-3 text-sm leading-6 outline-none transition placeholder:text-[#95a29a] focus:border-[var(--primary)] focus:ring-4 focus:ring-[rgba(46,92,69,0.12)]"
+                id="message"
+                maxLength={300}
+                onChange={(event) => updateField("message", event.target.value)}
+                placeholder="제품 규격, 사용 환경, 요청 사항 등을 입력해 주세요"
+                value={formData.message}
+              />
+            </label>
             <input
               aria-hidden="true"
               autoComplete="off"
@@ -236,7 +348,7 @@ export default function InquirySection() {
           ) : null}
 
           <Button className="mt-6 w-full" disabled={isLoading} type="submit">
-            {isLoading ? "제출 중..." : "문의 제출하기"}
+            {isLoading ? "제출 중..." : "견적 문의 제출"}
           </Button>
         </form>
 

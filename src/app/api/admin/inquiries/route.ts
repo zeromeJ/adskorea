@@ -41,7 +41,10 @@ export async function GET(request: Request) {
   const [items, total] = await Promise.all([
     prisma.inquiry.findMany({
       where,
-      orderBy: [{ status: "desc" }, { createdAt: "desc" }],
+      orderBy:
+        status === "ALL"
+          ? [{ status: "asc" }, { createdAt: "asc" }]
+          : [{ createdAt: "asc" }],
       skip: (page - 1) * limit,
       take: limit,
       select: {

@@ -4,7 +4,7 @@ import { benefits } from "@/lib/constants";
 
 export default function BenefitsSection() {
   return (
-    <section id="benefits" className="px-5 pt-10 pb-16 lg:px-8 lg:pt-14 lg:pb-20">
+    <section id="benefits" className="px-5 pt-14 pb-16 lg:px-8 lg:pb-20">
       <div className="mx-auto max-w-[1200px]">
         <SectionTitle
           eyebrow="Key Benefits"

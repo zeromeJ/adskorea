@@ -14,14 +14,13 @@ export const navItems = [
   { label: "제품군", href: "#products" },
   { label: "적용 산업", href: "#industries" },
   { label: "회사 소개", href: "#about" },
-  { label: "문의하기", href: "#contact" },
+  { label: "견적 문의", href: "#contact" },
 ];
 
 export const heroMetrics = [
   { value: "20+", label: "Years", description: "20년 이상 물류 포장 산업 경험" },
   { value: "50+", label: "Countries", description: "50개국 이상 글로벌 판매" },
   { value: "12M", label: "Annual Capacity", description: "연간 1,200만 대 설계 생산 능력" },
-  { value: "MDI", label: "Molded Pallet", description: "MDI 친환경 성형 팔레트" },
 ];
 
 export const problemCards = [
@@ -204,12 +203,12 @@ export const caseReferences = [
 ];
 
 export const companyStats = [
-  { value: "20+", label: "Years", description: "물류 포장 산업 경험" },
-  { value: "2.2억", label: "RMB", description: "총 투자액 자료 기준" },
+  { value: "20+", label: "Years", description: "물류 포장 경험" },
+  { value: "2.2억 RMB", label: "Investment", description: "총 투자액" },
   { value: "40,000㎡", label: "Area", description: "총 토지 면적" },
-  { value: "12M", label: "Capacity", description: "설계 연간 생산 능력" },
+  { value: "12M", label: "Capacity", description: "연간 생산 능력" },
   { value: "50+", label: "Countries", description: "글로벌 판매" },
-  { value: "30+", label: "IP / Tech", description: "특허 및 기술 인증 자료 기준" },
+  { value: "30+", label: "IP / Tech", description: "특허·기술 인증" },
 ];
 
 export const companyNetwork = [

@@ -163,7 +163,7 @@ class PushNotificationService {
       await _localNotifications
           .show(
             id: message.messageId.hashCode,
-            title: notification.title ?? 'ADS 문의관리',
+            title: notification.title ?? '아델슨 문의관리',
             body: notification.body ?? '새로운 문의가 등록되었습니다.',
             notificationDetails: const NotificationDetails(
               android: AndroidNotificationDetails(

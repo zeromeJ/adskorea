@@ -19,9 +19,9 @@ function getJwtSecret() {
 
 export function signAdminToken(payload: AdminTokenPayload) {
   // TODO: For production, consider httpOnly cookie auth for web admin.
-  // TODO: For Flutter app, Bearer token authentication is acceptable for MVP.
-  // TODO: Add password change API later.
-  return jwt.sign(payload, getJwtSecret(), { expiresIn: "7d" });
+  // The app stores this token in platform secure storage. Disabled or deleted
+  // administrator accounts are still rejected on every authenticated request.
+  return jwt.sign(payload, getJwtSecret(), { expiresIn: "3650d" });
 }
 
 export async function getAdminFromRequest(request: Request) {
