@@ -60,4 +60,11 @@ if [[ "$BUILD_APK" == true ]]; then
 
   echo "빌드 번호를 $NEXT_BUILD_NUMBER(으)로 올렸습니다."
   (cd "$APP_ROOT" && flutter build apk --release)
+
+  RELEASE_DIR="$APP_ROOT/build/app/outputs/flutter-apk"
+  RELEASE_APK="$RELEASE_DIR/app-release.apk"
+  NAMED_APK="$RELEASE_DIR/adelson-admin-$VERSION_NAME+$NEXT_BUILD_NUMBER.apk"
+
+  cp "$RELEASE_APK" "$NAMED_APK"
+  echo "설치용 APK: $NAMED_APK"
 fi

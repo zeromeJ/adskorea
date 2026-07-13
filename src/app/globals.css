@@ -22,7 +22,7 @@
   --font-en: "Space Grotesk", "Paperlogy", sans-serif;
 }
 
-@theme inline {
+:root[data-theme='inline'] {
   --color-background: var(--background);
   --color-foreground: var(--text);
   --font-sans: var(--font-kr);
