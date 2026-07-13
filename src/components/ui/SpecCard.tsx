@@ -5,7 +5,10 @@ type SpecCardProps = {
 
 export default function SpecCard({ value, label }: SpecCardProps) {
   return (
-    <article className="rounded-lg border border-[var(--line)] bg-white p-5 justify-center text-center">
+    <article
+      aria-label={label}
+      className="justify-center rounded-lg border border-[var(--line)] bg-white p-5 text-center"
+    >
       <p className="spec-value text-xl font-bold text-[var(--primary)]">
         {value}
       </p>

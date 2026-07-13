@@ -15,7 +15,7 @@ flutter run
 The API address is selected automatically:
 
 - Debug default: `http://10.0.2.2:3000`
-- Release default: `https://adskorea.co.kr`
+- Release default: `https://www.adson.co.kr`
 
 To use another deployed backend, inject its HTTPS origin at build time:
 
@@ -28,7 +28,7 @@ Build APK:
 
 ```bash
 flutter build apk --release \
-  --dart-define=API_BASE_URL=https://adskorea.co.kr
+  --dart-define=API_BASE_URL=https://www.adson.co.kr
 ```
 
 Initial login:

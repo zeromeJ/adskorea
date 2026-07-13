@@ -114,7 +114,11 @@ ${data.message || "-"}
     }
 
     try {
-      await sendNewInquiryPush(inquiry.id);
+      await sendNewInquiryPush(
+        inquiry.id,
+        inquiry.companyName,
+        inquiry.contactPerson,
+      );
     } catch (pushError) {
       console.error("Inquiry push notification failed:", pushError);
     }

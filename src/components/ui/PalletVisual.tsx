@@ -1,16 +1,18 @@
 type PalletVisualProps = {
   compact?: boolean;
   dark?: boolean;
+  aspect?: string;
 };
 
 export default function PalletVisual({
   compact = false,
   dark = false,
+  aspect,
 }: PalletVisualProps) {
   return (
     <div
       className={`relative overflow-hidden rounded-md border ${
-        compact ? "aspect-[4/3]" : "aspect-[16/10]"
+        aspect ?? (compact ? "aspect-[4/3]" : "aspect-[16/10]")
       } ${
         dark
           ? "border-white/10 bg-white/[0.04]"

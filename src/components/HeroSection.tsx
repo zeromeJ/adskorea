@@ -3,9 +3,17 @@ import StatCard from "@/components/ui/StatCard";
 import { LinkButton } from "@/components/ui/Button";
 import { heroMetrics } from "@/lib/constants";
 
+const trustPoints = [
+  "20년 이상 산업 경험",
+  "50개국 이상 공급",
+  "연간 1,200만대 생산능력",
+  "특허 및 기술 인증",
+  "수출 포장 대응",
+];
+
 export default function HeroSection() {
   return (
-    <section id="hero" className="mx-auto grid w-full max-w-[1200px] gap-x-10 gap-y-10 px-5 py-14 md:grid-cols-[7fr_3fr] md:grid-rows-[1fr_auto] lg:px-8 lg:py-24">
+    <section id="hero" className="mx-auto grid w-full max-w-[1200px] gap-x-8 gap-y-9 px-5 py-14 md:grid-cols-[13fr_7fr] md:grid-rows-[1fr_auto] lg:px-8 lg:py-24">
       <div className="order-1 md:order-none md:col-start-1 md:row-start-1">
         <p className="en mb-5 text-sm font-bold uppercase tracking-[0.12em] text-[var(--accent-gold)]">
           Eco-tech Molded Pallet
@@ -26,6 +34,17 @@ export default function HeroSection() {
           <LinkButton href="#performance" variant="secondary">
             제품 사양 확인하기
           </LinkButton>
+        </div>
+        <div className="mt-6 flex max-w-3xl flex-wrap gap-2">
+          {trustPoints.map((point) => (
+            <span
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-white/70 px-3 py-1.5 text-xs font-semibold text-[var(--primary-dark)]"
+              key={point}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-gold)]" />
+              {point}
+            </span>
+          ))}
         </div>
       </div>
 

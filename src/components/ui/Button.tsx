@@ -31,7 +31,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`inline-flex min-h-12 items-center justify-center rounded-md px-5 py-3 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-60 ${variants[variant]} ${className}`}
+      className={`inline-flex min-h-11 items-center justify-center rounded-md px-4 py-2.5 text-sm font-bold transition sm:min-h-12 sm:px-5 sm:py-3 disabled:cursor-not-allowed disabled:opacity-60 ${variants[variant]} ${className}`}
       {...props}
     >
       {children}
@@ -49,7 +49,7 @@ export function LinkButton({
 }: LinkButtonProps) {
   return (
     <a
-      className={`inline-flex min-h-12 items-center justify-center rounded-md px-5 py-3 text-sm font-bold transition ${variants[variant]} ${className}`}
+      className={`inline-flex min-h-11 items-center justify-center rounded-md px-4 py-2.5 text-sm font-bold transition sm:min-h-12 sm:px-5 sm:py-3 ${variants[variant]} ${className}`}
       href={href}
       onClick={(event) => {
         onClick?.(event);

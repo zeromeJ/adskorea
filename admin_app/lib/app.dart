@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'constants/colors.dart';
 import 'models/admin_user.dart';
@@ -8,7 +9,7 @@ import 'services/api_client.dart';
 import 'services/admin_management_service.dart';
 import 'services/auth_service.dart';
 import 'services/inquiry_service.dart';
-import 'services/notification_service.dart';
+import 'services/push_notification_service.dart';
 
 class AdsInquiryAdminApp extends StatefulWidget {
   const AdsInquiryAdminApp({super.key});
@@ -24,7 +25,8 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
   late final AdminManagementService _adminManagementService =
       AdminManagementService(_apiClient);
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
-  late final NotificationService _notificationService = NotificationService(
+  late final PushNotificationService _pushNotificationService =
+      PushNotificationService(
     _apiClient,
     onOpenInquiry: _openInquiry,
   );
@@ -39,17 +41,29 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
   }
 
   Future<void> _bootstrap() async {
-    await _authService.loadToken();
-    final admin = await _authService.me();
-    if (admin != null) {
-      await _notificationService.initialize();
+    AdminUser? admin;
+
+    try {
+      final token = await _authService.loadToken();
+      if (token != null && token.isNotEmpty) {
+        admin = await _authService.me();
+      }
+    } catch (_) {
+      await _authService.logout();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoggedIn = admin != null;
+          _currentAdmin = admin;
+          _isLoading = false;
+        });
+      }
     }
-    if (!mounted) return;
-    setState(() {
-      _isLoggedIn = admin != null;
-      _currentAdmin = admin;
-      _isLoading = false;
-    });
+
+    final token = _apiClient.token;
+    if (admin != null && token != null) {
+      unawaited(_pushNotificationService.initializeForAuthenticatedAdmin(token));
+    }
   }
 
   Future<void> _setLoggedIn(bool value) async {
@@ -59,7 +73,10 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
       _isLoggedIn = value && admin != null;
       _currentAdmin = admin;
     });
-    if (value) _notificationService.initialize();
+    final token = _apiClient.token;
+    if (value && token != null) {
+      unawaited(_pushNotificationService.initializeForAuthenticatedAdmin(token));
+    }
   }
 
   void _openInquiry(String inquiryId) {
@@ -79,7 +96,7 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
 
   @override
   void dispose() {
-    _notificationService.dispose();
+    _pushNotificationService.dispose();
     super.dispose();
   }
 
