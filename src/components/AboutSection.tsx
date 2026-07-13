@@ -3,6 +3,14 @@ import SectionTitle from "@/components/ui/SectionTitle";
 import StatCard from "@/components/ui/StatCard";
 import { companyNetwork, companyStats } from "@/lib/constants";
 
+const mobileCompanyNetwork = [
+  "중국 생산 기지",
+  "상하이·허페이 거점",
+  "뒤셀도르프 R&D",
+  "TOGREEN 전략 협력",
+  "독일 품질 기준",
+];
+
 export default function AboutSection() {
   return (
     <section id="about" className="px-5 pt-14 pb-16 lg:px-8 lg:pb-20">
@@ -33,13 +41,16 @@ export default function AboutSection() {
           </div>
         </div>
 
-        <div className="mt-10 grid gap-4 md:grid-cols-3">
-          {companyNetwork.map((item) => (
+        <div className="mt-10 grid grid-cols-6 gap-2 sm:gap-3 lg:gap-4">
+          {companyNetwork.map((item, index) => (
             <div
-              className="rounded-lg border border-[var(--line)] bg-white p-5 text-sm font-bold leading-6 text-[var(--primary-dark)]"
+              className={`rounded-lg border border-[var(--line)] bg-white px-1.5 py-3 text-center text-[9px] leading-4 font-bold whitespace-nowrap text-[var(--primary-dark)] sm:px-3 sm:text-xs lg:p-5 lg:text-left lg:text-sm lg:leading-6 ${
+                index < 3 ? "col-span-2" : "col-span-3"
+              }`}
               key={item}
             >
-              {item}
+              <span className="lg:hidden">{mobileCompanyNetwork[index]}</span>
+              <span className="hidden lg:inline">{item}</span>
             </div>
           ))}
         </div>

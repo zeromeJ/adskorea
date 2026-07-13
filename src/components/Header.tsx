@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { navItems } from "@/lib/constants";
 import { scrollToSection } from "@/lib/scrollToSection";
 import { LinkButton } from "@/components/ui/Button";
@@ -9,6 +10,8 @@ import { LinkButton } from "@/components/ui/Button";
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("");
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let frameId = 0;
@@ -44,6 +47,32 @@ export default function Header() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleOutsidePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+
+      if (!(target instanceof Node)) return;
+      if (mobileMenuButtonRef.current?.contains(target)) return;
+      if (mobileMenuRef.current?.contains(target)) return;
+
+      setIsOpen(false);
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsOpen(false);
+    };
+
+    document.addEventListener("pointerdown", handleOutsidePointerDown);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("pointerdown", handleOutsidePointerDown);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isOpen]);
+
   function handleNavigation(
     event: React.MouseEvent<HTMLAnchorElement>,
     href: string,
@@ -57,8 +86,8 @@ export default function Header() {
     href: string,
   ) {
     event.preventDefault();
-    setIsOpen(false);
-    requestAnimationFrame(() => scrollToSection(href.slice(1)));
+    flushSync(() => setIsOpen(false));
+    scrollToSection(href.slice(1));
   }
 
   return (
@@ -112,6 +141,7 @@ export default function Header() {
           aria-label="Toggle navigation"
           className="flex h-11 w-11 items-center justify-center rounded-md lg:hidden"
           onClick={() => setIsOpen((value) => !value)}
+          ref={mobileMenuButtonRef}
           type="button"
         >
           <span className="flex w-5 flex-col gap-1.5">
@@ -123,7 +153,10 @@ export default function Header() {
       </div>
 
       {isOpen ? (
-        <div className="border-t border-[var(--line)] bg-[var(--background)] px-5 py-5 lg:hidden">
+        <div
+          className="border-t border-[var(--line)] bg-[var(--background)] px-5 py-5 lg:hidden"
+          ref={mobileMenuRef}
+        >
           <nav className="mx-auto grid max-w-[1200px] grid-cols-2 gap-2">
             {navItems.map((item) => (
               <a

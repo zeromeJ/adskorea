@@ -21,7 +21,7 @@ export default function PerformanceSection() {
               title="친환경을 넘어, 산업 물류에 필요한 강도까지"
               description="일체형 정밀 성형 구조를 통해 안정적인 구조 강도를 구현하고, 방수성, 내후성, 하중 지지 성능을 강화했습니다."
             />
-            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-4">
               {performanceFeatures.map((feature) => (
                 <SpecCard key={feature} label="Feature" value={feature} />
               ))}

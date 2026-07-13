@@ -12,7 +12,7 @@ export default function ProductLineup() {
           title="다양한 산업에 맞춘 제품 라인업"
           description="제품 규격, 적재 중량, 보관 환경, 수출 조건에 따라 다양한 몰드 팔레트 제품군을 선택할 수 있습니다."
         />
-        <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
           {products.map((product) => (
             <ProductCard
               className={product.title.includes("3D") ? "lg:col-span-2" : ""}

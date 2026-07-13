@@ -35,7 +35,9 @@ class InquiryListScreen extends StatefulWidget {
 }
 
 class _InquiryListScreenState extends State<InquiryListScreen> {
+  final _searchController = TextEditingController();
   String _status = 'ALL';
+  String _searchQuery = '';
   bool _isLoading = true;
   String? _error;
   List<Inquiry> _items = [];
@@ -46,6 +48,12 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
     _load();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<void> _load() async {
     setState(() {
       _isLoading = true;
@@ -53,14 +61,18 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
     });
 
     try {
-      final result =
-          await widget.inquiryService.fetchInquiries(status: _status);
+      final result = await widget.inquiryService.fetchInquiries(
+        status: _status,
+        search: _searchQuery,
+      );
       final sortedItems = [...result.items]..sort((a, b) {
           final aStatus = a.status == InquiryStatus.pending ? 0 : 1;
           final bStatus = b.status == InquiryStatus.pending ? 0 : 1;
           final statusOrder = aStatus.compareTo(bStatus);
           if (statusOrder != 0) return statusOrder;
-          return a.createdAt.compareTo(b.createdAt);
+          return a.status == InquiryStatus.pending
+              ? a.createdAt.compareTo(b.createdAt)
+              : b.createdAt.compareTo(a.createdAt);
         });
       if (mounted) setState(() => _items = sortedItems);
     } catch (error) {
@@ -70,6 +82,18 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<void> _search() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    _searchQuery = _searchController.text.trim();
+    await _load();
+  }
+
+  Future<void> _clearSearch() async {
+    _searchController.clear();
+    _searchQuery = '';
+    await _load();
   }
 
   Future<void> _openPhone(String? phone) async {
@@ -118,6 +142,9 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
   }
 
   String get _emptyMessage {
+    if (_searchQuery.isNotEmpty) {
+      return '회사명, 담당자명 또는 전화번호와 일치하는 문의가 없습니다.';
+    }
     if (_status == 'PENDING') return '처리 전 문의가 없습니다.';
     if (_status == 'COMPLETED') return '처리 완료된 문의가 없습니다.';
     return '아직 접수된 문의가 없습니다.';
@@ -210,6 +237,39 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      textInputAction: TextInputAction.search,
+                      onChanged: (_) => setState(() {}),
+                      onSubmitted: (_) => _search(),
+                      decoration: InputDecoration(
+                        hintText: '회사명, 담당자명 또는 전화번호',
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: _searchController.text.isEmpty
+                            ? null
+                            : IconButton(
+                                tooltip: '검색어 지우기',
+                                onPressed: _clearSearch,
+                                icon: const Icon(Icons.close),
+                              ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton.icon(
+                    onPressed: _isLoading ? null : _search,
+                    icon: const Icon(Icons.search, size: 22),
+                    label: const Text('검색'),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               child: SizedBox(
                 width: double.infinity,
                 child: SegmentedButton<String>(
