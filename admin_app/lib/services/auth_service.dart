@@ -32,6 +32,8 @@ class AuthService {
   }
 
   Future<AdminUser?> me() async {
+    if (client.token == null || client.token!.isEmpty) return null;
+
     try {
       final json = await client.get('/api/admin/me');
       return AdminUser.fromJson(json['admin'] as Map<String, dynamic>);

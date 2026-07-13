@@ -1,6 +1,7 @@
 import PalletVisual from "@/components/ui/PalletVisual";
 import SectionTitle from "@/components/ui/SectionTitle";
 import SpecCard from "@/components/ui/SpecCard";
+import ModelSpecTable from "@/components/ui/ModelSpecTable";
 import { modelSpecs, performanceFeatures } from "@/lib/constants";
 
 export default function PerformanceSection() {
@@ -28,30 +29,7 @@ export default function PerformanceSection() {
           </div>
         </div>
 
-        <div className="mt-10 overflow-x-auto rounded-lg border border-[var(--line)] bg-white">
-          <table className="w-full min-w-[780px] border-collapse text-left text-sm">
-            <thead className="en bg-[var(--muted-surface)] text-xs uppercase tracking-[0.08em] text-[var(--sub-text)]">
-              <tr>
-                <th className="p-4">모델군</th>
-                <th className="p-4">대표 규격</th>
-                <th className="p-4">동하중</th>
-                <th className="p-4">정하중</th>
-                <th className="p-4">추천 용도</th>
-              </tr>
-            </thead>
-            <tbody>
-              {modelSpecs.map((spec) => (
-                <tr className="border-t border-[var(--line)]" key={spec.model}>
-                  <td className="p-4 font-bold text-[var(--primary-dark)]">{spec.model}</td>
-                  <td className="p-4 text-[var(--sub-text)]">{spec.size}</td>
-                  <td className="number p-4 font-bold">{spec.dynamicLoad}</td>
-                  <td className="number p-4 font-bold">{spec.staticLoad}</td>
-                  <td className="p-4 text-[var(--sub-text)]">{spec.usage}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ModelSpecTable specs={modelSpecs} />
       </div>
     </section>
   );

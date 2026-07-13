@@ -12,8 +12,12 @@ export default function BenefitsSection() {
           description="기존 팔레트의 운영 부담을 줄이고, 글로벌 물류 환경에 맞춘 효율적인 포장 솔루션을 제공합니다."
         />
         <div className="mt-10 grid gap-4 lg:grid-cols-3">
-          {benefits.map((benefit) => (
-            <BenefitCard key={benefit.title} {...benefit} />
+          {benefits.map((benefit, index) => (
+            <BenefitCard
+              key={benefit.title}
+              variant={index === 0 ? "dark" : index === 2 ? "accent" : "default"}
+              {...benefit}
+            />
           ))}
         </div>
       </div>

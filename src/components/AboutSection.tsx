@@ -7,9 +7,9 @@ export default function AboutSection() {
   return (
     <section id="about" className="px-5 pt-10 pb-16 lg:px-8 lg:pt-14 lg:pb-20">
       <div className="mx-auto max-w-[1200px]">
-        <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+        <div className="grid gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
           <div className="overflow-hidden rounded-lg bg-[var(--primary-deep)] p-5">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-md bg-white/5">
+            <div className="relative aspect-[16/11] overflow-hidden rounded-md bg-white/5">
               <Image
                 alt="Factory placeholder"
                 className="h-full w-full object-contain p-10 brightness-0 invert"
@@ -25,7 +25,7 @@ export default function AboutSection() {
               title="20년의 경험과 글로벌 생산·R&D 네트워크"
               description="ADS는 물류 포장 산업 경험과 생산 인프라, R&D 협력 기반을 바탕으로 친환경 성형 팔레트 솔루션을 개발해왔습니다."
             />
-            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            <div className="mt-7 grid gap-3 sm:grid-cols-2">
               {companyStats.map((stat) => (
                 <StatCard inlineValueLabel key={stat.label} {...stat} />
               ))}

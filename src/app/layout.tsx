@@ -6,8 +6,8 @@ export const metadata: Metadata = {
   description:
     "친환경 MDI 몰드 팔레트로 수출 포장, 보관 효율, B2B 물류 비용 개선에 기여하는 ADS 아델슨 랜딩 페이지",
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
+    icon: "/logo.svg",
+    shortcut: "/logo.svg",
   },
 };
 

@@ -20,18 +20,26 @@ export async function POST(request: Request) {
     );
   }
 
-  await prisma.adminDevice.upsert({
-    where: { token },
-    create: {
-      token,
-      adminUserId: admin.id,
-      platform: body.platform?.trim() || null,
-    },
-    update: {
-      adminUserId: admin.id,
-      platform: body.platform?.trim() || null,
-    },
-  });
+  await prisma.$transaction([
+    prisma.adminDevice.deleteMany({
+      where: {
+        adminUserId: admin.id,
+        token: { not: token },
+      },
+    }),
+    prisma.adminDevice.upsert({
+      where: { token },
+      create: {
+        token,
+        adminUserId: admin.id,
+        platform: body.platform?.trim() || null,
+      },
+      update: {
+        adminUserId: admin.id,
+        platform: body.platform?.trim() || null,
+      },
+    }),
+  ]);
 
   return NextResponse.json({ success: true });
 }

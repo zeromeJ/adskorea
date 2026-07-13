@@ -86,58 +86,18 @@ export default function InquirySection() {
       id="contact"
       className="bg-[var(--primary-dark)] px-5 pt-10 pb-16 lg:px-8 lg:pt-14 lg:pb-20"
     >
-      <div className="mx-auto grid max-w-[1200px] gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
-        <div className="lg:sticky lg:top-28">
+      <div className="mx-auto grid max-w-[1200px] gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:grid-rows-[auto_1fr] lg:items-start lg:gap-10">
+        <div className="order-1 lg:col-start-1 lg:row-start-1">
           <SectionTitle
             dark
             eyebrow="Inquiry"
             title="견적 문의하기"
             description="회사명, 담당자명, 연락처를 남겨주시면 담당자가 확인 후 연락드립니다."
           />
-          <div className="mt-8 rounded-lg border border-white/12 bg-white/[0.04] p-5 text-white">
-            <p className="text-sm font-bold text-[var(--accent-gold)]">
-              빠른 상담 (전화 상담)
-            </p>
-            <ol className="mt-4 grid gap-3 text-sm leading-6 text-white/72">
-              <li>1. 전화로 문의 내용 접수</li>
-              <li>3. 즉각적인 상담 회신</li>
-            </ol>
-
-            <br/>
-
-            <p className="text-sm font-bold text-[var(--accent-gold)]">
-              견적 문의하기
-            </p>
-
-            <ol className="mt-4 grid gap-3 text-sm leading-6 text-white/72">
-              <li>1. 문의 내용 접수</li>
-              <li>2. 제품 사양 및 조건 검토</li>
-              <li>3. 담당자 견적 및 상담 회신(문자/전화 중 택)</li>
-            </ol>
-            <LinkButton
-              className="mt-6 w-full gap-2"
-              href={company.phoneHref}
-              variant="light"
-            >
-              <svg
-                aria-hidden="true"
-                className="h-[18px] w-[18px] fill-none stroke-current"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.63a2 2 0 0 1-.45 2.11L8 9.73a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.85.29 1.73.5 2.63.62A2 2 0 0 1 22 16.92Z"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2.6"
-                />
-              </svg>
-              전화하기
-            </LinkButton>
-          </div>
         </div>
 
         <form
-          className="rounded-lg bg-white p-5 shadow-none sm:p-8"
+          className="order-2 rounded-lg bg-white p-5 shadow-none sm:p-8 lg:col-start-2 lg:row-span-2 lg:row-start-1"
           noValidate
           onSubmit={handleSubmit}
         >
@@ -191,7 +151,7 @@ export default function InquirySection() {
                   return (
                     <button
                       aria-pressed={selected}
-                      className={`min-h-12 rounded-lg border px-3 text-sm font-bold transition ${
+                      className={`min-h-11 rounded-lg border px-3 text-sm font-bold transition sm:min-h-12 ${
                         selected
                           ? "border-[var(--primary)] bg-[var(--primary)] text-white"
                           : "border-[var(--line)] bg-white text-[var(--text)] hover:border-[var(--primary)]"
@@ -279,6 +239,48 @@ export default function InquirySection() {
             {isLoading ? "제출 중..." : "문의 제출하기"}
           </Button>
         </form>
+
+        <aside className="order-3 lg:sticky lg:top-28 lg:col-start-1 lg:row-start-2">
+          <div className="rounded-lg border border-white/12 bg-white/[0.04] p-5 text-white">
+            <p className="text-sm font-bold text-[var(--accent-gold)]">
+              빠른 견적 상담
+            </p>
+            <ul className="mt-4 grid gap-3 text-sm leading-6 text-white/78">
+              {[
+                "무료 상담",
+                "맞춤 규격 검토",
+                "빠른 견적 회신",
+                "전화 또는 문자 상담 가능",
+              ].map((item) => (
+                <li className="flex items-center gap-3" key={item}>
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--accent-gold)] text-[11px] font-black text-[var(--primary-deep)]">
+                    ✓
+                  </span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <LinkButton
+            className="mt-3 w-full gap-2"
+            href={company.phoneHref}
+            variant="light"
+          >
+            <svg
+              aria-hidden="true"
+              className="h-[18px] w-[18px] fill-none stroke-current"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.63a2 2 0 0 1-.45 2.11L8 9.73a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.85.29 1.73.5 2.63.62A2 2 0 0 1 22 16.92Z"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.6"
+              />
+            </svg>
+            전화하기
+          </LinkButton>
+        </aside>
       </div>
     </section>
   );

@@ -86,7 +86,7 @@ export default function Header() {
               aria-current={
                 activeSection === item.href.slice(1) ? "page" : undefined
               }
-              className={`transition hover:text-[var(--primary)] ${
+              className={`transition-colors duration-300 ease-out hover:text-[var(--primary)] ${
                 activeSection === item.href.slice(1)
                   ? "font-extrabold text-[var(--primary)]"
                   : "font-medium"
