@@ -127,7 +127,7 @@ export default function InquirySection() {
           noValidate
           onSubmit={handleSubmit}
         >
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-x-3 gap-y-5 min-[340px]:grid-cols-2 sm:gap-x-5">
             <Input
               id="companyName"
               label="회사명 (필수)"
@@ -176,11 +176,11 @@ export default function InquirySection() {
               <span className="mb-2 block text-sm font-bold text-[var(--text)]">
                 이메일 (선택)
               </span>
-              <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1 sm:gap-2">
                 <input
                   aria-label="이메일 아이디"
                   autoComplete="off"
-                  className="min-h-12 w-full rounded-md border border-[var(--line)] bg-white px-3 text-sm outline-none transition placeholder:text-[#95a29a] focus:border-[var(--primary)] focus:ring-4 focus:ring-[rgba(46,92,69,0.12)]"
+                  className="min-h-12 w-full rounded-md border border-[var(--line)] bg-white px-2 text-xs outline-none transition placeholder:text-[#95a29a] focus:border-[var(--primary)] focus:ring-4 focus:ring-[rgba(46,92,69,0.12)] sm:px-3 sm:text-sm"
                   onChange={(event) =>
                     updateEmail(event.target.value, emailDomain)
                   }
@@ -194,7 +194,7 @@ export default function InquirySection() {
                     aria-controls="email-domain-options"
                     aria-expanded={showEmailDomains}
                     aria-label="이메일 도메인"
-                    className="min-h-12 w-full rounded-md border border-[var(--line)] bg-white px-3 text-sm outline-none transition placeholder:text-[#95a29a] focus:border-[var(--primary)] focus:ring-4 focus:ring-[rgba(46,92,69,0.12)]"
+                    className="min-h-12 w-full rounded-md border border-[var(--line)] bg-white px-2 text-xs outline-none transition placeholder:text-[#95a29a] focus:border-[var(--primary)] focus:ring-4 focus:ring-[rgba(46,92,69,0.12)] sm:px-3 sm:text-sm"
                     onBlur={() => setShowEmailDomains(false)}
                     onChange={(event) =>
                       updateEmail(emailLocalPart, event.target.value)
@@ -207,7 +207,7 @@ export default function InquirySection() {
                   />
                   {showEmailDomains ? (
                     <div
-                      className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-md border border-[var(--line)] bg-white py-1 shadow-lg"
+                      className="absolute top-full right-0 z-30 mt-2 w-32 overflow-hidden rounded-md border border-[var(--line)] bg-white py-1 shadow-lg sm:left-0 sm:w-auto"
                       id="email-domain-options"
                       role="listbox"
                     >
@@ -232,7 +232,7 @@ export default function InquirySection() {
                 </div>
               </div>
             </div>
-            <fieldset className="md:col-span-2">
+            <fieldset className="col-span-full">
               <legend className="mb-2 block text-sm font-bold text-[var(--text)]">
                 회신 방법 (필수)
               </legend>
@@ -268,6 +268,7 @@ export default function InquirySection() {
               </div>
             </fieldset>
             <Select
+              containerClassName="col-span-full"
               id="industry"
               label="산업 분야 (선택)"
               onChange={(event) => updateField("industry", event.target.value)}
@@ -276,7 +277,7 @@ export default function InquirySection() {
             />
             <Select
               id="currentPalletType"
-              label="현재 사용 중인 팔레트 (선택)"
+              label="사용 팔레트 (선택)"
               onChange={(event) =>
                 updateField("currentPalletType", event.target.value)
               }
@@ -292,7 +293,7 @@ export default function InquirySection() {
               options={productInterestOptions}
               value={formData.productInterest}
             />
-            <label className="md:col-span-2" htmlFor="message">
+            <label className="col-span-full" htmlFor="message">
               <span className="mb-2 flex items-center justify-between gap-3 text-sm font-bold text-[var(--text)]">
                 <span>문의 내용 (선택)</span>
                 <span className="font-medium text-[var(--sub-text)]">

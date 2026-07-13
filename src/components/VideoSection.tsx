@@ -12,25 +12,27 @@ export default function VideoSection({ variant }: VideoSectionProps) {
   return (
     <section className={`${isProduct ? "bg-[var(--muted-surface)]" : "bg-white"} px-5 pt-14 pb-16 lg:px-8 lg:pb-24`}>
       <div className="mx-auto grid max-w-[1200px] gap-10 lg:grid-cols-[1fr_0.8fr] lg:items-center">
-        <VideoCard
-          description={
-            isProduct
-              ? "MDI 친환경 몰드 팔레트의 핵심 장점과 적용 효과를 소개합니다."
-              : "ADS의 생산 인프라, R&D 협력, 제품 개발 및 글로벌 공급 역량을 소개합니다."
-          }
-          posterSrc={
-            isProduct
-              ? "/images/video-thumbnail-1.png"
-              : "/images/video-thumbnail-2.png"
-          }
-          title={isProduct ? "제품 소개 영상" : "회사·기술 소개 영상"}
-          videoSrc={
-            isProduct
-              ? "/videos/product-intro-placeholder.mp4"
-              : "/videos/company-tech-placeholder.mp4"
-          }
-        />
-        <div>
+        <div className="order-2 lg:order-1">
+          <VideoCard
+            description={
+              isProduct
+                ? "MDI 친환경 몰드 팔레트의 핵심 장점과 적용 효과를 소개합니다."
+                : "ADS의 생산 인프라, R&D 협력, 제품 개발 및 글로벌 공급 역량을 소개합니다."
+            }
+            posterSrc={
+              isProduct
+                ? "/images/video-thumbnail-1.png"
+                : "/images/video-thumbnail-2.png"
+            }
+            title={isProduct ? "제품 소개 영상" : "회사·기술 소개 영상"}
+            videoSrc={
+              isProduct
+                ? "/videos/product-intro-placeholder.mp4"
+                : "/videos/company-tech-placeholder.mp4"
+            }
+          />
+        </div>
+        <div className="order-1 lg:order-2">
           <SectionTitle
             eyebrow={isProduct ? "Primary Video" : "Company Video"}
             title={

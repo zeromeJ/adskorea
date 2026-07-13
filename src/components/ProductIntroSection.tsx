@@ -43,8 +43,13 @@ export default function ProductIntroSection() {
               달라질 수 있습니다. 상세 사양은 문의를 통해 확인 가능합니다.
             </p>
           </div>
-          <div className="mt-10 flex justify-center">
-            <LinkButton href="#products">제품군 확인하기</LinkButton>
+          <div className="mt-10 flex justify-start">
+            <LinkButton
+              className="min-h-[52px] px-8 py-3 sm:min-h-[52px] sm:px-8 sm:py-3"
+              href="#products"
+            >
+              제품군 확인하기
+            </LinkButton>
           </div>
         </div>
       </div>

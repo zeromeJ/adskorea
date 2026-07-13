@@ -237,25 +237,6 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
-              child: SizedBox(
-                width: double.infinity,
-                child: SegmentedButton<String>(
-                  segments: const [
-                    ButtonSegment(value: 'ALL', label: Text('전체 목록')),
-                    ButtonSegment(value: 'PENDING', label: Text('처리 전')),
-                    ButtonSegment(value: 'COMPLETED', label: Text('처리 완료')),
-                  ],
-                  showSelectedIcon: false,
-                  selected: {_status},
-                  onSelectionChanged: (value) {
-                    setState(() => _status = value.first);
-                    _load();
-                  },
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -285,6 +266,25 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
                     label: const Text('검색'),
                   ),
                 ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(value: 'ALL', label: Text('전체 목록')),
+                    ButtonSegment(value: 'PENDING', label: Text('처리 전')),
+                    ButtonSegment(value: 'COMPLETED', label: Text('처리 완료')),
+                  ],
+                  showSelectedIcon: false,
+                  selected: {_status},
+                  onSelectionChanged: (value) {
+                    setState(() => _status = value.first);
+                    _load();
+                  },
+                ),
               ),
             ),
             Expanded(

@@ -39,7 +39,18 @@ export default function StatCard({
                 : "text-3xl"
           }`}
         >
-          {value}
+          {value.split(/([가-힣]+)/g).map((part, index) =>
+            /[가-힣]/.test(part) ? (
+              <span
+                key={`${part}-${index}`}
+                style={{ fontFamily: "var(--font-kr)" }}
+              >
+                {part}
+              </span>
+            ) : (
+              part
+            ),
+          )}
         </p>
         <p
           className={`en ${

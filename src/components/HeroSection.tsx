@@ -43,7 +43,7 @@ export default function HeroSection() {
         <HeroProductVisual />
       </div>
 
-      <div className="order-3 grid grid-cols-3 gap-2 sm:gap-3 lg:col-start-1 lg:row-start-2">
+      <div className="pt-3 order-3 grid grid-cols-3 gap-2 sm:gap-3 lg:col-start-1 lg:row-start-2">
         {heroMetrics.map((stat) => (
           <StatCard compact key={stat.label} {...stat} />
         ))}

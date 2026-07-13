@@ -3,17 +3,19 @@ import type { SelectHTMLAttributes } from "react";
 type SelectProps = {
   label: string;
   options: string[];
+  containerClassName?: string;
 } & SelectHTMLAttributes<HTMLSelectElement>;
 
 export default function Select({
   label,
   id,
   options,
+  containerClassName = "",
   className = "",
   ...props
 }: SelectProps) {
   return (
-    <label className="block" htmlFor={id}>
+    <label className={`block min-w-0 ${containerClassName}`} htmlFor={id}>
       <span className="mb-2 block text-sm font-bold text-[var(--text)]">
         {label}
       </span>

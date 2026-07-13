@@ -49,10 +49,10 @@ export default function EcoDataSection() {
               ))}
             </div>
           </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:mt-auto lg:pt-4">
+          <div className="mt-4 grid grid-cols-2 gap-3 lg:mt-auto lg:pt-4">
             {ecoCards.map((card) => (
               <div
-                className="rounded-lg border border-white/12 bg-white/[0.04] p-4 text-sm font-bold text-white"
+                className="rounded-lg border border-white/12 bg-white/[0.04] p-3 text-[13px] leading-5 font-bold text-white sm:p-4 sm:text-sm"
                 key={card}
               >
                 {card}
