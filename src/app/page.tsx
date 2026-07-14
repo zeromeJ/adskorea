@@ -56,9 +56,9 @@ export default async function Home() {
     "overview",
     "process",
     "productOverviewVideo",
+    "benefits",
     "verification",
     "performanceVideos",
-    "benefits",
     "documents",
     "products",
     "preApplication",
@@ -69,9 +69,29 @@ export default async function Home() {
     "catalog",
     "contact",
   ];
-  const requestedOrder = home?.sectionOrder?.length
+  const storedOrder = home?.sectionOrder?.length
     ? home.sectionOrder
     : defaultOrder;
+  const requestedOrder = storedOrder.filter((key) => key !== "benefits");
+  const verificationIndex = requestedOrder.indexOf("verification");
+  requestedOrder.splice(
+    verificationIndex >= 0 ? verificationIndex : 5,
+    0,
+    "benefits",
+  );
+  const storedDocumentsIndex = requestedOrder.indexOf("documents");
+  if (storedDocumentsIndex >= 0) requestedOrder.splice(storedDocumentsIndex, 1);
+  const performanceVideosIndex = requestedOrder.indexOf("performanceVideos");
+  const productsIndex = requestedOrder.indexOf("products");
+  requestedOrder.splice(
+    performanceVideosIndex >= 0
+      ? performanceVideosIndex + 1
+      : productsIndex >= 0
+        ? productsIndex
+        : 8,
+    0,
+    "documents",
+  );
   const orderMap = new Map(requestedOrder.map((key, index) => [key, index]));
   const sections = [
     {
