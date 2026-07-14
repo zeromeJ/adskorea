@@ -91,7 +91,7 @@ export default function DocumentLibrarySection({
   return (
     <section
       id="documents"
-      className="bg-[var(--muted-surface)] px-5 pt-12 pb-14 lg:px-8 lg:pb-[72px]"
+      className="bg-[var(--background)] px-5 pt-12 pb-14 lg:px-8 lg:pb-[72px]"
     >
       <div className="mx-auto max-w-[1200px]">
         <SectionTitle
@@ -138,7 +138,7 @@ export default function DocumentLibrarySection({
                 >{item}</button>
               ))}
             </div>
-            {filterCategories.length > 3 && canScrollRight ? <div aria-hidden="true" className="pointer-events-none absolute top-0 right-0 h-10 w-12 bg-gradient-to-l from-[var(--muted-surface)] to-transparent" /> : null}
+            {filterCategories.length > 3 && canScrollRight ? <div aria-hidden="true" className="pointer-events-none absolute top-0 right-0 h-10 w-12 bg-gradient-to-l from-[var(--background)] to-transparent" /> : null}
             {filterCategories.length > 3 && canScrollLeft ? <button aria-label="이전 문서 유형 보기" className="absolute top-1/2 left-0 hidden h-8 w-8 -translate-y-[60%] items-center justify-center rounded-full border border-[var(--line)] bg-white font-bold shadow-sm focus-visible:outline-2 focus-visible:outline-[var(--primary)] md:flex" onClick={() => scrollFilters(-1)} type="button">‹</button> : null}
             {filterCategories.length > 3 && canScrollRight ? <button aria-label="다음 문서 유형 보기" className="absolute top-1/2 right-0 hidden h-8 w-8 -translate-y-[60%] items-center justify-center rounded-full border border-[var(--line)] bg-white font-bold shadow-sm focus-visible:outline-2 focus-visible:outline-[var(--primary)] md:flex" onClick={() => scrollFilters(1)} type="button">›</button> : null}
           </div> : <div />}

@@ -4,7 +4,7 @@ import { benefits } from "@/lib/constants";
 
 export default function BenefitsSection() {
   return (
-    <section id="benefits" className="px-5 pt-12 pb-14 lg:px-8 lg:pb-[72px]">
+    <section id="benefits" className="bg-[var(--muted-surface)] px-5 pt-12 pb-14 lg:px-8 lg:pb-[72px]">
       <div className="mx-auto max-w-[1200px]">
         <SectionTitle
           eyebrow="Key Benefits"
