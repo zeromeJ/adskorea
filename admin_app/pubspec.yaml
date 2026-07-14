@@ -1,7 +1,7 @@
 name: ads_inquiry_admin
 description: ADS 문의관리 Android admin app.
 publish_to: "none"
-version: 1.0.3+10
+version: 1.0.8+15
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -19,6 +19,9 @@ dependencies:
   image_picker: ^1.2.3
   crop_your_image: ^2.0.0
   image: ^4.9.1
+  file_picker:
+    path: plugins/file_picker
+  http_parser: ^4.1.2
 
 dev_dependencies:
   flutter_test:

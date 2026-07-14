@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/website_content.dart';
+import '../services/api_client.dart';
 import '../services/website_content_service.dart';
 import 'website_section_screen.dart';
 
@@ -28,12 +29,57 @@ class _WebsiteManagementScreenState extends State<WebsiteManagementScreen> {
       error = null;
     });
     try {
-      sections = await widget.service.sections();
-    } catch (_) {
-      error = '홈페이지 관리 정보를 불러오지 못했습니다.';
+      final loadedSections = (await widget.service.sections())
+          .where((section) => section.key != 'site-settings')
+          .toList();
+      final performanceAssets =
+          loadedSections.any((item) => item.key == 'performance')
+              ? await widget.service.assets('performance')
+              : <WebsiteAsset>[];
+      sections = loadedSections.expand((section) {
+        if (section.key != 'performance') return [section];
+        return [
+          _performanceSummary(
+              section, 'performance-verification', '성능 검증', performanceAssets),
+          _performanceSummary(
+              section, 'performance-videos', '성능 시연 영상', performanceAssets),
+          _performanceSummary(
+              section, 'performance-documents', '기술 자료', performanceAssets),
+        ];
+      }).toList();
+    } catch (cause) {
+      error = cause is ApiException
+          ? cause.message
+          : '홈페이지 관리 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
     } finally {
       if (mounted) setState(() => loading = false);
     }
+  }
+
+  WebsiteSectionSummary _performanceSummary(
+    WebsiteSectionSummary source,
+    String key,
+    String title,
+    List<WebsiteAsset> assets,
+  ) {
+    final slots = websiteImageSlots[key] ?? const <ImageSlot>[];
+    final slotKeys = slots.map((slot) => slot.key).toSet();
+    final registered =
+        assets.where((asset) => slotKeys.contains(asset.itemKey)).length;
+    final status = registered == 0
+        ? '미등록'
+        : registered >= slots.length
+            ? '등록 완료'
+            : '일부 등록';
+    return WebsiteSectionSummary(
+      key: key,
+      title: title,
+      requiredCount: slots.length,
+      registeredCount: registered,
+      status: status,
+      updatedAt: source.updatedAt,
+      updatedByName: source.updatedByName,
+    );
   }
 
   Color _statusColor(String status) => status == '등록 완료'
@@ -48,7 +94,27 @@ class _WebsiteManagementScreenState extends State<WebsiteManagementScreen> {
             ? const Center(child: CircularProgressIndicator())
             : error != null
                 ? Center(
-                    child: FilledButton(onPressed: _load, child: Text(error!)))
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.cloud_off,
+                              size: 44, color: Color(0xFF667085)),
+                          const SizedBox(height: 14),
+                          Text(error!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontSize: 17)),
+                          const SizedBox(height: 18),
+                          FilledButton.icon(
+                            onPressed: _load,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('다시 시도'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
                 : RefreshIndicator(
                     onRefresh: _load,
                     child:

@@ -18,7 +18,9 @@ class ApiClient {
   ApiClient({this.token});
 
   String? token;
-  static const _timeout = Duration(seconds: 10);
+  // Vercel의 첫 요청과 모바일 통신 환경에서는 10초를 넘길 수 있습니다.
+  // 무한 대기는 막되 정상적인 콜드 스타트는 기다릴 수 있도록 여유를 둡니다.
+  static const _timeout = Duration(seconds: 30);
 
   Uri uri(String path, [Map<String, String?>? query]) {
     final filteredQuery = <String, String>{};
@@ -81,8 +83,7 @@ class ApiClient {
     request.fields.addAll(fields);
     request.files.addAll(files);
     try {
-      final streamed =
-          await request.send().timeout(const Duration(seconds: 60));
+      final streamed = await request.send().timeout(const Duration(minutes: 5));
       return _decode(await http.Response.fromStream(streamed));
     } on TimeoutException {
       throw const ApiException('파일 업로드가 지연되고 있습니다. 다시 시도해 주세요.');

@@ -51,6 +51,19 @@ class PendingImageEdit {
   final double zoom;
 }
 
+class PendingFileUpload {
+  const PendingFileUpload({
+    required this.bytes,
+    required this.fileName,
+    required this.mimeType,
+  });
+
+  final Uint8List bytes;
+  final String fileName, mimeType;
+}
+
+enum WebsiteSlotType { image, pdf, video }
+
 class ImageSlot {
   const ImageSlot(
       {required this.key,
@@ -58,60 +71,93 @@ class ImageSlot {
       required this.ratio,
       required this.width,
       required this.height,
-      required this.description});
+      required this.description,
+      this.type = WebsiteSlotType.image});
   final String key, label, ratio, description;
   final int width, height;
+  final WebsiteSlotType type;
   double get aspect => width / height;
 }
 
-const mainImageSlots = [
+const homeImageSlots = [
   ImageSlot(
       key: 'heroDesktop',
-      label: 'Hero 데스크톱 이미지',
+      label: 'Hero 대표 이미지',
       ratio: '16:9',
       width: 1920,
       height: 1080,
-      description: '홈페이지 첫 화면의 데스크톱 대표 이미지'),
-  ImageSlot(
-      key: 'heroMobile',
-      label: 'Hero 모바일 이미지',
-      ratio: '4:5',
-      width: 1080,
-      height: 1350,
-      description: '모바일 첫 화면의 대표 이미지'),
-  ImageSlot(
-      key: 'overview',
-      label: '제품 개요 이미지',
-      ratio: '4:3',
-      width: 1200,
-      height: 900,
-      description: '제품 소개 영역에 표시되는 이미지'),
-  ImageSlot(
-      key: 'verification',
-      label: '성능 시험 대표 이미지',
-      ratio: '4:3',
-      width: 1200,
-      height: 900,
-      description: '성능 시험 영역에 표시되는 이미지'),
-  ImageSlot(
-      key: 'verificationReport',
-      label: '시험성적서 대표 썸네일',
-      ratio: 'A4 세로형',
-      width: 900,
-      height: 1273,
-      description: '시험성적서 미리보기 이미지'),
-  ImageSlot(
-      key: 'carbonStatement',
-      label: '탄소발자국 검증 성명서 썸네일',
-      ratio: 'A4 세로형',
-      width: 900,
-      height: 1273,
-      description: '환경 데이터 검증서 미리보기 이미지'),
+      description: '한 장만 등록하면 PC 16:9와 모바일 4:5 이미지가 자동으로 생성됩니다.'),
 ];
 
 final websiteImageSlots = <String, List<ImageSlot>>{
-  'main-images': mainImageSlots,
-  'product-images': const [
+  'home': homeImageSlots,
+  'product-overview': const [
+    ImageSlot(
+        key: 'overview',
+        label: '제품 개요 이미지',
+        ratio: '4:3',
+        width: 1200,
+        height: 900,
+        description: '제품 개요 영역에 표시되는 대표 이미지'),
+    ImageSlot(
+        key: 'productOverviewVideo',
+        label: '제품 구조 소개영상',
+        ratio: '16:9',
+        width: 1280,
+        height: 720,
+        description: 'MP4, WEBM 영상 원본 파일',
+        type: WebsiteSlotType.video),
+    ImageSlot(
+        key: 'processVideo',
+        label: '제조공정 영상',
+        ratio: '16:9',
+        width: 1280,
+        height: 720,
+        description: 'MP4, WEBM 영상 원본 파일',
+        type: WebsiteSlotType.video),
+  ],
+  'performance-verification': const [
+    ImageSlot(
+        key: 'verification',
+        label: '성능 시험 대표 이미지',
+        ratio: '4:3',
+        width: 1200,
+        height: 900,
+        description: '성능 검증 영역에 표시되는 대표 이미지'),
+    ImageSlot(
+        key: 'verificationReportFile',
+        label: '시험성적서 PDF',
+        ratio: 'A4 세로형',
+        width: 900,
+        height: 1273,
+        description: '원본 PDF를 올리면 미리보기 표지가 자동 생성됩니다.',
+        type: WebsiteSlotType.pdf),
+  ],
+  'performance-videos': [
+    ...List.generate(
+        6,
+        (i) => ImageSlot(
+            key: 'video${i + 1}File',
+            label: '성능 시연 영상 ${i + 1}',
+            ratio: '16:9',
+            width: 1280,
+            height: 720,
+            description: 'MP4, WEBM 영상 원본 파일',
+            type: WebsiteSlotType.video)),
+  ],
+  'performance-documents': [
+    ...List.generate(
+        4,
+        (i) => ImageSlot(
+            key: 'document${i + 1}File',
+            label: '기술자료 ${i + 1} PDF',
+            ratio: 'A4 세로형',
+            width: 900,
+            height: 1273,
+            description: '원본 PDF를 올리면 미리보기 표지가 자동 생성됩니다.',
+            type: WebsiteSlotType.pdf)),
+  ],
+  'product-lineup': const [
     ImageSlot(
         key: 'singleDeck',
         label: '단면형 대표 이미지',
@@ -141,78 +187,16 @@ final websiteImageSlots = <String, List<ImageSlot>>{
         height: 900,
         description: '주문제작 제품군 대표 이미지입니다.'),
   ],
-  'intro-videos': const [
+  'applications': const [],
+  'environment': const [
     ImageSlot(
-        key: 'productOverviewPoster',
-        label: '제품 구조 소개영상 썸네일',
-        ratio: '16:9',
-        width: 1280,
-        height: 720,
-        description: '영상 재생 전 표시되는 이미지'),
-    ImageSlot(
-        key: 'companyOverviewPoster',
-        label: '회사·생산 소개영상 썸네일',
-        ratio: '16:9',
-        width: 1280,
-        height: 720,
-        description: '영상 재생 전 표시되는 이미지'),
-    ImageSlot(
-        key: 'processPoster',
-        label: '제조공정 영상 썸네일',
-        ratio: '16:9',
-        width: 1280,
-        height: 720,
-        description: '영상 재생 전 표시되는 이미지'),
-  ],
-  'performance-tests': const [
-    ImageSlot(
-        key: 'national2025',
-        label: '2025 성능 시험 썸네일',
+        key: 'carbonStatementFile',
+        label: '탄소발자국 검증 성명서 PDF',
         ratio: 'A4 세로형',
         width: 900,
         height: 1273,
-        description: 'PDF 옆에 표시되는 대표 이미지'),
-    ImageSlot(
-        key: 'tbkPhysical2026',
-        label: '2026 TBK 물리성능 썸네일',
-        ratio: 'A4 세로형',
-        width: 900,
-        height: 1273,
-        description: 'PDF 옆에 표시되는 대표 이미지'),
-    ImageSlot(
-        key: 'tbkFormaldehyde2026',
-        label: '2026 TBK 포름알데히드 썸네일',
-        ratio: 'A4 세로형',
-        width: 900,
-        height: 1273,
-        description: 'PDF 옆에 표시되는 대표 이미지'),
-  ],
-  'performance-videos': List.generate(
-      6,
-      (i) => ImageSlot(
-          key: 'video${i + 1}',
-          label: '성능 시연 영상 ${i + 1} 썸네일',
-          ratio: '16:9',
-          width: 1280,
-          height: 720,
-          description: '영상 URL과 함께 표시되는 썸네일')),
-  'documents': List.generate(
-      4,
-      (i) => ImageSlot(
-          key: 'document${i + 1}',
-          label: '기술자료 ${i + 1} 썸네일',
-          ratio: 'A4 세로형',
-          width: 900,
-          height: 1273,
-          description: 'PDF 문서 카드의 대표 이미지')),
-  'catalog': const [
-    ImageSlot(
-        key: 'catalogCover',
-        label: '카탈로그 표지',
-        ratio: 'A4 세로형',
-        width: 900,
-        height: 1273,
-        description: '카탈로그 다운로드 카드 표지')
+        description: '원본 PDF를 올리면 미리보기 표지가 자동 생성됩니다.',
+        type: WebsiteSlotType.pdf),
   ],
   'company': const [
     ImageSlot(
@@ -221,15 +205,27 @@ final websiteImageSlots = <String, List<ImageSlot>>{
         ratio: '4:3',
         width: 1200,
         height: 900,
-        description: '회사·생산 영역 대표 이미지')
-  ],
-  'site-settings': const [
+        description: '회사·생산 영역 대표 이미지'),
     ImageSlot(
-        key: 'logo',
-        label: '홈페이지 로고',
-        ratio: '4:3',
-        width: 1200,
-        height: 900,
-        description: '투명 여백을 포함해 로고 전체가 보이도록 조정하세요.')
+        key: 'companyOverviewVideo',
+        label: '회사·생산 소개영상',
+        ratio: '16:9',
+        width: 1280,
+        height: 720,
+        description: 'MP4, WEBM 영상 원본 파일',
+        type: WebsiteSlotType.video),
+    ImageSlot(
+        key: 'catalogFile',
+        label: '제품 카탈로그 PDF',
+        ratio: 'A4 세로형',
+        width: 900,
+        height: 1273,
+        description: '원본 PDF를 올리면 카탈로그 표지가 자동 생성됩니다.',
+        type: WebsiteSlotType.pdf),
   ],
 };
+
+String websiteStorageSectionKey(String sectionKey) {
+  if (sectionKey.startsWith('performance-')) return 'performance';
+  return sectionKey;
+}

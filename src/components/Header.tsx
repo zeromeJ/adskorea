@@ -47,6 +47,8 @@ export default function Header({
   const closeMenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchPrimedMenuRef = useRef<string | null>(null);
   const mobileNavRef = useRef<HTMLElement>(null);
+  const mobilePointerStartXRef = useRef<number | null>(null);
+  const mobileNavDraggedRef = useRef(false);
   const activeMobileSection =
     mobileNavItems.find(
       (item) =>
@@ -155,14 +157,13 @@ export default function Header({
       `[data-mobile-section="${activeMobileSection}"]`,
     );
     if (!activeItem) return;
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const nav = mobileNavRef.current;
     const centeredPosition =
       activeItem.offsetLeft + activeItem.offsetWidth / 2 - nav.clientWidth / 2;
     const maxScrollPosition = Math.max(nav.scrollWidth - nav.clientWidth, 0);
     mobileNavRef.current.scrollTo({
       left: Math.min(Math.max(centeredPosition, 0), maxScrollPosition),
-      behavior: reduceMotion ? "auto" : "smooth",
+      behavior: "auto",
     });
   }, [activeMobileSection]);
 
@@ -223,7 +224,37 @@ export default function Header({
   function navigate(event: React.MouseEvent<HTMLAnchorElement>, href: string) {
     event.preventDefault();
     setOpenDesktopMenu(null);
+    if (window.innerWidth < 1024) {
+      setMobileLogoVisible(href === "#hero");
+      setActiveSection(href.slice(1));
+    }
     scrollToSection(href.slice(1));
+  }
+
+  function handleMobilePointerDown(event: React.PointerEvent<HTMLAnchorElement>) {
+    mobilePointerStartXRef.current = event.clientX;
+    mobileNavDraggedRef.current = false;
+  }
+
+  function handleMobilePointerMove(event: React.PointerEvent<HTMLAnchorElement>) {
+    const startX = mobilePointerStartXRef.current;
+    if (startX !== null && Math.abs(event.clientX - startX) > 8) {
+      mobileNavDraggedRef.current = true;
+    }
+  }
+
+  function handleMobileNavigation(
+    event: React.MouseEvent<HTMLAnchorElement>,
+    href: string,
+  ) {
+    if (mobileNavDraggedRef.current) {
+      event.preventDefault();
+      mobileNavDraggedRef.current = false;
+      mobilePointerStartXRef.current = null;
+      return;
+    }
+    mobilePointerStartXRef.current = null;
+    navigate(event, href);
   }
 
   function cancelScheduledMenuClose() {
@@ -402,6 +433,7 @@ export default function Header({
       <nav
         aria-label="모바일 섹션 내비게이션"
         className="touch-horizontal-scroller no-scrollbar flex w-full snap-x gap-2 overflow-x-auto border-t border-[var(--line)] px-4 py-2 lg:hidden"
+        data-mobile-navigation
         ref={mobileNavRef}
       >
         {mobileNavItems.map((item) => {
@@ -414,7 +446,16 @@ export default function Header({
               data-mobile-section={section}
               href={item.href}
               key={item.href}
-              onClick={(event) => navigate(event, item.href)}
+              onClick={(event) => handleMobileNavigation(event, item.href)}
+              onPointerCancel={() => {
+                mobilePointerStartXRef.current = null;
+                mobileNavDraggedRef.current = false;
+              }}
+              onPointerDown={handleMobilePointerDown}
+              onPointerMove={handleMobilePointerMove}
+              onPointerUp={() => {
+                mobilePointerStartXRef.current = null;
+              }}
             >
               {item.label}
             </a>

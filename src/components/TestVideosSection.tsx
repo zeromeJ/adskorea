@@ -69,15 +69,19 @@ export default function TestVideosSection({
                   onClick={() => setSelectedVideo(video)}
                   type="button"
                 >
-                  <MediaPlaceholder
-                    alt={`${video.title} 영상 썸네일`}
-                    desktopRatio="16:9"
-                    fieldName={`performanceVideo.${index}.poster`}
-                    guide="원본 영상 등록 완료 · 대표 장면을 사용한 썸네일 필요"
-                    label="영상 썸네일 / 16:9"
-                    expandable={false}
-                    src={video.poster}
-                  />
+                  {video.videoUrl && !video.poster ? (
+                    <video aria-label={`${video.title} 영상 미리보기`} className="aspect-video w-full bg-black object-contain" muted playsInline preload="metadata" src={`${video.videoUrl}#t=0.1`} />
+                  ) : (
+                    <MediaPlaceholder
+                      alt={`${video.title} 영상 썸네일`}
+                      desktopRatio="16:9"
+                      fieldName={`performanceVideo.${index}.poster`}
+                      guide="영상을 등록하면 첫 장면을 미리보기로 사용합니다."
+                      label="영상 미리보기 / 16:9"
+                      expandable={false}
+                      src={video.poster}
+                    />
+                  )}
                   {playable ? <span className="absolute inset-0 flex items-center justify-center"><span className="flex h-11 w-11 items-center justify-center rounded-full bg-[rgba(16,37,29,0.82)] text-white">▶</span></span> : null}
                   <span className="absolute right-2 bottom-2 rounded bg-[rgba(16,37,29,0.82)] px-2 py-1 text-xs font-bold text-white">{durationLabel(video.durationSeconds)}</span>
                 </button>

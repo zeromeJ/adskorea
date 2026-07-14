@@ -4,10 +4,12 @@ import { sustainabilityData, sustainabilityPoints } from "@/lib/constants";
 
 type EcoDataSectionProps = {
   statementThumbnailUrl?: string;
+  statementFileUrl?: string;
 };
 
 export default function EcoDataSection({
   statementThumbnailUrl,
+  statementFileUrl,
 }: EcoDataSectionProps) {
   return (
     <section
@@ -22,9 +24,10 @@ export default function EcoDataSection({
           description="적용 모델과 검증 기준이 확인된 탄소발자국 값을 제공합니다."
         />
         <div className="mt-8 grid gap-6 md:grid-cols-[0.42fr_1fr] md:items-stretch">
+          <div className="relative mx-auto w-full max-w-[150px] self-center md:h-full md:max-w-none">
           <MediaPlaceholder
             alt="SGS 제품 탄소발자국 검증 성명서 표지"
-            className="mx-auto w-full max-w-[150px] self-center md:h-full md:max-w-none"
+            className="h-full"
             desktopRatio="9:16"
             fieldName="homePage.sustainability.statementThumbnail"
             guide="SGS 제품 탄소발자국 검증 성명서 A4 표지"
@@ -34,6 +37,8 @@ export default function EcoDataSection({
             desktopFill
             src={statementThumbnailUrl}
           />
+          {statementFileUrl ? <a aria-label="탄소발자국 검증 성명서 PDF 열기" className="absolute right-2 bottom-2 z-20 rounded-md bg-white px-3 py-2 text-xs font-bold text-[var(--primary-dark)]" href={statementFileUrl} rel="noreferrer" target="_blank">PDF 열기</a> : null}
+          </div>
           <div className="flex h-full flex-col gap-4">
             <article className="rounded-lg border border-white/12 bg-white/[0.04] p-6">
               <p className="en text-sm font-bold text-[var(--accent-gold)]">

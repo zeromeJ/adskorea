@@ -19,7 +19,7 @@ export default function Footer({ settings, hasCatalog = false }: { settings?: Fo
   const email = settings?.email || company.email;
   const phone = settings?.phone || company.phone;
   const address = settings?.address || company.address;
-  const logoUrl = settings?.logoUrl || "/images/logo_white_new.png";
+  const logoUrl = "/images/logo_white_new.png";
 
   return (
     <footer className="bg-[var(--primary-deep)] px-5 py-12 text-white lg:px-8">
@@ -30,7 +30,6 @@ export default function Footer({ settings, hasCatalog = false }: { settings?: Fo
             className="h-12 w-auto object-contain"
             height={540}
             src={logoUrl}
-            unoptimized={logoUrl.startsWith("http")}
             width={966}
           />
           <p className="mt-5 max-w-md text-sm leading-7 text-white/68">

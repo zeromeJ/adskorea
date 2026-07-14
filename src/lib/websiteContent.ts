@@ -1,5 +1,9 @@
-import { prisma } from "@/lib/prisma";
-import { products as fallbackProducts } from "@/lib/constants";
+import { hasWebsiteContentModels, prisma } from "@/lib/prisma";
+import {
+  documents as fallbackDocuments,
+  performanceVideoFallbacks,
+  products as fallbackProducts,
+} from "@/lib/constants";
 
 export type CmsSiteContent = {
   siteSettings?: {
@@ -25,7 +29,9 @@ export type CmsSiteContent = {
     companyOverviewPoster?: string;
     verificationImage?: string;
     verificationReportThumbnail?: string;
+    verificationReportFile?: string;
     sustainabilityStatementThumbnail?: string;
+    sustainabilityStatementFile?: string;
     sectionOrder?: string[];
     sectionVisibility?: Array<{ section: string; visible: boolean }>;
   };
@@ -103,6 +109,10 @@ export type CmsSiteContent = {
 };
 
 export async function getWebsiteContent(): Promise<CmsSiteContent | null> {
+  // Prisma 스키마 변경 직후 개발 서버가 구형 Client를 메모리에 들고
+  // 있어도 공개 홈페이지는 코드 기본값으로 정상 렌더링한다.
+  if (!hasWebsiteContentModels()) return null;
+
   try {
     const sections = await prisma.websiteSection.findMany({
       include: { assets: { where: { published: true }, orderBy: { sortOrder: "asc" } } },
@@ -112,9 +122,29 @@ export async function getWebsiteContent(): Promise<CmsSiteContent | null> {
     const assets = (key: string) => byKey.get(key)?.assets ?? [];
     const asset = (section: string, itemKey: string) =>
       assets(section).find((item) => item.itemKey === itemKey)?.url ?? undefined;
+    const assetRecord = (section: string, itemKey: string) =>
+      assets(section).find((item) => item.itemKey === itemKey);
+    const assetThumbnail = (section: string, itemKey: string) => {
+      const metadata = assetRecord(section, itemKey)?.metadata;
+      if (!metadata || Array.isArray(metadata) || typeof metadata !== "object") return undefined;
+      const value = (metadata as Record<string, unknown>).thumbnailUrl;
+      return typeof value === "string" ? value : undefined;
+    };
+    const assetWithLegacy = (
+      section: string,
+      itemKey: string,
+      legacySection: string,
+      legacyItemKey = itemKey,
+    ) => asset(section, itemKey) ?? asset(legacySection, legacyItemKey);
     const settings = (byKey.get("site-settings")?.data ?? {}) as CmsSiteContent["siteSettings"];
     const videoData = (byKey.get("intro-videos")?.data ?? {}) as Record<string, string>;
-    const productImages = new Map(assets("product-images").map((item) => [item.itemKey, item.url]));
+    const currentProductImages = assets("product-lineup");
+    const productImages = new Map(
+      (currentProductImages.length
+        ? currentProductImages
+        : assets("product-images")
+      ).map((item) => [item.itemKey, item.url]),
+    );
     const productKeys = ["singleDeck", "doubleDeck", "threeRunner", "custom"];
     const mappedProducts = fallbackProducts.map((item, index) => ({
       ...item,
@@ -123,24 +153,50 @@ export async function getWebsiteContent(): Promise<CmsSiteContent | null> {
     return {
       siteSettings: settings,
       homePage: {
-        heroDesktopImage: asset("main-images", "heroDesktop"),
-        heroMobileImage: asset("main-images", "heroMobile"),
-        overviewImage: asset("main-images", "overview"),
-        verificationImage: asset("main-images", "verification"),
-        verificationReportThumbnail: asset("main-images", "verificationReport"),
-        sustainabilityStatementThumbnail: asset("main-images", "carbonStatement"),
-        productOverviewVideo: videoData.productOverviewVideo,
-        productOverviewPoster: asset("intro-videos", "productOverviewPoster"),
-        companyOverviewVideo: videoData.companyOverviewVideo,
-        companyOverviewPoster: asset("intro-videos", "companyOverviewPoster"),
-        processVideo: videoData.processVideo,
-        processPoster: asset("intro-videos", "processPoster"),
+        heroDesktopImage: assetWithLegacy("home", "heroDesktop", "main-images"),
+        heroMobileImage: assetWithLegacy("home", "heroMobile", "main-images"),
+        overviewImage: assetWithLegacy("product-overview", "overview", "main-images"),
+        verificationImage: assetWithLegacy("performance", "verification", "main-images"),
+        verificationReportThumbnail: assetThumbnail("performance", "verificationReportFile") ?? assetWithLegacy("performance", "verificationReport", "main-images"),
+        verificationReportFile: asset("performance", "verificationReportFile"),
+        sustainabilityStatementThumbnail: assetThumbnail("environment", "carbonStatementFile") ?? assetWithLegacy("environment", "carbonStatement", "main-images"),
+        sustainabilityStatementFile: asset("environment", "carbonStatementFile"),
+        productOverviewVideo: asset("product-overview", "productOverviewVideo") ?? videoData.productOverviewVideo,
+        productOverviewPoster: assetWithLegacy("product-overview", "productOverviewPoster", "intro-videos"),
+        companyOverviewVideo: asset("company", "companyOverviewVideo") ?? videoData.companyOverviewVideo,
+        companyOverviewPoster: assetWithLegacy("company", "companyOverviewPoster", "intro-videos"),
+        processVideo: asset("product-overview", "processVideo") ?? videoData.processVideo,
+        processPoster: assetWithLegacy("product-overview", "processPoster", "intro-videos"),
       },
       products: mappedProducts,
+      performanceVideos: performanceVideoFallbacks.map((video, index) => ({
+        ...video,
+        videoUrl: asset("performance", `video${index + 1}File`),
+        poster: asset("performance", `video${index + 1}`),
+      })),
+      documents: fallbackDocuments.map((document, index) => ({
+        ...document,
+        relatedProducts: document.relatedProducts ? [document.relatedProducts] : [],
+        fileUrl: asset("performance", `document${index + 1}File`) ?? "",
+        previewUrl: asset("performance", `document${index + 1}File`) ?? "",
+        thumbnailUrl: assetThumbnail("performance", `document${index + 1}File`) ?? asset("performance", `document${index + 1}`),
+        publicDownload: Boolean(asset("performance", `document${index + 1}File`)),
+        previewAvailable: Boolean(asset("performance", `document${index + 1}File`)),
+      })),
       factoryImage: asset("company", "factory"),
+      catalog: asset("company", "catalogFile") ? {
+        title: "ADS Korea 제품 카탈로그",
+        language: "한국어",
+        version: "최신본",
+        pages: "PDF",
+        updatedAt: "최신 등록본",
+        fileSize: "",
+        thumbnailUrl: assetThumbnail("company", "catalogFile") ?? asset("company", "catalogCover"),
+        fileUrl: asset("company", "catalogFile"),
+      } : undefined,
     };
   } catch (error) {
-    console.error("Website content DB fetch failed:", error);
+    console.warn("Website content DB fetch failed; using fallback content.", error);
     return null;
   }
 }

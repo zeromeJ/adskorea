@@ -19,7 +19,7 @@ export default function StatCard({
 }: StatCardProps) {
   return (
     <div
-      className={`rounded-lg border ${
+      className={`min-w-0 overflow-hidden rounded-lg border ${
         compact ? "p-3 sm:p-4" : company ? "px-4 py-3.5" : "p-5"
       } ${
         dark
@@ -27,19 +27,19 @@ export default function StatCard({
           : "border-[var(--line)] bg-white"
       } ${
         company
-          ? "transition duration-300 hover:border-[var(--primary)] hover:shadow-[0_8px_20px_rgba(16,37,29,0.06)]"
+          ? "flex h-full flex-col justify-center transition duration-300 hover:border-[var(--primary)] hover:shadow-[0_8px_20px_rgba(16,37,29,0.06)]"
           : ""
       } ${compact ? "flex h-full flex-col items-center justify-center text-center" : ""} ${className}`}
     >
       <div
-        className={compact ? "flex flex-col items-center justify-center" : ""}
+        className={`min-w-0 max-w-full ${compact ? "flex flex-col items-center justify-center" : ""}`}
       >
         <p
-          className={`stat-value font-bold text-[var(--accent-gold)] ${
+          className={`stat-value max-w-full font-bold text-[var(--accent-gold)] ${
             compact
               ? "text-2xl leading-none sm:text-3xl"
               : company
-                ? "whitespace-nowrap text-xl sm:text-2xl"
+                ? "whitespace-nowrap text-xl leading-tight tracking-[-0.035em] sm:text-2xl lg:text-lg xl:text-xl"
                 : "text-3xl"
           }`}
           style={company ? { fontFamily: "var(--font-kr)" } : undefined}

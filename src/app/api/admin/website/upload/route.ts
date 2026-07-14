@@ -41,7 +41,9 @@ export async function POST(request: Request) {
   const outputHeight = Math.max(1, Number(form.get("outputHeight") || originalMeta.height || 1));
   const hasAlpha = Boolean((await sharp(editedBuffer).metadata()).hasAlpha);
   const pipeline = sharp(editedBuffer).rotate().resize(outputWidth, outputHeight, {
-    fit: "cover", position: "centre", withoutEnlargement: true,
+    fit: "cover",
+    position: itemKey === "heroMobile" ? "attention" : "centre",
+    withoutEnlargement: true,
   });
   const outputMime = hasAlpha ? "image/png" : "image/webp";
   const outputExtension = hasAlpha ? "png" : "webp";

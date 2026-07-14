@@ -2,7 +2,7 @@ import { Prisma, WebsiteAssetType } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getAdminFromRequest, unauthorizedResponse } from "@/lib/admin/auth";
-import { prisma } from "@/lib/prisma";
+import { hasWebsiteContentModels, prisma } from "@/lib/prisma";
 import { getWebsiteSection } from "@/lib/websiteSections";
 
 type Context = { params: Promise<{ sectionKey: string }> };
@@ -10,6 +10,7 @@ type Context = { params: Promise<{ sectionKey: string }> };
 export async function GET(request: Request, context: Context) {
   const admin = await getAdminFromRequest(request);
   if (!admin) return unauthorizedResponse();
+  if (!hasWebsiteContentModels()) return NextResponse.json({ success: false, message: "서버를 다시 시작한 후 이용해 주세요." }, { status: 503 });
   const { sectionKey } = await context.params;
   const definition = getWebsiteSection(sectionKey);
   if (!definition) return NextResponse.json({ success: false, message: "관리 섹션을 찾을 수 없습니다." }, { status: 404 });
@@ -32,6 +33,7 @@ type AssetInput = {
 export async function PUT(request: Request, context: Context) {
   const admin = await getAdminFromRequest(request);
   if (!admin) return unauthorizedResponse();
+  if (!hasWebsiteContentModels()) return NextResponse.json({ success: false, message: "서버를 다시 시작한 후 이용해 주세요." }, { status: 503 });
   const { sectionKey } = await context.params;
   const definition = getWebsiteSection(sectionKey);
   if (!definition) return NextResponse.json({ success: false, message: "관리 섹션을 찾을 수 없습니다." }, { status: 404 });
@@ -42,7 +44,7 @@ export async function PUT(request: Request, context: Context) {
     const saved = await tx.websiteSection.upsert({
       where: { key: sectionKey },
       create: { key: sectionKey, title: definition.title, requiredCount: definition.requiredCount, data: body.data ?? Prisma.JsonNull, updatedById: admin.id, updatedByName: admin.displayName ?? admin.username },
-      update: { data: body.data ?? Prisma.JsonNull, updatedById: admin.id, updatedByName: admin.displayName ?? admin.username },
+      update: { title: definition.title, requiredCount: definition.requiredCount, data: body.data ?? Prisma.JsonNull, updatedById: admin.id, updatedByName: admin.displayName ?? admin.username },
     });
     await tx.websiteAsset.deleteMany({ where: { sectionKey } });
     for (const asset of assets) {

@@ -113,7 +113,7 @@ export default function InquirySection({ phoneHref = "" }: { phoneHref?: string 
           <aside className="mt-7 rounded-lg border border-white/12 bg-white/[0.04] p-5 text-white">
             <p className="text-sm font-bold text-[var(--accent-gold)]">상담 안내</p>
             <ul className="mt-4 grid gap-3 text-sm leading-6 text-white/78">
-              {["문의 유형에 맞는 항목만 입력", "일반 문의는 간단하게 접수", "화물·설비 조건은 필요할 때만 입력", "도면과 현장사진 첨부 가능", "이메일·전화 등 회신 방식 선택 가능"].map((item) => <li className="flex min-w-0 items-center gap-3" key={item}><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--accent-gold)] text-[11px] font-black text-[var(--primary-deep)]">✓</span><span className="min-w-0">{item}</span></li>)}
+              {["문의 유형별 맞춤 입력", "필요한 정보만 간편하게 작성", "맞춤 규격 및 적용 환경 상담", "도면과 현장사진 첨부 가능", "전화·문자·이메일 회신 지원"].map((item) => <li className="flex min-w-0 items-center gap-3" key={item}><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--accent-gold)] text-[11px] font-black text-[var(--primary-deep)]">✓</span><span className="min-w-0">{item}</span></li>)}
             </ul>
           </aside>
           {phoneHref ? <LinkButton className="mt-3 w-full" href={phoneHref} variant="light">전화하기</LinkButton> : null}

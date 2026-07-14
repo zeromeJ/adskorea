@@ -18,7 +18,6 @@ export const navItems = [
       { label: "제품 개요", href: "#product-overview" },
       { label: "제조공정", href: "#manufacturing-process" },
       { label: "제품 소개영상", href: "#product-overview-video" },
-      { label: "핵심 장점", href: "#benefits" },
     ],
   },
   {
@@ -27,6 +26,7 @@ export const navItems = [
     children: [
       { label: "성능 검증", href: "#performance" },
       { label: "성능 시연 영상", href: "#performance-videos" },
+      { label: "핵심 장점", href: "#benefits" },
       { label: "기술자료·시험·인증", href: "#documents" },
     ],
   },

@@ -7,12 +7,14 @@ import { performanceFeatureGroups, testGroups } from "@/lib/constants";
 type PerformanceSectionProps = {
   testImageUrl?: string;
   reportThumbnailUrl?: string;
+  reportFileUrl?: string;
   groups?: TestGroup[];
 };
 
 export default function PerformanceSection({
   testImageUrl,
   reportThumbnailUrl,
+  reportFileUrl,
   groups = testGroups,
 }: PerformanceSectionProps) {
   return (
@@ -37,16 +39,19 @@ export default function PerformanceSection({
             mobileRatio="16:9"
             src={testImageUrl}
           />
-          <MediaPlaceholder
-            alt="제품 성능 시험성적서 표지"
-            desktopRatio="9:16"
-            fieldName="homePage.verification.reportThumbnail"
-            guide="공개 가능한 시험성적서 A4 표지 또는 핵심 페이지"
-            label="시험성적서 썸네일"
-            mediaType="document"
-            mobileRatio="9:16"
-            src={reportThumbnailUrl}
-          />
+          <div className="relative">
+            <MediaPlaceholder
+              alt="제품 성능 시험성적서 표지"
+              desktopRatio="9:16"
+              fieldName="homePage.verification.reportThumbnail"
+              guide="공개 가능한 시험성적서 A4 표지 또는 핵심 페이지"
+              label="시험성적서 썸네일"
+              mediaType="document"
+              mobileRatio="9:16"
+              src={reportThumbnailUrl}
+            />
+            {reportFileUrl ? <a aria-label="시험성적서 PDF 열기" className="absolute right-2 bottom-2 z-20 rounded-md bg-[var(--primary)] px-3 py-2 text-xs font-bold text-white" href={reportFileUrl} rel="noreferrer" target="_blank">PDF 열기</a> : null}
+          </div>
         </div>
 
         <VerificationPanel groups={groups} />
