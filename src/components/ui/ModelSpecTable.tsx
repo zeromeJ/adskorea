@@ -6,30 +6,60 @@ type ModelSpec = {
   usage: string;
 };
 
-export default function ModelSpecTable({ specs }: { specs: ModelSpec[] }) {
+type ModelSpecTableProps = {
+  specs: ModelSpec[];
+};
+
+function SizeText({ size }: { size: string }) {
+  const suffix = " 등";
+
+  if (!size.endsWith(suffix)) return <>{size}</>;
+
   return (
     <>
+      {size.slice(0, -suffix.length)}
+      <span className="font-normal text-[var(--sub-text)]">{suffix}</span>
+    </>
+  );
+}
+
+export default function ModelSpecTable({ specs }: ModelSpecTableProps) {
+  return (
+    <div className="mx-auto max-w-[1080px]">
       <div className="mt-8 grid gap-3 md:hidden">
         {specs.map((spec) => (
           <article
-            className="rounded-lg border border-[var(--line)] bg-white p-4"
+            className="rounded-lg border border-[var(--line)] bg-white p-4 transition-colors hover:border-[var(--primary)] hover:bg-[var(--muted-surface)]"
             key={spec.model}
           >
-            <div className="flex items-center justify-between gap-4">
-              <h3 className="font-bold text-[var(--primary-dark)]">{spec.model}</h3>
-              <span className="rounded-full bg-[var(--muted-surface)] px-3 py-1 text-xs font-semibold text-[var(--sub-text)]">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-lg font-bold text-[var(--primary)]">
+                {spec.model}
+              </h3>
+              <span
+                className="rounded-full bg-[var(--sub-mint)] px-3 py-1 text-xs font-bold text-[var(--primary-dark)]"
+              >
                 {spec.usage}
               </span>
             </div>
-            <p className="mt-3 text-sm text-[var(--sub-text)]">{spec.size}</p>
-            <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-[var(--line)] pt-3">
-              <div>
-                <dt className="text-xs text-[var(--sub-text)]">동하중</dt>
-                <dd className="number mt-1 font-bold text-[var(--text)]">{spec.dynamicLoad}</dd>
+            <dl className="mt-4 grid grid-cols-2 gap-2 border-t border-[var(--line)] pt-3">
+              <div className="col-span-2 rounded-md bg-[var(--muted-surface)] px-3 py-2.5">
+                <dt className="text-xs text-[var(--sub-text)]">대표 규격</dt>
+                <dd className="number mt-1 whitespace-nowrap text-sm font-bold text-[var(--text)]">
+                  <SizeText size={spec.size} />
+                </dd>
               </div>
-              <div>
+              <div className="rounded-md bg-[var(--muted-surface)] px-3 py-2.5">
+                <dt className="text-xs text-[var(--sub-text)]">동하중</dt>
+                <dd className="number mt-1 whitespace-nowrap text-sm font-bold text-[var(--text)]">
+                  {spec.dynamicLoad}
+                </dd>
+              </div>
+              <div className="rounded-md bg-[var(--muted-surface)] px-3 py-2.5">
                 <dt className="text-xs text-[var(--sub-text)]">정하중</dt>
-                <dd className="number mt-1 font-bold text-[var(--text)]">{spec.staticLoad}</dd>
+                <dd className="number mt-1 whitespace-nowrap text-sm font-bold text-[var(--text)]">
+                  {spec.staticLoad}
+                </dd>
               </div>
             </dl>
           </article>
@@ -38,28 +68,43 @@ export default function ModelSpecTable({ specs }: { specs: ModelSpec[] }) {
 
       <div className="mt-10 hidden overflow-hidden rounded-lg border border-[var(--line)] md:block">
         <table className="w-full border-collapse bg-white text-left text-sm">
-          <thead className="en bg-[var(--muted-surface)] text-xs uppercase tracking-[0.08em] text-[var(--sub-text)]">
+          <thead className="bg-[var(--muted-surface)] text-xs font-bold text-[var(--primary-dark)] lg:text-sm">
             <tr>
-              <th className="p-4">모델군</th>
-              <th className="p-4">대표 규격</th>
-              <th className="p-4">동하중</th>
-              <th className="p-4">정하중</th>
-              <th className="p-4">추천 용도</th>
+              <th className="px-3 py-4 lg:px-5">모델군</th>
+              <th className="px-3 py-4 lg:px-5">대표 규격</th>
+              <th className="px-3 py-4 lg:px-5">동하중</th>
+              <th className="px-3 py-4 lg:px-5">정하중</th>
+              <th className="px-3 py-4 lg:px-5">추천 용도</th>
             </tr>
           </thead>
           <tbody>
             {specs.map((spec) => (
-              <tr className="border-t border-[var(--line)]" key={spec.model}>
-                <td className="p-4 font-bold text-[var(--primary-dark)]">{spec.model}</td>
-                <td className="p-4 text-[var(--sub-text)]">{spec.size}</td>
-                <td className="number p-4 font-bold">{spec.dynamicLoad}</td>
-                <td className="number p-4 font-bold">{spec.staticLoad}</td>
-                <td className="p-4 text-[var(--sub-text)]">{spec.usage}</td>
+              <tr
+                className="border-t border-[var(--line)] transition-colors hover:bg-[var(--muted-surface)]"
+                key={spec.model}
+              >
+                <td className="whitespace-nowrap px-3 py-4 font-bold text-[var(--primary)] lg:px-5 lg:py-5">
+                  {spec.model}
+                </td>
+                <td className="number whitespace-nowrap px-3 py-4 text-[var(--text)] lg:px-5 lg:py-5">
+                  <SizeText size={spec.size} />
+                </td>
+                <td className="number whitespace-nowrap px-3 py-4 font-bold text-[var(--text)] lg:px-5 lg:py-5">
+                  {spec.dynamicLoad}
+                </td>
+                <td className="number whitespace-nowrap px-3 py-4 font-bold text-[var(--text)] lg:px-5 lg:py-5">
+                  {spec.staticLoad}
+                </td>
+                <td className="px-3 py-4 lg:px-5 lg:py-5">
+                  <span className="inline-flex whitespace-nowrap rounded-full bg-[var(--sub-mint)] px-3 py-1.5 text-xs font-bold text-[var(--primary-dark)]">
+                    {spec.usage}
+                  </span>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-    </>
+    </div>
   );
 }
