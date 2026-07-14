@@ -1,55 +1,48 @@
-import PalletVisual from "@/components/ui/PalletVisual";
+import MediaPlaceholder from "@/components/ui/MediaPlaceholder";
 import SectionTitle from "@/components/ui/SectionTitle";
 import { LinkButton } from "@/components/ui/Button";
-import { processSteps } from "@/lib/constants";
 
-export default function ProductIntroSection() {
+type ProductIntroSectionProps = {
+  imageUrl?: string;
+};
+
+export default function ProductIntroSection({
+  imageUrl,
+}: ProductIntroSectionProps) {
   return (
-    <section id="product" className="px-5 pt-14 pb-16 lg:px-8 lg:pb-20">
+    <section id="product-overview" className="px-5 pt-12 pb-14 lg:px-8 lg:pb-[72px]">
       <div className="mx-auto grid max-w-[1200px] gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
-        <div>
-          <PalletVisual />
-          <div className="mt-4 rounded-lg border border-[var(--line)] bg-white p-5">
-            <p className="en text-sm font-bold text-[var(--accent-gold)]">
-              Integrated Molding Process
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {processSteps.map((step) => (
-                <span
-                  className="rounded-md bg-[var(--muted-surface)] px-3 py-2 text-sm font-bold text-[var(--primary-dark)]"
-                  key={step}
-                >
-                  {step}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div>
+        <MediaPlaceholder
+          alt="MDI 압축성형 목재 팔레트 제품 구조"
+          className="order-2 lg:order-1"
+          desktopRatio="4:3"
+          fieldName="homePage.overview.image"
+          guide="배경을 제거한 실제 제품 또는 제품 구조 확인 이미지"
+          label="제품 개요 이미지"
+          mobileRatio="4:3"
+          src={imageUrl}
+        />
+        <div className="order-1 lg:order-2">
           <SectionTitle
-            eyebrow="Product Intro"
-            title="MDI 친환경 몰드 팔레트란?"
-            description="MDI 친환경 몰드 팔레트는 목재 폐기물, 짚, 대나무 등 농림 부산물을 주원료로 사용하고, MDI 친환경 접착제를 더해 고온·고압 조건에서 일체형으로 성형한 물류 포장재입니다."
+            eyebrow="Product Overview"
+            title="MDI 압축성형 목재 팔레트"
+            description="MDI-bonded Compressed Wood Pallet"
           />
-          <p className="mt-6 text-base leading-8 text-[var(--sub-text)]">
-            기존 목재 팔레트의 수출 처리 부담과 품질 편차를 줄이고,
-            친환경성과 구조적 안정성을 동시에 고려한 차세대 팔레트
-            솔루션입니다.
+          <p className="mt-3 text-base leading-8 text-[var(--sub-text)]">
+            목질 원료와 농림업 부산물 등을 선별·분쇄한 후 MDI계 접착
+            시스템을 혼합하고, 고온·고압 조건에서 일체형으로 압축성형한
+            산업용 물류 팔레트입니다.
           </p>
-          <div className="mt-8 rounded-lg border border-[var(--line)] bg-white p-5">
-            <p className="text-sm font-bold text-[var(--primary)]">자료 기준</p>
+          <div className="mt-7 rounded-lg border border-[var(--line)] bg-white p-5">
+            <p className="font-bold text-[var(--primary-dark)]">적용 전 확인사항</p>
             <p className="mt-2 text-sm leading-7 text-[var(--sub-text)]">
-              모델별 성능과 적용 조건은 제품 규격, 사용 환경, 시험 조건에 따라
-              달라질 수 있습니다. 상세 사양은 문의를 통해 확인 가능합니다.
+              제품 규격, 하중 분포, 지게차 진입 방향, 랙 구조, 보관환경과
+              목적국 규정을 함께 확인해야 합니다. 모델별 상세 사양은 기술
+              검토 후 확정됩니다.
             </p>
           </div>
-          <div className="mt-10 flex justify-start">
-            <LinkButton
-              className="min-h-[52px] px-8 py-3 sm:min-h-[52px] sm:px-8 sm:py-3"
-              href="#products"
-            >
-              제품군 확인하기
-            </LinkButton>
+          <div className="mt-7">
+            <LinkButton className="!min-h-10 !px-3 !py-2 text-xs" href="#product-lineup">제품 라인업 보기</LinkButton>
           </div>
         </div>
       </div>

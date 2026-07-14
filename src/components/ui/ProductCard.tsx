@@ -1,6 +1,7 @@
-import PalletVisual from "@/components/ui/PalletVisual";
+import MediaPlaceholder from "@/components/ui/MediaPlaceholder";
 
 export type ProductCardProps = {
+  id?: string;
   title: string;
   englishLabel?: string;
   description: string;
@@ -9,9 +10,18 @@ export type ProductCardProps = {
   className?: string;
   onOpen?: () => void;
   pinSpecsToBottom?: boolean;
+  mediaField: string;
+  imageUrl?: string;
+  series?: string;
+  sizes?: string[];
+  ratedDynamicLoad?: string;
+  ratedStaticLoad?: string;
+  disclaimer?: string;
+  relatedTests?: string[];
 };
 
 export default function ProductCard({
+  id,
   title,
   englishLabel,
   description,
@@ -20,6 +30,8 @@ export default function ProductCard({
   className = "",
   onOpen,
   pinSpecsToBottom = false,
+  mediaField,
+  imageUrl,
 }: ProductCardProps) {
   function handleKeyDown(event: React.KeyboardEvent<HTMLElement>) {
     if (!onOpen || (event.key !== "Enter" && event.key !== " ")) return;
@@ -39,19 +51,24 @@ export default function ProductCard({
       } ${onOpen ? "cursor-pointer" : ""} ${className}`}
       onClick={onOpen}
       onKeyDown={handleKeyDown}
+      id={id}
       role={onOpen ? "button" : undefined}
       tabIndex={onOpen ? 0 : undefined}
     >
       <div className="relative">
-        <PalletVisual
-          aspect={
-            featured ? "aspect-[16/10]" : "aspect-[16/10] sm:aspect-[5/4]"
-          }
-          compact={!featured}
+        <MediaPlaceholder
+          alt={`${title} 제품 이미지`}
+          desktopRatio="4:3"
+          fieldName={mediaField}
+          guide="동일 각도·동일 스케일의 배경 제거 제품 이미지"
+          label="제품 이미지"
+          mobileRatio="4:3"
+          expandable={false}
+          src={imageUrl}
         />
         {onOpen ? (
-          <span className="absolute right-2 bottom-2 rounded-full bg-[rgba(16,37,29,0.82)] px-2 py-1 text-[9px] font-bold text-white sm:text-[10px]">
-            크게 보기
+          <span className="pointer-events-none absolute top-2 right-2 rounded-md border border-white/60 bg-black/55 px-2.5 py-1.5 text-[10px] font-bold text-white backdrop-blur-[2px] sm:top-3 sm:right-3 sm:px-3 sm:text-xs">
+            자세히 보기
           </span>
         ) : null}
       </div>

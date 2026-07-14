@@ -4,12 +4,12 @@ import { benefits } from "@/lib/constants";
 
 export default function BenefitsSection() {
   return (
-    <section id="benefits" className="px-5 pt-14 pb-16 lg:px-8 lg:pb-20">
+    <section id="benefits" className="px-5 pt-12 pb-14 lg:px-8 lg:pb-[72px]">
       <div className="mx-auto max-w-[1200px]">
         <SectionTitle
           eyebrow="Key Benefits"
-          title="수출, 보관, 비용까지 바꾸는 팔레트 솔루션"
-          description="기존 팔레트의 운영 부담을 줄이고, 글로벌 물류 환경에 맞춘 효율적인 포장 솔루션을 제공합니다."
+          title="운영조건에 따라 검토할 수 있는 핵심 장점"
+          description="수출 규정, 중첩 적재 가능 여부와 물류 총비용을 제품 모델과 실제 운용조건에 맞춰 검토합니다."
         />
         <div className="mt-10 grid gap-4 lg:grid-cols-3">
           {benefits.map((benefit, index) => (

@@ -58,8 +58,8 @@ export async function sendNewInquiryPush(
     const response = await messaging.sendEachForMulticast({
       tokens: tokenChunk,
       notification: {
-        title: "ADS 견적 문의",
-        body: `${companyName} · ${contactPerson}님의 견적 문의가 접수되었습니다.`,
+        title: "ADS 신규 문의",
+        body: `${companyName} · ${contactPerson}님의 문의가 접수되었습니다.`,
       },
       data: {
         inquiryId,

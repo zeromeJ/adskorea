@@ -77,12 +77,18 @@ class InquiryCard extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             _info('담당자', inquiry.contactPerson),
+            if (inquiry.inquiryType?.isNotEmpty == true)
+              _info('문의 유형', inquiryTypeLabel(inquiry.inquiryType)),
             _info(
               '연락처',
               inquiry.phone?.isNotEmpty == true ? inquiry.phone! : '연락처 없음',
             ),
             if (inquiry.productInterest?.isNotEmpty == true)
               _info('관심 제품', inquiry.productInterest!),
+            if (inquiry.cargoType?.isNotEmpty == true)
+              _info('화물 종류', inquiry.cargoType!),
+            if (inquiry.loadPerPallet?.isNotEmpty == true)
+              _info('팔레트당 중량', inquiry.loadPerPallet!),
             if (inquiry.estimatedQuantity?.isNotEmpty == true)
               _info('예상 수량', inquiry.estimatedQuantity!),
             if (inquiry.message?.isNotEmpty == true) ...[

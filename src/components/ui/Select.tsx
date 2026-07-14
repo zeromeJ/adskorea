@@ -16,12 +16,12 @@ export default function Select({
 }: SelectProps) {
   return (
     <label className={`block min-w-0 ${containerClassName}`} htmlFor={id}>
-      <span className="mb-2 block text-sm font-bold text-[var(--text)]">
+      <span className="mb-2 flex min-h-6 items-center text-sm font-bold text-[var(--text)]">
         {label}
       </span>
-      <span className="relative block">
+      <span className="relative block min-w-0 max-w-full overflow-hidden rounded-md">
         <select
-          className={`min-h-12 w-full appearance-none rounded-md border border-[var(--line)] bg-white py-0 pr-12 pl-4 text-sm outline-none transition focus:border-[var(--primary)] focus:ring-4 focus:ring-[rgba(46,92,69,0.12)] ${className}`}
+          className={`min-h-12 w-full min-w-0 max-w-full appearance-none overflow-hidden text-ellipsis rounded-md border border-[var(--line)] bg-white py-0 pr-14 pl-4 text-base outline-none transition focus:border-[var(--primary)] focus:ring-4 focus:ring-[rgba(46,92,69,0.12)] ${className}`}
           id={id}
           {...props}
         >
@@ -34,7 +34,7 @@ export default function Select({
         </select>
         <svg
           aria-hidden="true"
-          className="pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2 text-[var(--sub-text)]"
+          className="pointer-events-none absolute top-1/2 right-4 z-10 h-4 w-4 -translate-y-1/2 text-[var(--sub-text)]"
           fill="none"
           viewBox="0 0 20 20"
         >

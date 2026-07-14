@@ -1,78 +1,67 @@
-import PalletVisual from "@/components/ui/PalletVisual";
+import MediaPlaceholder from "@/components/ui/MediaPlaceholder";
 import SectionTitle from "@/components/ui/SectionTitle";
-import SpecCard from "@/components/ui/SpecCard";
-import { performanceFeatures } from "@/lib/constants";
+import VerificationPanel from "@/components/VerificationPanel";
+import type { TestGroup } from "@/components/VerificationPanel";
+import { performanceFeatureGroups, testGroups } from "@/lib/constants";
 
-const performanceSummary = [
-  {
-    label: "최대 동하중",
-    value: "2,800",
-    unit: "kg",
-    description: "제품군 최대 운용 하중",
-  },
-  {
-    label: "최대 정하중",
-    value: "10,000",
-    unit: "kg",
-    description: "제품군 최대 보관 하중",
-  },
-  {
-    label: "자동화 대응",
-    value: "물류 라인",
-    description: "자동화 물류 라인 적용 가능",
-  },
-];
+type PerformanceSectionProps = {
+  testImageUrl?: string;
+  reportThumbnailUrl?: string;
+  groups?: TestGroup[];
+};
 
-export default function PerformanceSection() {
+export default function PerformanceSection({
+  testImageUrl,
+  reportThumbnailUrl,
+  groups = testGroups,
+}: PerformanceSectionProps) {
   return (
-    <section id="performance" className="bg-white px-5 pt-14 pb-16 lg:px-8 lg:pb-20">
+    <section
+      id="performance"
+      className="bg-white px-5 pt-12 pb-14 lg:px-8 lg:pb-[72px]"
+    >
       <div className="mx-auto max-w-[1200px]">
-        <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-          <div>
-            <PalletVisual />
-          </div>
-          <div>
-            <SectionTitle
-              eyebrow="Performance Specs"
-              title="친환경을 넘어, 산업 물류에 필요한 강도까지"
-              description="일체형 정밀 성형 구조를 통해 안정적인 구조 강도를 구현하고, 방수성, 내후성, 하중 지지 성능을 강화했습니다."
-            />
-            <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-4">
-              {performanceFeatures.map((feature) => (
-                <SpecCard key={feature} label="Feature" value={feature} />
-              ))}
-            </div>
-          </div>
+        <SectionTitle
+          eyebrow="Performance Verification"
+          title="시험 데이터로 확인하는 제품 성능"
+          description="제조사 제시 사양과 제3자 시험결과를 구분해 제공합니다."
+        />
+
+        <div className="mx-auto mt-8 grid max-w-[920px] gap-4 min-[520px]:grid-cols-[minmax(0,256fr)_minmax(0,81fr)] min-[520px]:items-start">
+          <MediaPlaceholder
+            alt="압축성형 목재 팔레트 성능 시험 현장"
+            desktopRatio="16:9"
+            fieldName="homePage.verification.testImage"
+            guide="시험 장비, 적용 시료와 하중 조건이 함께 보이는 실제 시험 사진"
+            label="성능 시험 사진"
+            mobileRatio="16:9"
+            src={testImageUrl}
+          />
+          <MediaPlaceholder
+            alt="제품 성능 시험성적서 표지"
+            desktopRatio="9:16"
+            fieldName="homePage.verification.reportThumbnail"
+            guide="공개 가능한 시험성적서 A4 표지 또는 핵심 페이지"
+            label="시험성적서 썸네일"
+            mediaType="document"
+            mobileRatio="9:16"
+            src={reportThumbnailUrl}
+          />
         </div>
 
-        <div className="mt-10 grid gap-3 sm:grid-cols-3 sm:gap-4 lg:mt-12">
-          {performanceSummary.map((item) => (
-            <article
-              className="rounded-lg border border-[var(--line)] bg-[var(--muted-surface)] px-5 py-5 sm:px-4 lg:px-6 lg:py-6"
-              key={item.label}
-            >
-              <p className="text-sm font-bold text-[var(--primary-dark)]">
-                {item.label}
-              </p>
-              <p
-                className={`${item.unit ? "number " : ""}mt-2 whitespace-nowrap text-[clamp(1.65rem,3vw,2.25rem)] leading-none font-bold tracking-[-0.03em] text-[var(--primary)]`}
-              >
-                {item.value}
-                {item.unit ? (
-                  <span className="ml-1 text-base font-bold tracking-normal sm:text-sm lg:text-lg">
-                    {item.unit}
-                  </span>
-                ) : null}
-              </p>
-              <p className="mt-2 text-sm leading-5 text-[var(--sub-text)]">
-                {item.description}
-              </p>
-            </article>
-          ))}
+        <VerificationPanel groups={groups} />
+
+        <div className="mt-6 grid items-stretch gap-3 lg:grid-cols-3">
+          {performanceFeatureGroups.map((group, index) => <article className="h-full rounded-lg border border-[var(--line)] bg-[var(--muted-surface)] p-4" key={group.title}><h3 className="font-bold text-[var(--primary-dark)]">{group.title}</h3><ul className={`mt-2 grid gap-x-3 gap-y-1 text-sm leading-5 text-[var(--sub-text)] ${index === 0 ? "grid-cols-1" : "grid-cols-2"}`}>{group.items.map((item) => <li className="min-w-0 [overflow-wrap:anywhere]" key={item}>• {item}</li>)}</ul></article>)}
         </div>
-        <p className="mt-4 text-sm leading-6 text-[var(--sub-text)]">
-          실제 성능은 제품 모델, 사용 환경, 시험 조건에 따라 달라질 수 있습니다.
-        </p>
+
+        <div className="mt-5 rounded-lg border border-[var(--line)] bg-white p-5">
+          <p className="font-bold text-[var(--text)]">포름알데히드 방출량 시험</p>
+          <p className="number mt-2 text-2xl font-bold text-[var(--primary)]">0.9mg/L</p>
+          <p className="mt-2 text-sm leading-6 text-[var(--sub-text)]">
+            방법 검출한계 0.1mg/L · 시험방법 GB/T 17657-2022 · 보고서 TBK20260318Lab10101-1A · 2026년 4월 2일 발급
+          </p>
+        </div>
       </div>
     </section>
   );
