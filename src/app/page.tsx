@@ -59,11 +59,11 @@ export default async function Home() {
     "verification",
     "performanceVideos",
     "benefits",
+    "documents",
     "products",
     "preApplication",
     "applications",
     "sustainability",
-    "documents",
     "company",
     "companyOverviewVideo",
     "catalog",
@@ -110,6 +110,7 @@ export default async function Home() {
         <PerformanceSection
           groups={completeCmsTestResults?.length ? completeCmsTestResults : undefined}
           reportThumbnailUrl={home?.verificationReportThumbnail}
+          reportFileUrl={home?.verificationReportFile}
           testImageUrl={home?.verificationImage}
         />
       ),
@@ -134,6 +135,7 @@ export default async function Home() {
       element: (
         <EcoDataSection
           statementThumbnailUrl={home?.sustainabilityStatementThumbnail}
+          statementFileUrl={home?.sustainabilityStatementFile}
         />
       ),
     },
@@ -181,7 +183,7 @@ export default async function Home() {
 
   return (
     <>
-      <Header brandName={settings?.brandName} logoUrl={settings?.logoUrl} />
+      <Header brandName={settings?.brandName} />
       <main>
         {sections.map((section) => (
           <Fragment key={section.key}>{section.element}</Fragment>

@@ -1,4 +1,6 @@
 import 'dart:typed_data';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
@@ -21,6 +23,7 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
   String? error;
   List<WebsiteAsset> assets = [];
   final Map<String, PendingImageEdit> pending = {};
+  final Map<String, PendingFileUpload> pendingFiles = {};
   final Set<String> deleted = {};
   List<ImageSlot> get slots =>
       websiteImageSlots[widget.summary.key] ?? const [];
@@ -36,8 +39,10 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
       error = null;
     });
     try {
-      assets = await widget.service.assets(widget.summary.key);
+      assets = await widget.service
+          .assets(websiteStorageSectionKey(widget.summary.key));
       pending.clear();
+      pendingFiles.clear();
       deleted.clear();
       dirty = false;
     } catch (_) {
@@ -45,6 +50,47 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
     } finally {
       if (mounted) setState(() => loading = false);
     }
+  }
+
+  Future<void> _chooseFile(ImageSlot slot) async {
+    final isPdf = slot.type == WebsiteSlotType.pdf;
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: isPdf ? const ['pdf'] : const ['mp4', 'webm', 'mov'],
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final selected = result.files.single;
+    final bytes = selected.bytes ??
+        (selected.path == null
+            ? null
+            : await File(selected.path!).readAsBytes());
+    if (bytes == null) return;
+    final maxBytes = isPdf ? 30 * 1024 * 1024 : 150 * 1024 * 1024;
+    if (bytes.length > maxBytes) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(isPdf
+                ? 'PDF는 30MB 이하만 등록할 수 있습니다.'
+                : '영상은 150MB 이하만 등록할 수 있습니다.')));
+      }
+      return;
+    }
+    final extension = selected.extension?.toLowerCase();
+    final mimeType = isPdf
+        ? 'application/pdf'
+        : extension == 'webm'
+            ? 'video/webm'
+            : extension == 'mov'
+                ? 'video/quicktime'
+                : 'video/mp4';
+    if (!mounted) return;
+    setState(() {
+      pendingFiles[slot.key] = PendingFileUpload(
+          bytes: bytes, fileName: selected.name, mimeType: mimeType);
+      deleted.remove(slot.key);
+      dirty = true;
+    });
   }
 
   WebsiteAsset? _asset(String key) {
@@ -113,7 +159,9 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
     final yes = await showDialog<bool>(
         context: context,
         builder: (_) => AlertDialog(
-                title: const Text('이 이미지를 삭제하시겠습니까?'),
+                title: Text(slot.type == WebsiteSlotType.image
+                    ? '이 이미지를 삭제하시겠습니까?'
+                    : '이 파일을 삭제하시겠습니까?'),
                 content: const Text('변경사항을 저장하면 홈페이지에서도 더 이상 표시되지 않습니다.'),
                 actions: [
                   TextButton(
@@ -126,6 +174,7 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
     if (yes == true) {
       setState(() {
         pending.remove(slot.key);
+        pendingFiles.remove(slot.key);
         deleted.add(slot.key);
         dirty = true;
       });
@@ -137,16 +186,32 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
     try {
       final next = assets
           .where((a) =>
-              !deleted.contains(a.itemKey) && !pending.containsKey(a.itemKey))
+              !deleted.contains(a.itemKey) &&
+              !pending.containsKey(a.itemKey) &&
+              !pendingFiles.containsKey(a.itemKey))
           .toList();
+      if (pending.containsKey('heroDesktop') ||
+          deleted.contains('heroDesktop')) {
+        next.removeWhere((asset) => asset.itemKey == 'heroMobile');
+      }
+      final storageSectionKey = websiteStorageSectionKey(widget.summary.key);
       for (final slot in slots) {
         final edit = pending[slot.key];
         if (edit != null) {
+          if (widget.summary.key == 'home' && slot.key == 'heroDesktop') {
+            next.addAll(await widget.service.uploadHeroImages(edit, slot));
+          } else {
+            next.add(await widget.service
+                .uploadImage(storageSectionKey, slot, edit));
+          }
+        }
+        final file = pendingFiles[slot.key];
+        if (file != null) {
           next.add(
-              await widget.service.uploadImage(widget.summary.key, slot, edit));
+              await widget.service.uploadFile(storageSectionKey, slot, file));
         }
       }
-      await widget.service.saveSection(widget.summary.key, next);
+      await widget.service.saveSection(storageSectionKey, next);
       if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('홈페이지에 반영되었습니다.')));
@@ -159,6 +224,88 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
     } finally {
       if (mounted) setState(() => saving = false);
     }
+  }
+
+  Widget _buildFileCard(int index, ImageSlot slot, WebsiteAsset? current) {
+    final pendingFile = pendingFiles[slot.key];
+    final isPdf = slot.type == WebsiteSlotType.pdf;
+    final fileName =
+        pendingFile?.fileName ?? current?.data['originalFileName'] as String?;
+    final size = pendingFile?.bytes.length ?? current?.data['size'] as int?;
+    final sizeLabel = size == null
+        ? null
+        : size >= 1024 * 1024
+            ? '${(size / 1024 / 1024).toStringAsFixed(1)}MB'
+            : '${(size / 1024).toStringAsFixed(0)}KB';
+    return Card(
+      margin: const EdgeInsets.only(bottom: 14),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('${index + 1}. ${slot.label}',
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 6),
+            Text(slot.description,
+                style: const TextStyle(color: Color(0xFF667085))),
+            const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F3EF),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(children: [
+                Icon(isPdf ? Icons.picture_as_pdf : Icons.video_file,
+                    size: 34, color: const Color(0xFF164B32)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: fileName == null
+                      ? Text(isPdf ? '등록된 PDF 없음' : '등록된 영상 없음')
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(fileName,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w700)),
+                            if (sizeLabel != null)
+                              Text(sizeLabel,
+                                  style: const TextStyle(
+                                      color: Color(0xFF667085))),
+                          ],
+                        ),
+                ),
+              ]),
+            ),
+            if (isPdf)
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text('표지 이미지는 서버에서 자동으로 생성됩니다.',
+                    style: TextStyle(fontSize: 13, color: Color(0xFF667085))),
+              ),
+            const SizedBox(height: 12),
+            Wrap(spacing: 8, runSpacing: 8, children: [
+              FilledButton.icon(
+                onPressed: () => _chooseFile(slot),
+                icon: const Icon(Icons.upload_file),
+                label: Text(fileName == null ? '파일 선택' : '파일 교체'),
+              ),
+              if (fileName != null)
+                OutlinedButton.icon(
+                  onPressed: () => _delete(slot),
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('삭제'),
+                ),
+            ]),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<bool> _canLeave() async {
@@ -235,78 +382,103 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
                     ...slots.asMap().entries.map((entry) {
                       final slot = entry.value;
                       final current = _asset(slot.key);
+                      if (slot.type != WebsiteSlotType.image) {
+                        return _buildFileCard(entry.key, slot, current);
+                      }
                       final local = pending[slot.key];
-                      return Card(
-                          margin: const EdgeInsets.only(bottom: 14),
-                          child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('${entry.key + 1}. ${slot.label}',
-                                        style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w800)),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                        '권장 비율 ${slot.ratio} · 권장 크기 ${slot.width}×${slot.height}px'),
-                                    const SizedBox(height: 4),
-                                    Text(slot.description,
-                                        style: const TextStyle(
-                                            color: Color(0xFF667085))),
-                                    const SizedBox(height: 12),
-                                    AspectRatio(
-                                        aspectRatio: slot.aspect,
-                                        child: ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                            child: local != null
-                                                ? Image.memory(local.edited,
-                                                    fit: BoxFit.cover)
-                                                : current?.url != null
-                                                    ? Image.network(
-                                                        current!.url!,
-                                                        fit: BoxFit.cover,
-                                                        errorBuilder: (_, __,
-                                                                ___) =>
-                                                            const Center(
-                                                                child: Text(
-                                                                    '미리보기를 불러오지 못했습니다.')))
-                                                    : Container(
-                                                        color: const Color(
-                                                            0xFFF1F3EF),
-                                                        alignment:
-                                                            Alignment.center,
-                                                        child: const Text(
-                                                            '등록된 파일 없음')))),
-                                    const SizedBox(height: 12),
-                                    if (local != null)
-                                      Text('선택한 파일: ${local.fileName}',
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis),
-                                    const SizedBox(height: 10),
-                                    Wrap(spacing: 8, runSpacing: 8, children: [
-                                      FilledButton.icon(
-                                          onPressed: () => _choose(slot),
-                                          icon: const Icon(Icons.photo_library),
-                                          label: Text(
-                                              current == null && local == null
-                                                  ? '파일 선택'
-                                                  : '파일 교체')),
-                                      if (current != null || local != null)
-                                        OutlinedButton.icon(
-                                            onPressed: () =>
-                                                _choose(slot, existing: true),
-                                            icon: const Icon(Icons.crop),
-                                            label: const Text('다시 편집')),
-                                      if (current != null || local != null)
-                                        OutlinedButton.icon(
-                                            onPressed: () => _delete(slot),
-                                            icon: const Icon(
-                                                Icons.delete_outline),
-                                            label: const Text('삭제')),
-                                    ]),
-                                  ])));
+                      return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Card(
+                                margin: const EdgeInsets.only(bottom: 14),
+                                child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                              '${entry.key + 1}. ${slot.label}',
+                                              style: const TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.w800)),
+                                          const SizedBox(height: 6),
+                                          Text(
+                                              '권장 비율 ${slot.ratio} · 권장 크기 ${slot.width}×${slot.height}px'),
+                                          const SizedBox(height: 4),
+                                          Text(slot.description,
+                                              style: const TextStyle(
+                                                  color: Color(0xFF667085))),
+                                          const SizedBox(height: 12),
+                                          AspectRatio(
+                                              aspectRatio: slot.aspect,
+                                              child: ClipRRect(
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                  child: local != null
+                                                      ? Image.memory(
+                                                          local.edited,
+                                                          fit: BoxFit.cover)
+                                                      : current?.url != null
+                                                          ? Image.network(
+                                                              current!.url!,
+                                                              fit: BoxFit.cover,
+                                                              errorBuilder: (_,
+                                                                      __,
+                                                                      ___) =>
+                                                                  const Center(
+                                                                      child: Text(
+                                                                          '미리보기를 불러오지 못했습니다.')))
+                                                          : Container(
+                                                              color: const Color(
+                                                                  0xFFF1F3EF),
+                                                              alignment:
+                                                                  Alignment
+                                                                      .center,
+                                                              child: const Text(
+                                                                  '등록된 파일 없음')))),
+                                          const SizedBox(height: 12),
+                                          if (local != null)
+                                            Text('선택한 파일: ${local.fileName}',
+                                                maxLines: 2,
+                                                overflow:
+                                                    TextOverflow.ellipsis),
+                                          const SizedBox(height: 10),
+                                          Wrap(
+                                              spacing: 8,
+                                              runSpacing: 8,
+                                              children: [
+                                                FilledButton.icon(
+                                                    onPressed: () =>
+                                                        _choose(slot),
+                                                    icon: const Icon(
+                                                        Icons.photo_library),
+                                                    label: Text(
+                                                        current == null &&
+                                                                local == null
+                                                            ? '파일 선택'
+                                                            : '파일 교체')),
+                                                if (current != null ||
+                                                    local != null)
+                                                  OutlinedButton.icon(
+                                                      onPressed: () => _choose(
+                                                          slot,
+                                                          existing: true),
+                                                      icon: const Icon(
+                                                          Icons.crop),
+                                                      label:
+                                                          const Text('다시 편집')),
+                                                if (current != null ||
+                                                    local != null)
+                                                  OutlinedButton.icon(
+                                                      onPressed: () =>
+                                                          _delete(slot),
+                                                      icon: const Icon(
+                                                          Icons.delete_outline),
+                                                      label: const Text('삭제')),
+                                              ]),
+                                        ]))),
+                          ]);
                     }),
                     const SizedBox(height: 80),
                   ]),

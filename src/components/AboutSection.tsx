@@ -32,7 +32,7 @@ export default function AboutSection({ factoryImageUrl }: AboutSectionProps) {
             <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
               {companyStats.map((stat, index) => (
                 <StatCard
-                  className={`h-full ${index < 3 ? "lg:col-span-2" : "lg:col-span-3 lg:min-h-[118px]"}`}
+                  className={`h-full ${index < 3 ? "lg:col-span-2" : "lg:col-span-3"}`}
                   company
                   key={stat.label}
                   {...stat}

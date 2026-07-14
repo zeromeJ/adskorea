@@ -71,11 +71,18 @@ canvas {
 }
 
 section[id] {
-  scroll-margin-top: 128px;
+  scroll-margin-top: 64px;
 }
 
 [id^="product-"] {
-  scroll-margin-top: 128px;
+  scroll-margin-top: 64px;
+}
+
+@media (min-width: 1024px) {
+  section[id],
+  [id^="product-"] {
+    scroll-margin-top: 88px;
+  }
 }
 
 @keyframes header-dropdown-in {

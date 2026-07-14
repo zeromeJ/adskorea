@@ -171,19 +171,6 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
                 ),
               ),
               const Divider(),
-              ListTile(
-                leading: const Icon(Icons.web),
-                title: const Text('홈페이지 관리'),
-                subtitle: const Text('이미지·영상·자료 관리'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => WebsiteManagementScreen(
-                      service: widget.websiteContentService,
-                    ),
-                  ));
-                },
-              ),
               if (widget.currentAdmin.isSuperAdmin) ...[
                 ListTile(
                   leading: const Icon(Icons.person_add_alt_1),
@@ -231,6 +218,19 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
                 },
               ),
               const Spacer(),
+              ListTile(
+                leading: const Icon(Icons.web),
+                title: const Text('홈페이지 관리'),
+                subtitle: const Text('이미지·영상·자료 관리'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => WebsiteManagementScreen(
+                      service: widget.websiteContentService,
+                    ),
+                  ));
+                },
+              ),
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.logout),

@@ -21,20 +21,29 @@ export async function ensureWebsiteContentBucket() {
   if (!supabase) return null;
 
   const { data } = await supabase.storage.getBucket(websiteContentBucket);
+  const bucketOptions = {
+    public: true,
+    fileSizeLimit: 200 * 1024 * 1024,
+    allowedMimeTypes: [
+      "application/pdf",
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "video/mp4",
+      "video/webm",
+      "video/quicktime",
+    ],
+  };
   if (!data) {
     const { error } = await supabase.storage.createBucket(websiteContentBucket, {
-      public: true,
-      fileSizeLimit: 20 * 1024 * 1024,
-      allowedMimeTypes: [
-        "application/pdf",
-        "image/jpeg",
-        "image/png",
-        "image/webp",
-      ],
+      ...bucketOptions,
     });
     if (error && !error.message.toLowerCase().includes("already exists")) {
       throw error;
     }
+  } else {
+    const { error } = await supabase.storage.updateBucket(websiteContentBucket, bucketOptions);
+    if (error) throw error;
   }
   return supabase;
 }
