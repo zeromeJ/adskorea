@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
@@ -14,42 +14,68 @@ enum InquiryStatus {
 }
 
 enum ResponseMethod {
+  EMAIL
   PHONE
   TEXT
   BOTH
+  ANY
 }
 
 model Inquiry {
-  id                 String        @id @default(cuid())
+  id                 String                 @id @default(cuid())
   companyName        String
   contactPerson      String
   email              String?
   phone              String?
-  responseMethod     ResponseMethod @default(BOTH)
+  responseMethod     ResponseMethod         @default(ANY)
+  inquiryType        String                 @default("일반 제품 문의")
+  department         String?
+  inquiryDetails     Json?
   country            String?
   industry           String?
   currentPalletType  String?
   productInterest    String?
+  cargoType          String?
+  loadPerPallet      String?
   estimatedQuantity  String?
+  requiredPalletSize String?
   exportCountry      String?
-  message            String?       @db.VarChar(300)
-  status             InquiryStatus @default(PENDING)
+  rackStorage        Boolean?
+  automationUse      Boolean?
+  forkliftUse        Boolean?
+  handPalletTruckUse Boolean?
+  message            String?                @db.VarChar(1500)
+  status             InquiryStatus          @default(PENDING)
   adminMemo          String?
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
   completionLogs     InquiryCompletionLog[]
+  attachments        InquiryAttachment[]
+}
+
+model InquiryAttachment {
+  id          String   @id @default(cuid())
+  inquiryId   String
+  fileName    String
+  contentType String
+  size        Int
+  storagePath String   @unique
+  createdAt   DateTime @default(now())
+  inquiry     Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+
+  @@index([inquiryId])
 }
 
 model AdminUser {
-  id           String   @id @default(cuid())
-  username     String   @unique
-  passwordHash String
-  displayName  String?
-  isActive     Boolean  @default(true)
-  isSuperAdmin Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  devices      AdminDevice[]
+  id             String                 @id @default(cuid())
+  username       String                 @unique
+  passwordHash   String
+  displayName    String?
+  isActive       Boolean                @default(true)
+  isSuperAdmin   Boolean                @default(false)
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  devices        AdminDevice[]
   completionLogs InquiryCompletionLog[]
 }
 
@@ -78,4 +104,73 @@ model AdminDevice {
   adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
 
   @@index([adminUserId])
+}
+
+enum WebsiteAssetType {
+  IMAGE
+  PDF
+  VIDEO
+}
+
+model WebsiteSection {
+  key         String         @id
+  title       String
+  requiredCount Int          @default(0)
+  data        Json?
+  updatedById String?
+  updatedByName String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  assets      WebsiteAsset[]
+}
+
+model WebsiteAsset {
+  id               String           @id @default(cuid())
+  sectionKey       String
+  itemKey          String
+  label            String
+  type             WebsiteAssetType
+  url              String?
+  originalUrl      String?
+  storagePath      String?
+  originalStoragePath String?
+  originalFileName String?
+  storedFileName   String?
+  mimeType         String?
+  size             Int?
+  width            Int?
+  height           Int?
+  cropX            Float?
+  cropY            Float?
+  cropWidth        Float?
+  cropHeight       Float?
+  zoom             Float?
+  rotation         Int?
+  aspectRatio      String?
+  outputWidth      Int?
+  outputHeight     Int?
+  sortOrder        Int              @default(0)
+  published        Boolean          @default(true)
+  metadata         Json?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  section          WebsiteSection   @relation(fields: [sectionKey], references: [key], onDelete: Cascade)
+
+  @@index([sectionKey, itemKey, sortOrder])
+}
+
+model WebsiteChangeLog {
+  id               String   @id @default(cuid())
+  sectionKey       String
+  sectionTitle     String
+  action           String
+  adminUserId      String
+  adminUsername    String
+  adminDisplayName String?
+  previousData     Json?
+  newData          Json?
+  createdAt        DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([sectionKey])
 }

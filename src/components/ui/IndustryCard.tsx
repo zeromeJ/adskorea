@@ -1,20 +1,40 @@
+import {
+  Boxes,
+  Container,
+  Cylinder,
+  FlaskConical,
+  Package,
+  Warehouse,
+} from "lucide-react";
+
+const industryIcons = {
+  FlaskConical,
+  Package,
+  Cylinder,
+  Warehouse,
+  Container,
+  Boxes,
+};
+
+export type IndustryIconName = keyof typeof industryIcons;
+
 type IndustryCardProps = {
   title: string;
   description?: string;
+  icon: string;
 };
 
-export default function IndustryCard({ title, description }: IndustryCardProps) {
+export default function IndustryCard({
+  title,
+  description,
+  icon,
+}: IndustryCardProps) {
+  const Icon = industryIcons[icon as IndustryIconName] ?? Boxes;
+
   return (
-    <article className="rounded-lg border border-[var(--line)] bg-white p-4 transition duration-300 hover:border-[var(--sub-sage)] sm:p-5">
-      <div className="mb-4 flex h-9 w-12 items-center justify-center overflow-hidden rounded-md border border-[var(--line)] bg-[var(--muted-surface)]">
-        <svg
-          aria-hidden="true"
-          className="h-5 w-5 fill-none stroke-[var(--primary)]"
-          viewBox="0 0 24 24"
-        >
-          <path d="M3 21V9l6 3V7l6 3V4h6v17H3Z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" />
-          <path d="M7 17h2m3 0h2m3 0h1" strokeLinecap="round" strokeWidth="1.6" />
-        </svg>
+    <article className="w-full min-w-0 max-w-full rounded-lg border border-[var(--line)] bg-white p-4 transition duration-300 hover:border-[var(--sub-sage)] sm:p-5">
+      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-md bg-[var(--muted-surface)] text-[var(--primary)]">
+        <Icon aria-hidden="true" size={30} strokeWidth={1.7} />
       </div>
       <h3 className="text-lg font-bold text-[var(--text)]">{title}</h3>
       {description ? (

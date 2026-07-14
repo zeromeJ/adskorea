@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ADS Korea",
+  title: "ADS 아델슨 | MDI 압축성형 목재 팔레트",
   description:
-    "친환경 MDI 몰드 팔레트로 수출 포장, 보관 효율, B2B 물류 비용 개선에 기여하는 ADS 아델슨 랜딩 페이지",
+    "시험 데이터와 제조사 제시 사양을 구분해 확인할 수 있는 ADS 아델슨 MDI 압축성형 목재 팔레트 B2B 제품 사이트",
   icons: {
     icon: "/logo.svg",
     shortcut: "/logo.svg",

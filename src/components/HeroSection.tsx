@@ -1,65 +1,78 @@
-import HeroProductVisual from "@/components/ui/HeroProductVisual";
-import StatCard from "@/components/ui/StatCard";
+import MediaPlaceholder from "@/components/ui/MediaPlaceholder";
 import { LinkButton } from "@/components/ui/Button";
 import { heroMetrics } from "@/lib/constants";
 
-const trustPoints = [
-  "20년 이상 산업 경험",
-  "50개국 이상 공급",
-  "연간 1,200만대 생산능력",
-  "특허 및 기술 인증",
-  "수출 포장 대응",
-];
+type HeroSectionProps = {
+  desktopImage?: string;
+  mobileImage?: string;
+};
 
-export default function HeroSection() {
+export default function HeroSection({
+  desktopImage,
+  mobileImage,
+}: HeroSectionProps) {
   return (
-    <section id="hero" className="mx-auto grid w-full max-w-[1200px] gap-x-10 gap-y-6 px-[clamp(20px,3vw,32px)] pt-10 pb-14 lg:grid-cols-[1.05fr_0.95fr] lg:grid-rows-[auto_auto_auto]">
-      <div className="order-1 lg:col-start-1 lg:row-start-1">
-        <p className="en mb-5 text-sm font-bold uppercase tracking-[0.12em] text-[var(--accent-gold)]">
-          Eco-tech Molded Pallet
-        </p>
-        <h1 className="max-w-4xl text-4xl font-bold leading-tight text-[var(--text)] sm:text-5xl lg:text-6xl">
-          수출은 더 간편하게,
-          <br />
-          보관은 더 효율적으로,
-          <br />
-          물류 비용은 더 낮게.
-        </h1>
-        <p className="mt-6 max-w-2xl text-lg leading-8 text-[var(--sub-text)]">
-          수출 포장부터 자동화 물류까지,
-          <br className="hidden md:block" />
-          <br className="block md:hidden" />
-          효율적인 운송을 위한 친환경 몰드 팔레트 솔루션
-        </p>
-        <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-          <LinkButton href="#contact">견적 문의하기</LinkButton>
-          <LinkButton href="#product" variant="secondary">
-            제품 알아보기
-          </LinkButton>
+    <section
+      id="hero"
+      className="mx-auto w-full max-w-[1200px] px-[clamp(20px,3vw,32px)] pt-8 pb-12"
+    >
+      <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-10">
+        <div>
+          <p className="en text-sm font-bold uppercase tracking-[0.12em] text-[var(--accent-gold)]">
+            MDI-bonded Compressed Wood Pallet
+          </p>
+          <h1 className="mt-4 max-w-4xl text-4xl leading-tight font-bold text-[var(--text)] sm:text-5xl lg:text-[54px]">
+            수출은 더 간편하게,
+            <br />
+            보관은 더 효율적으로,
+            <br />
+            물류 비용은 더 낮게.
+          </h1>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-[var(--sub-text)] sm:text-lg sm:leading-8">
+            시험 데이터로 성능을 확인한, MDI 압축성형 산업용 목재 팔레트
+          </p>
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+            <LinkButton href="#product-lineup">제품 라인업 보기</LinkButton>
+            <LinkButton href="#inquiry" variant="secondary">
+              견적 및 문의
+            </LinkButton>
+          </div>
         </div>
+
+        <MediaPlaceholder
+          alt="MDI 압축성형 목재 팔레트 또는 수출 적재 현장"
+          desktopRatio="16:9"
+          desktopSrc={desktopImage}
+          fieldName="homePage.hero.desktopImage / mobileImage"
+          guide="실제 압축성형 목재 팔레트 또는 수출 적재 현장"
+          label="히어로 이미지"
+          mobileRatio="4:5"
+          mobileSrc={mobileImage}
+          required
+        />
       </div>
 
-      <div className="order-2 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-center">
-        <HeroProductVisual />
-      </div>
-
-      <div className="pt-3 order-3 grid grid-cols-3 gap-2 sm:gap-3 lg:col-start-1 lg:row-start-2">
-        {heroMetrics.map((stat) => (
-          <StatCard compact key={stat.label} {...stat} />
-        ))}
-      </div>
-
-      <div className="order-4 flex flex-wrap gap-2 lg:col-span-2 lg:row-start-3">
-        {trustPoints.map((point) => (
-          <span
-            className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-white/70 px-3 py-1.5 text-xs font-semibold text-[var(--primary-dark)]"
-            key={point}
+      <div className="mt-8 grid gap-3 md:grid-cols-3">
+        {heroMetrics.map((metric) => (
+          <article
+            className="rounded-lg border border-[var(--line)] bg-white px-5 py-4"
+            key={metric.description}
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-gold)]" />
-            {point}
-          </span>
+            <p className="number whitespace-nowrap text-xl font-bold text-[var(--primary)] sm:text-3xl">
+              {metric.value}
+            </p>
+            <p className="en mt-1 text-xs font-bold text-[var(--text)]">
+              {metric.label}
+            </p>
+            <p className="mt-2 text-sm leading-5 text-[var(--sub-text)]">
+              {metric.description}
+            </p>
+          </article>
         ))}
       </div>
+      <p className="mt-3 text-xs leading-5 text-[var(--sub-text)]">
+        각 수치는 서로 다른 시험·검증자료와 적용 모델을 기준으로 합니다. 상세 조건은 해당 문서를 참조하십시오.
+      </p>
     </section>
   );
 }

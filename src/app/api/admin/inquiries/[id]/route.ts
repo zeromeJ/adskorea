@@ -2,6 +2,10 @@ import { InquiryStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { getAdminFromRequest, unauthorizedResponse } from "@/lib/admin/auth";
 import { prisma } from "@/lib/prisma";
+import {
+  getSupabaseAdmin,
+  inquiryAttachmentBucket,
+} from "@/lib/supabaseAdmin";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -17,6 +21,7 @@ export async function GET(request: Request, context: RouteContext) {
   const { id } = await context.params;
   const item = await prisma.inquiry.findUnique({
     where: { id },
+    include: { attachments: { orderBy: { createdAt: "asc" } } },
   });
 
   if (!item) {
@@ -26,7 +31,21 @@ export async function GET(request: Request, context: RouteContext) {
     );
   }
 
-  return NextResponse.json({ success: true, item });
+  const supabase = getSupabaseAdmin();
+  const attachments = await Promise.all(
+    item.attachments.map(async (attachment) => {
+      if (!supabase) return { ...attachment, downloadUrl: null };
+      const { data } = await supabase.storage
+        .from(inquiryAttachmentBucket)
+        .createSignedUrl(attachment.storagePath, 60 * 60);
+      return { ...attachment, downloadUrl: data?.signedUrl ?? null };
+    }),
+  );
+
+  return NextResponse.json({
+    success: true,
+    item: { ...item, attachments },
+  });
 }
 
 export async function PATCH(request: Request, context: RouteContext) {

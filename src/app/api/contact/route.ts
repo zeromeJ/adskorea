@@ -9,13 +9,16 @@ import {
 } from "@/lib/contactValidation";
 import { isRateLimited } from "@/lib/rateLimit";
 import { sendNewInquiryPush } from "@/lib/firebaseAdmin";
+import { inquiryTypeLabel } from "@/lib/contactSchema";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const responseMethodLabels: Record<ResponseMethod, string> = {
+  EMAIL: "이메일",
   PHONE: "전화",
   TEXT: "문자",
-  BOTH: "둘 다 괜찮음",
+  BOTH: "상관없음",
+  ANY: "상관없음",
 };
 
 function getClientKey(request: Request) {
@@ -58,12 +61,16 @@ export async function POST(request: Request) {
         email: data.email || null,
         phone: data.phone || null,
         responseMethod: data.responseMethod as ResponseMethod,
-        country: data.country || null,
+        inquiryType: data.inquiryType,
+        department: data.department || null,
+        inquiryDetails: data.details,
         industry: data.industry || null,
-        currentPalletType: data.currentPalletType || null,
         productInterest: data.productInterest || null,
+        cargoType: data.details.cargoType || null,
+        loadPerPallet: data.details.totalWeight || null,
         estimatedQuantity: data.estimatedQuantity || null,
-        exportCountry: data.exportCountry || null,
+        requiredPalletSize: data.details.requiredPalletSize || null,
+        exportCountry: data.details.deliveryRegion || data.details.exportCountry || null,
         message: data.message || null,
       },
     });
@@ -88,17 +95,22 @@ export async function POST(request: Request) {
 
 접수 시간: ${submittedAt}
 
+문의 유형: ${inquiryTypeLabel(data.inquiryType)}
 회사명: ${data.companyName}
 담당자명: ${data.contactPerson}
+부서/직책: ${data.department || "-"}
 이메일: ${data.email || "-"}
 연락처: ${data.phone || "-"}
 회신 방법: ${responseMethodLabels[data.responseMethod as ResponseMethod]}
-국가/지역: ${data.country || "-"}
 산업 분야: ${data.industry || "-"}
-현재 사용 중인 팔레트: ${data.currentPalletType || "-"}
+화물 종류: ${data.details.cargoType || "-"}
+팔레트당 화물중량: ${data.details.totalWeight || "-"}
+예상 사용수량: ${data.estimatedQuantity}
+필요 팔레트 규격: ${data.details.requiredPalletSize || "-"}
 관심 제품: ${data.productInterest || "-"}
-예상 수량: ${data.estimatedQuantity || "-"}
-주요 수출 국가: ${data.exportCountry || "-"}
+
+유형별 상세정보:
+${Object.entries(data.details).map(([key, value]) => `${key}: ${value}`).join("\n") || "-"}
 
 문의 내용:
 ${data.message || "-"}

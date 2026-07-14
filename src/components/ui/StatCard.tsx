@@ -5,6 +5,7 @@ type StatCardProps = {
   dark?: boolean;
   compact?: boolean;
   company?: boolean;
+  className?: string;
 };
 
 export default function StatCard({
@@ -14,6 +15,7 @@ export default function StatCard({
   dark = false,
   compact = false,
   company = false,
+  className = "",
 }: StatCardProps) {
   return (
     <div
@@ -27,17 +29,20 @@ export default function StatCard({
         company
           ? "transition duration-300 hover:border-[var(--primary)] hover:shadow-[0_8px_20px_rgba(16,37,29,0.06)]"
           : ""
-      }`}
+      } ${compact ? "flex h-full flex-col items-center justify-center text-center" : ""} ${className}`}
     >
-      <div>
+      <div
+        className={compact ? "flex flex-col items-center justify-center" : ""}
+      >
         <p
           className={`stat-value font-bold text-[var(--accent-gold)] ${
             compact
-              ? "text-2xl sm:text-3xl"
+              ? "text-2xl leading-none sm:text-3xl"
               : company
-                ? "whitespace-nowrap text-2xl"
+                ? "whitespace-nowrap text-xl sm:text-2xl"
                 : "text-3xl"
           }`}
+          style={company ? { fontFamily: "var(--font-kr)" } : undefined}
         >
           {value.split(/([가-힣]+)/g).map((part, index) =>
             /[가-힣]/.test(part) ? (
@@ -55,8 +60,10 @@ export default function StatCard({
         <p
           className={`en ${
             company
-              ? "mt-1 whitespace-nowrap text-[13px] font-bold tracking-[0.06em]"
-              : "mt-2 text-sm font-bold"
+              ? "mt-1 text-[12px] font-bold tracking-[0.03em]"
+              : compact
+                ? "mt-0 text-sm leading-none font-bold"
+                : "mt-2 text-sm font-bold"
           } ${
             dark ? "text-white" : "text-[var(--text)]"
           }`}

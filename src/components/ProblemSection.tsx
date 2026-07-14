@@ -3,7 +3,7 @@ import { problemCards } from "@/lib/constants";
 
 export default function ProblemSection() {
   return (
-    <section id="problem" className="bg-white px-5 pt-14 pb-16 lg:px-8 lg:pb-20">
+    <section id="problem" className="bg-white px-5 pt-12 pb-14 lg:px-8 lg:pb-[72px]">
       <div className="mx-auto max-w-[1200px]">
         <SectionTitle
           eyebrow="Operational Risk"

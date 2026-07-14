@@ -1,53 +1,46 @@
-import Image from "next/image";
+import MediaPlaceholder from "@/components/ui/MediaPlaceholder";
 import SectionTitle from "@/components/ui/SectionTitle";
 import StatCard from "@/components/ui/StatCard";
-import { companyNetwork, companyStats } from "@/lib/constants";
+import { companyStats } from "@/lib/constants";
 
-export default function AboutSection() {
+type AboutSectionProps = {
+  factoryImageUrl?: string;
+};
+
+export default function AboutSection({ factoryImageUrl }: AboutSectionProps) {
   return (
-    <section id="about" className="px-5 pt-14 pb-16 lg:px-8 lg:pb-20">
+    <section id="company" className="px-5 pt-12 pb-14 lg:px-8 lg:pb-[72px]">
       <div className="mx-auto max-w-[1200px]">
         <div className="grid gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
-          <div className="overflow-hidden rounded-lg bg-[var(--primary-deep)] p-5">
-            <div className="relative aspect-[16/11] overflow-hidden rounded-md bg-white/5">
-              <Image
-                alt="Factory placeholder"
-                className="h-full w-full object-contain p-10 brightness-0 invert"
-                height={540}
-                src="/images/factory-placeholder.png"
-                width={966}
-              />
-            </div>
+          <div className="order-2 min-w-0 lg:order-1">
+            <MediaPlaceholder
+              alt="ADS 아델슨 생산시설 전경"
+              desktopRatio="16:9"
+              fieldName="companyGallery.featured.image"
+              guide="위치와 촬영일을 확인할 수 있는 실제 공장 전경"
+              label="회사·공장 대표 이미지"
+              src={factoryImageUrl}
+            />
+            <p className="mt-3 text-xs leading-5 text-[var(--sub-text)]">투자액, 부지면적, 설계 생산능력과 특허·관련 증서 수는 회사 제공 자료 기준입니다.</p>
           </div>
-          <div>
+          <div className="order-1 lg:order-2">
             <SectionTitle
               eyebrow="Company / Manufacturing"
-              title="20년의 경험과 글로벌 생산·R&D 네트워크"
-              description="ADS는 물류 포장 산업 경험과 생산 인프라, R&D 협력 기반을 바탕으로 친환경 성형 팔레트 솔루션을 개발해왔습니다."
+              title="생산·기술 기반과 운영 역량"
+              description="아래 생산 및 운영 지표는 회사 제공 자료를 기준으로 합니다."
             />
-            <div className="mt-7 grid grid-cols-2 gap-3 lg:grid-cols-3">
-              {companyStats.map((stat) => (
-                <StatCard company key={stat.label} {...stat} />
+            <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
+              {companyStats.map((stat, index) => (
+                <StatCard
+                  className={`h-full ${index < 3 ? "lg:col-span-2" : "lg:col-span-3 lg:min-h-[118px]"}`}
+                  company
+                  key={stat.label}
+                  {...stat}
+                />
               ))}
             </div>
           </div>
         </div>
-
-        <div className="mt-10 grid grid-cols-1 gap-2 lg:grid-cols-3 lg:gap-4">
-          {companyNetwork.map((item) => (
-            <div
-              className="rounded-lg border border-[var(--line)] bg-white px-4 py-3 text-base leading-6 font-bold text-[var(--primary-dark)] lg:p-5"
-              key={item}
-            >
-              {item}
-            </div>
-          ))}
-        </div>
-        <p className="mt-5 text-sm leading-6 text-[var(--sub-text)]">
-          생산 기지 수처럼 자료 간 차이가 있을 수 있는 항목은 고정 숫자 대신
-          중국 내 주요 생산 기지로 표기했습니다. 독일 관련 표현은 제조국이
-          아니라 R&D 협력 기반과 품질 기준 지향으로 한정했습니다.
-        </p>
       </div>
     </section>
   );

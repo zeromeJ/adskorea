@@ -10,6 +10,7 @@ import 'services/admin_management_service.dart';
 import 'services/auth_service.dart';
 import 'services/inquiry_service.dart';
 import 'services/push_notification_service.dart';
+import 'services/website_content_service.dart';
 
 class AdsInquiryAdminApp extends StatefulWidget {
   const AdsInquiryAdminApp({super.key});
@@ -22,6 +23,8 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
   final ApiClient _apiClient = ApiClient();
   late final AuthService _authService = AuthService(_apiClient);
   late final InquiryService _inquiryService = InquiryService(_apiClient);
+  late final WebsiteContentService _websiteContentService =
+      WebsiteContentService(_apiClient);
   late final AdminManagementService _adminManagementService =
       AdminManagementService(_apiClient);
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
@@ -62,7 +65,8 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
 
     final token = _apiClient.token;
     if (admin != null && token != null) {
-      unawaited(_pushNotificationService.initializeForAuthenticatedAdmin(token));
+      unawaited(
+          _pushNotificationService.initializeForAuthenticatedAdmin(token));
     }
   }
 
@@ -75,7 +79,8 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
     });
     final token = _apiClient.token;
     if (value && token != null) {
-      unawaited(_pushNotificationService.initializeForAuthenticatedAdmin(token));
+      unawaited(
+          _pushNotificationService.initializeForAuthenticatedAdmin(token));
     }
   }
 
@@ -159,6 +164,7 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
                   authService: _authService,
                   adminManagementService: _adminManagementService,
                   inquiryService: _inquiryService,
+                  websiteContentService: _websiteContentService,
                   onLogout: () => _setLoggedIn(false),
                 )
               : LoginScreen(
