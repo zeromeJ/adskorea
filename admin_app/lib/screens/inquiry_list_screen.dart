@@ -9,6 +9,8 @@ import '../screens/inquiry_detail_screen.dart';
 import '../services/auth_service.dart';
 import '../services/admin_management_service.dart';
 import '../services/inquiry_service.dart';
+import '../services/website_content_service.dart';
+import '../screens/website_management_screen.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_view.dart';
 import '../widgets/inquiry_card.dart';
@@ -20,6 +22,7 @@ class InquiryListScreen extends StatefulWidget {
     required this.adminManagementService,
     required this.currentAdmin,
     required this.inquiryService,
+    required this.websiteContentService,
     required this.onLogout,
     super.key,
   });
@@ -28,6 +31,7 @@ class InquiryListScreen extends StatefulWidget {
   final AdminManagementService adminManagementService;
   final AdminUser currentAdmin;
   final InquiryService inquiryService;
+  final WebsiteContentService websiteContentService;
   final VoidCallback onLogout;
 
   @override
@@ -167,6 +171,19 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
                 ),
               ),
               const Divider(),
+              ListTile(
+                leading: const Icon(Icons.web),
+                title: const Text('홈페이지 관리'),
+                subtitle: const Text('이미지·영상·자료 관리'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => WebsiteManagementScreen(
+                      service: widget.websiteContentService,
+                    ),
+                  ));
+                },
+              ),
               if (widget.currentAdmin.isSuperAdmin) ...[
                 ListTile(
                   leading: const Icon(Icons.person_add_alt_1),

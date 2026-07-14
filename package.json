@@ -9,9 +9,6 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
-    "studio": "sanity dev",
-    "studio:build": "sanity build",
-    "sanity:schema": "sanity schema validate",
     "lint": "eslint",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
@@ -29,12 +26,10 @@
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^1.24.0",
     "next": "16.2.10",
-    "next-sanity": "^13.1.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "resend": "^6.16.0",
-    "sanity": "^5.31.1",
-    "styled-components": "^6.4.3"
+    "sharp": "^0.34.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

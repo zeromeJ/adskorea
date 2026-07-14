@@ -34,15 +34,6 @@ const trackedSectionIds = Array.from(
   ),
 );
 
-const desktopNavColumnWidths = [
-  "w-[100px]",
-  "w-[100px]",
-  "w-[118px]",
-  "w-[100px]",
-  "w-[112px]",
-  "w-[100px]",
-];
-
 export default function Header({
   logoUrl,
   brandName = "ADS 아델슨",
@@ -279,7 +270,7 @@ export default function Header({
       data-site-header
     >
       <div
-        className={`mx-auto flex h-12 w-[calc(100%-32px)] max-w-[1240px] items-center justify-between gap-4 overflow-hidden transition-opacity duration-200 md:h-14 md:w-[calc(100%-40px)] lg:h-[76px] lg:gap-10 lg:overflow-visible lg:opacity-100 xl:gap-12 ${mobileLogoVisible ? "opacity-100" : "opacity-0"}`}
+        className={`mx-auto flex h-12 w-[calc(100%-32px)] max-w-[1240px] items-center justify-between gap-4 overflow-hidden transition-opacity duration-200 md:h-14 md:w-[calc(100%-40px)] lg:grid lg:h-[76px] lg:grid-cols-[72px_minmax(0,1fr)_104px] lg:gap-6 lg:overflow-visible lg:opacity-100 xl:grid-cols-[82px_minmax(0,1fr)_112px] xl:gap-8 ${mobileLogoVisible ? "opacity-100" : "opacity-0"}`}
       >
         <a
           aria-label={`${brandName} 홈`}
@@ -298,13 +289,13 @@ export default function Header({
           />
         </a>
 
-        <div className="hidden min-w-0 flex-1 items-center justify-between gap-3 lg:flex xl:gap-6">
+        <div className="hidden lg:contents">
           <nav
-            className="flex min-w-0 items-center gap-5 whitespace-nowrap text-sm text-[var(--sub-text)] xl:gap-7"
+            className="grid min-w-0 grid-cols-6 items-center gap-2 whitespace-nowrap text-sm text-[var(--sub-text)] xl:gap-3"
             onMouseEnter={() => openMenu("sitemap")}
             onMouseLeave={scheduleMenuClose}
           >
-            {desktopNavItems.map((item, index) => {
+            {desktopNavItems.map((item) => {
               const selected =
                 activeSection === item.href.slice(1) ||
                 item.children?.some(
@@ -313,7 +304,7 @@ export default function Header({
               const isOpen = Boolean(openDesktopMenu);
               return (
                 <div
-                  className={`relative shrink-0 ${desktopNavColumnWidths[index]}`}
+                  className="relative min-w-0"
                   key={item.href}
                   onBlur={(event) => {
                     if (!event.currentTarget.contains(event.relatedTarget)) {
@@ -327,7 +318,7 @@ export default function Header({
                     aria-current={selected ? "page" : undefined}
                     aria-expanded={Boolean(openDesktopMenu)}
                     aria-haspopup="true"
-                    className={`inline-flex min-h-11 items-center gap-1 px-2 transition-colors duration-200 focus-visible:rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)] xl:px-2.5 ${
+                    className={`inline-flex min-h-11 w-full items-center justify-center gap-1 px-1 text-center transition-colors duration-200 focus-visible:rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)] xl:px-2 ${
                       selected
                         ? "font-extrabold text-[var(--primary-dark)]"
                         : "font-medium hover:text-[var(--primary)]"
@@ -357,7 +348,7 @@ export default function Header({
               );
             })}
           </nav>
-          <LinkButton aria-current={activeSection === "inquiry" ? "page" : undefined} className={`shrink-0 whitespace-nowrap lg:px-4 xl:px-5 ${activeSection === "inquiry" ? "ring-2 ring-[var(--sub-sage)] ring-offset-2" : ""}`} href="#inquiry">
+          <LinkButton aria-current={activeSection === "inquiry" ? "page" : undefined} className={`w-full shrink-0 whitespace-nowrap px-3 xl:px-4 ${activeSection === "inquiry" ? "ring-2 ring-[var(--sub-sage)] ring-offset-2" : ""}`} href="#inquiry">
             견적 문의
           </LinkButton>
         </div>
@@ -377,17 +368,17 @@ export default function Header({
           onMouseEnter={cancelScheduledMenuClose}
           onMouseLeave={scheduleMenuClose}
         >
-          <div className="mx-auto flex w-[calc(100%-40px)] max-w-[1240px] items-start gap-10 pt-1.5 pb-4 xl:gap-12 xl:pt-2 xl:pb-5">
-            <div aria-hidden="true" className="h-9 w-16 shrink-0 xl:h-10 xl:w-[72px]" />
-            <div className="flex gap-5 xl:gap-7">
-              {desktopNavItems.map((item, index) => (
-                <div className={`grid shrink-0 content-start gap-0.5 ${desktopNavColumnWidths[index]}`} key={item.href}>
+          <div className="mx-auto grid w-[calc(100%-40px)] max-w-[1240px] grid-cols-[72px_minmax(0,1fr)_104px] items-start gap-6 pt-1.5 pb-4 xl:grid-cols-[82px_minmax(0,1fr)_112px] xl:gap-8 xl:pt-2 xl:pb-5">
+            <div aria-hidden="true" />
+            <div className="grid min-w-0 grid-cols-6 gap-2 xl:gap-3">
+              {desktopNavItems.map((item) => (
+                <div className="grid min-w-0 content-start gap-0.5" key={item.href}>
                   {(item.children ?? []).map((child) => {
                     const childSelected = activeSection === child.href.slice(1);
                     return (
                       <a
                         aria-current={childSelected ? "page" : undefined}
-                        className={`flex min-h-9 min-w-0 items-center rounded-md px-2 text-[13px] transition-colors focus-visible:outline-2 focus-visible:outline-[var(--primary)] ${
+                        className={`flex min-h-9 min-w-0 items-center justify-center whitespace-nowrap rounded-md px-1 text-center text-xs tracking-[-0.02em] transition-colors focus-visible:outline-2 focus-visible:outline-[var(--primary)] xl:px-2 xl:text-[13px] ${
                           childSelected
                             ? "font-extrabold text-[var(--primary-dark)]"
                             : "font-medium text-[var(--sub-text)] hover:bg-white/55 hover:text-[var(--primary)]"
@@ -403,6 +394,7 @@ export default function Header({
                 </div>
               ))}
             </div>
+            <div aria-hidden="true" />
           </div>
         </div>
       ) : null}

@@ -71,6 +71,31 @@ class ApiClient {
     return _send(http.delete(uri(path), headers: headers));
   }
 
+  Future<Map<String, dynamic>> multipart(
+    String path, {
+    required Map<String, String> fields,
+    required List<http.MultipartFile> files,
+  }) async {
+    final request = http.MultipartRequest('POST', uri(path));
+    if (token != null) request.headers['Authorization'] = 'Bearer $token';
+    request.fields.addAll(fields);
+    request.files.addAll(files);
+    try {
+      final streamed =
+          await request.send().timeout(const Duration(seconds: 60));
+      return _decode(await http.Response.fromStream(streamed));
+    } on TimeoutException {
+      throw const ApiException('파일 업로드가 지연되고 있습니다. 다시 시도해 주세요.');
+    } on SocketException {
+      throw const ApiException('서버에 연결할 수 없습니다. 네트워크를 확인해 주세요.');
+    }
+  }
+
+  Future<Map<String, dynamic>> put(
+      String path, Map<String, dynamic> body) async {
+    return _send(http.put(uri(path), headers: headers, body: jsonEncode(body)));
+  }
+
   Future<Map<String, dynamic>> _send(Future<http.Response> request) async {
     try {
       final response = await request.timeout(_timeout);

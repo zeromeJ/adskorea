@@ -23,21 +23,6 @@ export type DocumentItem = {
   thumbnailUrl?: string;
 };
 
-function pdfDownloadUrl(fileUrl: string, title: string) {
-  try {
-    const url = new URL(fileUrl);
-    if (url.hostname.endsWith("cdn.sanity.io")) {
-      const fileName = title.toLocaleLowerCase().endsWith(".pdf")
-        ? title
-        : `${title}.pdf`;
-      url.searchParams.set("dl", fileName);
-    }
-    return url.toString();
-  } catch {
-    return fileUrl;
-  }
-}
-
 export default function DocumentLibrarySection({
   items = fallbackDocuments,
 }: {
@@ -189,7 +174,7 @@ export default function DocumentLibrarySection({
                   aria-label={`${item.title} PDF 다운로드`}
                   className="absolute top-4 right-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-md bg-black/[0.055] text-[var(--sub-text)] transition-colors hover:bg-black/[0.1] hover:text-[var(--primary-dark)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)]"
                   download={`${item.title}.pdf`}
-                  href={pdfDownloadUrl(item.fileUrl, item.title)}
+                  href={item.fileUrl}
                   title="PDF 다운로드"
                 >
                   <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24">

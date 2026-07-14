@@ -20,11 +20,13 @@ import ProductIntroSection from "@/components/ProductIntroSection";
 import ProductLineup from "@/components/ProductLineup";
 import TestVideosSection from "@/components/TestVideosSection";
 import { documents, industries, products } from "@/lib/constants";
-import { getCmsSiteContent } from "@/sanity/lib/content";
+import { getWebsiteContent } from "@/lib/websiteContent";
 import { Fragment } from "react";
 
+export const revalidate = 300;
+
 export default async function Home() {
-  const cms = await getCmsSiteContent();
+  const cms = await getWebsiteContent();
   const home = cms?.homePage;
   const settings = cms?.siteSettings;
   const completeCmsTestResults = cms?.testResults?.filter(
@@ -139,7 +141,7 @@ export default async function Home() {
       key: "documents",
       element: (
         <DocumentLibrarySection
-          items={cms ? (cmsDocuments ?? []) : documents}
+          items={cmsDocuments?.length ? cmsDocuments : documents}
         />
       ),
     },

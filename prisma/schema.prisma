@@ -105,3 +105,72 @@ model AdminDevice {
 
   @@index([adminUserId])
 }
+
+enum WebsiteAssetType {
+  IMAGE
+  PDF
+  VIDEO
+}
+
+model WebsiteSection {
+  key         String         @id
+  title       String
+  requiredCount Int          @default(0)
+  data        Json?
+  updatedById String?
+  updatedByName String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  assets      WebsiteAsset[]
+}
+
+model WebsiteAsset {
+  id               String           @id @default(cuid())
+  sectionKey       String
+  itemKey          String
+  label            String
+  type             WebsiteAssetType
+  url              String?
+  originalUrl      String?
+  storagePath      String?
+  originalStoragePath String?
+  originalFileName String?
+  storedFileName   String?
+  mimeType         String?
+  size             Int?
+  width            Int?
+  height           Int?
+  cropX            Float?
+  cropY            Float?
+  cropWidth        Float?
+  cropHeight       Float?
+  zoom             Float?
+  rotation         Int?
+  aspectRatio      String?
+  outputWidth      Int?
+  outputHeight     Int?
+  sortOrder        Int              @default(0)
+  published        Boolean          @default(true)
+  metadata         Json?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  section          WebsiteSection   @relation(fields: [sectionKey], references: [key], onDelete: Cascade)
+
+  @@index([sectionKey, itemKey, sortOrder])
+}
+
+model WebsiteChangeLog {
+  id               String   @id @default(cuid())
+  sectionKey       String
+  sectionTitle     String
+  action           String
+  adminUserId      String
+  adminUsername    String
+  adminDisplayName String?
+  previousData     Json?
+  newData          Json?
+  createdAt        DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([sectionKey])
+}
