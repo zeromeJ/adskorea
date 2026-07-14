@@ -55,7 +55,7 @@ export default function StatCard({
         <p
           className={`en ${
             company
-              ? "mt-1 whitespace-nowrap text-[11px] font-semibold tracking-[0.08em]"
+              ? "mt-1 whitespace-nowrap text-[13px] font-bold tracking-[0.06em]"
               : "mt-2 text-sm font-bold"
           } ${
             dark ? "text-white" : "text-[var(--text)]"
@@ -70,7 +70,7 @@ export default function StatCard({
             compact
               ? "mt-1 hidden text-xs leading-5 lg:block"
               : company
-                ? "mt-1 whitespace-nowrap text-xs leading-5"
+                ? "mt-1 whitespace-nowrap text-sm leading-5"
               : "mt-2 text-sm leading-6"
           } ${
             dark ? "text-white/62" : "text-[var(--sub-text)]"

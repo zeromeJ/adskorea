@@ -40,12 +40,13 @@ export default function ProductGallery({ products }: ProductGalleryProps) {
   return (
     <>
       <div className="mt-10 grid grid-cols-2 items-stretch gap-3 sm:gap-4 lg:grid-cols-3">
-        {products.map((product) => (
+        {products.map((product, index) => (
           <ProductCard
             className={product.title.includes("3D") ? "lg:col-span-2" : ""}
             featured={product.title.includes("3D")}
             key={product.title}
             onOpen={() => setSelectedProduct(product)}
+            pinSpecsToBottom={index >= 2}
             {...product}
           />
         ))}

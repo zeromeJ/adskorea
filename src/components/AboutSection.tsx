@@ -33,12 +33,10 @@ export default function AboutSection() {
           </div>
         </div>
 
-        <div className="mt-10 grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-4">
-          {companyNetwork.map((item, index) => (
+        <div className="mt-10 grid grid-cols-1 gap-2 lg:grid-cols-3 lg:gap-4">
+          {companyNetwork.map((item) => (
             <div
-              className={`flex min-h-20 items-center justify-center rounded-lg border border-[var(--line)] bg-white p-3 text-center text-[13px] leading-5 font-bold text-[var(--primary-dark)] sm:text-sm lg:col-span-1 lg:min-h-0 lg:justify-start lg:p-5 lg:text-left lg:leading-6 ${
-                index === companyNetwork.length - 1 ? "col-span-2" : ""
-              }`}
+              className="rounded-lg border border-[var(--line)] bg-white px-4 py-3 text-base leading-6 font-bold text-[var(--primary-dark)] lg:p-5"
               key={item}
             >
               {item}

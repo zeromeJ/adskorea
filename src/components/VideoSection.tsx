@@ -11,8 +11,14 @@ export default function VideoSection({ variant }: VideoSectionProps) {
 
   return (
     <section className={`${isProduct ? "bg-[var(--muted-surface)]" : "bg-white"} px-5 pt-14 pb-16 lg:px-8 lg:pb-24`}>
-      <div className="mx-auto grid max-w-[1200px] gap-10 lg:grid-cols-[1fr_0.8fr] lg:items-center">
-        <div className="order-2 lg:order-1">
+      <div
+        className={`mx-auto grid max-w-[1200px] gap-10 ${
+          isProduct
+            ? "lg:grid-cols-[1fr_0.8fr] lg:items-center"
+            : "lg:grid-cols-[0.8fr_1fr] lg:items-start"
+        }`}
+      >
+        <div className={isProduct ? "order-2 lg:order-1" : "order-2"}>
           <VideoCard
             description={
               isProduct
@@ -32,7 +38,7 @@ export default function VideoSection({ variant }: VideoSectionProps) {
             }
           />
         </div>
-        <div className="order-1 lg:order-2">
+        <div className={isProduct ? "order-1 lg:order-2" : "order-1"}>
           <SectionTitle
             eyebrow={isProduct ? "Primary Video" : "Company Video"}
             title={
