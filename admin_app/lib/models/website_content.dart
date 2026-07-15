@@ -34,6 +34,12 @@ class WebsiteAsset {
   String? get originalUrl => data['originalUrl'] as String?;
 }
 
+class WebsiteSectionContent {
+  const WebsiteSectionContent({required this.assets, required this.data});
+  final List<WebsiteAsset> assets;
+  final Map<String, dynamic> data;
+}
+
 class PendingImageEdit {
   const PendingImageEdit(
       {required this.original,
@@ -63,6 +69,73 @@ class PendingFileUpload {
 }
 
 enum WebsiteSlotType { image, pdf, video }
+
+const websiteDocumentDefaults = <Map<String, String>>[
+  {
+    'title': '2025 국가포장제품품질검사센터 시험자료',
+    'documentType': '제품 성능 시험',
+    'issuer': '국가포장제품품질검사센터',
+    'reportNumber': 'TJA20251108-0015',
+    'issueDate': '2025년 2월 21일',
+    'expiryDate': '별도 유효기간 기재 없음',
+    'relatedProducts': '압축성형 팔레트 · 1100 × 1100 × 130mm',
+    'language': '원문',
+    'summary': '',
+  },
+  {
+    'title': '2026 TBK 별도 시험자료',
+    'documentType': '제품 성능 시험',
+    'issuer': '쑤저우 톈뱌오 시험기술유한회사',
+    'reportNumber': 'TBK20260318Lab10101-2A',
+    'issueDate': '2026년 4월 2일',
+    'expiryDate': '별도 유효기간 기재 없음',
+    'relatedProducts': '압축성형 팔레트 · 1100 × 1100',
+    'language': '원문',
+    'summary': '',
+  },
+  {
+    'title': '포름알데히드 방출량 시험자료',
+    'documentType': '포름알데히드 시험',
+    'issuer': '쑤저우 톈뱌오 시험기술유한회사',
+    'reportNumber': 'TBK20260318Lab10101-1A',
+    'issueDate': '2026년 4월 2일',
+    'expiryDate': '별도 유효기간 기재 없음',
+    'relatedProducts': '압축성형 팔레트 · 1100 × 1100 · 시료 1개',
+    'language': '원문',
+    'summary': '포름알데히드 방출량 0.9mg/L · 방법 검출한계 0.1mg/L · GB/T 17657-2022',
+  },
+  {
+    'title': '제품 탄소발자국 검증 성명서',
+    'documentType': '탄소발자국 검증',
+    'issuer': 'SGS',
+    'reportNumber': 'CN25/00002415',
+    'issueDate': '2025년 5월 7일',
+    'expiryDate': '별도 유효기간 기재 없음',
+    'relatedProducts': 'AD-11001100-93',
+    'language': '원문',
+    'summary':
+        '1.8859kg CO₂e / pallet · AD-11001100-93 · 기능 단위 팔레트 1개 · ISO 14067:2018',
+  },
+];
+
+List<ImageSlot> websiteDocumentSlots(int index) => [
+      ImageSlot(
+          key: 'document${index + 1}File',
+          label: '원본 PDF',
+          ratio: 'A4 세로형',
+          width: 900,
+          height: 1273,
+          description: '원본 PDF를 기준으로 홈페이지 썸네일이 자동 생성됩니다.',
+          type: WebsiteSlotType.pdf),
+      ImageSlot(
+          key: 'document${index + 1}TranslatedFile',
+          label: '번역본 PDF',
+          ratio: 'A4 세로형',
+          width: 900,
+          height: 1273,
+          description: '번역본이 있을 때만 등록하세요.',
+          type: WebsiteSlotType.pdf),
+    ];
 
 class ImageSlot {
   const ImageSlot(
@@ -146,16 +219,7 @@ final websiteImageSlots = <String, List<ImageSlot>>{
             type: WebsiteSlotType.video)),
   ],
   'performance-documents': [
-    ...List.generate(
-        4,
-        (i) => ImageSlot(
-            key: 'document${i + 1}File',
-            label: '기술자료 ${i + 1} PDF',
-            ratio: 'A4 세로형',
-            width: 900,
-            height: 1273,
-            description: '원본 PDF를 올리면 미리보기 표지가 자동 생성됩니다.',
-            type: WebsiteSlotType.pdf)),
+    ...List.generate(4, websiteDocumentSlots).expand((slots) => slots),
   ],
   'product-lineup': const [
     ImageSlot(

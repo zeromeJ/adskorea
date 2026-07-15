@@ -10,9 +10,15 @@ import '../widgets/image_editor_dialog.dart';
 
 class WebsiteSectionScreen extends StatefulWidget {
   const WebsiteSectionScreen(
-      {required this.service, required this.summary, super.key});
+      {required this.service,
+      required this.summary,
+      this.slotsOverride,
+      this.documentIndex,
+      super.key});
   final WebsiteContentService service;
   final WebsiteSectionSummary summary;
+  final List<ImageSlot>? slotsOverride;
+  final int? documentIndex;
   @override
   State<WebsiteSectionScreen> createState() => _WebsiteSectionScreenState();
 }
@@ -25,12 +31,43 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
   final Map<String, PendingImageEdit> pending = {};
   final Map<String, PendingFileUpload> pendingFiles = {};
   final Set<String> deleted = {};
+  final Map<String, TextEditingController> documentControllers = {};
+  Map<String, dynamic> sectionData = {};
   List<ImageSlot> get slots =>
-      websiteImageSlots[widget.summary.key] ?? const [];
+      widget.slotsOverride ?? websiteImageSlots[widget.summary.key] ?? const [];
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    for (final controller in documentControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  void _setDocumentControllers(Map<String, dynamic> values) {
+    for (final controller in documentControllers.values) {
+      controller.dispose();
+    }
+    documentControllers.clear();
+    for (final key in const [
+      'title',
+      'documentType',
+      'issuer',
+      'reportNumber',
+      'issueDate',
+      'expiryDate',
+      'relatedProducts',
+      'language',
+      'summary',
+    ]) {
+      documentControllers[key] =
+          TextEditingController(text: values[key]?.toString() ?? '');
+    }
   }
 
   Future<void> _load() async {
@@ -39,8 +76,23 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
       error = null;
     });
     try {
-      assets = await widget.service
-          .assets(websiteStorageSectionKey(widget.summary.key));
+      final content = await widget.service
+          .content(websiteStorageSectionKey(widget.summary.key));
+      assets = content.assets;
+      sectionData = content.data;
+      final documentIndex = widget.documentIndex;
+      if (documentIndex != null) {
+        final storedDocuments = sectionData['documents'];
+        final stored = storedDocuments is List &&
+                storedDocuments.length > documentIndex &&
+                storedDocuments[documentIndex] is Map
+            ? Map<String, dynamic>.from(storedDocuments[documentIndex] as Map)
+            : <String, dynamic>{};
+        _setDocumentControllers({
+          ...websiteDocumentDefaults[documentIndex],
+          ...stored,
+        });
+      }
       pending.clear();
       pendingFiles.clear();
       deleted.clear();
@@ -225,7 +277,30 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
               await widget.service.uploadFile(storageSectionKey, slot, file));
         }
       }
-      await widget.service.saveSection(storageSectionKey, next);
+      Map<String, dynamic>? data;
+      final documentIndex = widget.documentIndex;
+      if (documentIndex != null) {
+        final existing = sectionData['documents'];
+        final documents = existing is List
+            ? existing
+                .map((item) => item is Map
+                    ? Map<String, dynamic>.from(item)
+                    : <String, dynamic>{})
+                .toList()
+            : websiteDocumentDefaults
+                .map((item) => Map<String, dynamic>.from(item))
+                .toList();
+        while (documents.length < websiteDocumentDefaults.length) {
+          documents.add(Map<String, dynamic>.from(
+              websiteDocumentDefaults[documents.length]));
+        }
+        documents[documentIndex] = {
+          for (final entry in documentControllers.entries)
+            entry.key: entry.value.text.trim(),
+        };
+        data = {...sectionData, 'documents': documents};
+      }
+      await widget.service.saveSection(storageSectionKey, next, data: data);
       if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('홈페이지에 반영되었습니다.')));
@@ -238,6 +313,51 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
     } finally {
       if (mounted) setState(() => saving = false);
     }
+  }
+
+  Widget _buildDocumentInformation() {
+    const fields = [
+      ('title', '문서 제목', 1),
+      ('documentType', '문서 유형', 1),
+      ('issuer', '발급기관', 1),
+      ('reportNumber', '문서번호', 1),
+      ('issueDate', '발급일', 1),
+      ('expiryDate', '유효기간', 1),
+      ('relatedProducts', '적용 제품', 2),
+      ('language', '언어 표시', 1),
+      ('summary', '핵심 내용 요약', 3),
+    ];
+    return Card(
+      margin: const EdgeInsets.only(bottom: 14),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('문서 정보',
+                style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 6),
+            const Text('홈페이지 카드 옆에 표시되는 정보입니다.',
+                style: TextStyle(color: Color(0xFF667085))),
+            const SizedBox(height: 16),
+            ...fields.map((field) => Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: TextField(
+                    controller: documentControllers[field.$1],
+                    maxLines: field.$3,
+                    minLines: field.$3,
+                    onChanged: (_) => setState(() => dirty = true),
+                    decoration: InputDecoration(
+                      labelText: field.$2,
+                      alignLabelWithHint: field.$3 > 1,
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                )),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildFileCard(int index, ImageSlot slot, WebsiteAsset? current) {
@@ -341,6 +461,17 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
         false;
   }
 
+  Future<void> _cancel() async {
+    if (saving) return;
+    if (widget.documentIndex != null) {
+      if (await _canLeave() && mounted) {
+        Navigator.pop(context);
+      }
+      return;
+    }
+    if (dirty) await _load();
+  }
+
   @override
   Widget build(BuildContext context) => PopScope(
       canPop: !dirty,
@@ -362,7 +493,10 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
                 child: Row(children: [
                   Expanded(
                       child: OutlinedButton(
-                          onPressed: dirty && !saving ? _load : null,
+                          onPressed:
+                              !saving && (widget.documentIndex != null || dirty)
+                                  ? _cancel
+                                  : null,
                           child: const Text('취소', maxLines: 1))),
                   const SizedBox(width: 8),
                   Expanded(
@@ -391,6 +525,8 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
                               borderRadius: BorderRadius.circular(8)),
                           child: const Text('저장되지 않은 변경사항이 있습니다.',
                               style: TextStyle(fontWeight: FontWeight.w800))),
+                    if (widget.documentIndex != null)
+                      _buildDocumentInformation(),
                     if (slots.isEmpty)
                       const Card(
                           child: Padding(

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../models/website_content.dart';
 import '../services/api_client.dart';
 import '../services/website_content_service.dart';
+import 'website_document_list_screen.dart';
 import 'website_section_screen.dart';
 
 class WebsiteManagementScreen extends StatefulWidget {
@@ -175,8 +176,13 @@ class _WebsiteManagementScreenState extends State<WebsiteManagementScreen> {
                                               await Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
-                                                      builder: (_) =>
-                                                          WebsiteSectionScreen(
+                                                      builder: (_) => section
+                                                                  .key ==
+                                                              'performance-documents'
+                                                          ? WebsiteDocumentListScreen(
+                                                              service: widget
+                                                                  .service)
+                                                          : WebsiteSectionScreen(
                                                               service: widget
                                                                   .service,
                                                               summary:
