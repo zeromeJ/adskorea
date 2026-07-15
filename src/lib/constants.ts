@@ -1,3 +1,5 @@
+import { defaultDocumentSummaries } from "@/lib/documentSummaries";
+
 export const company = {
   brandName: "ADS 아델슨",
   brandNameEn: "ADS",
@@ -398,6 +400,7 @@ export const documents = [
     language: "원문",
     fileUrl: "",
     publicPreview: true,
+    koreanSummary: defaultDocumentSummaries[0],
   },
   {
     title: "2026 TBK 별도 시험자료",
@@ -410,6 +413,7 @@ export const documents = [
     language: "원문",
     fileUrl: "",
     publicPreview: true,
+    koreanSummary: defaultDocumentSummaries[1],
   },
   {
     title: "포름알데히드 방출량 시험자료",
@@ -423,6 +427,7 @@ export const documents = [
     fileUrl: "",
     summary: "포름알데히드 방출량 0.9mg/L · 방법 검출한계 0.1mg/L · GB/T 17657-2022",
     publicPreview: true,
+    koreanSummary: defaultDocumentSummaries[2],
   },
   {
     title: "제품 탄소발자국 검증 성명서",
@@ -436,6 +441,7 @@ export const documents = [
     fileUrl: "",
     summary: "1.8859kg CO₂e / pallet · AD-11001100-93 · 기능 단위 팔레트 1개 · ISO 14067:2018",
     publicPreview: true,
+    koreanSummary: defaultDocumentSummaries[3],
   },
 ];
 

@@ -82,15 +82,17 @@ class _WebsiteDocumentListScreenState extends State<WebsiteDocumentListScreen> {
                             style: TextStyle(
                                 fontSize: 20, fontWeight: FontWeight.w800)),
                         const SizedBox(height: 6),
-                        const Text('문서 정보와 원본·번역본 PDF, 썸네일을 문서별로 관리합니다.'),
+                        const Text(
+                            '문서 정보와 한국어 요약, 원문 미리보기 PDF, 썸네일을 문서별로 관리합니다.'),
                         const SizedBox(height: 18),
                         ...documents.asMap().entries.map((entry) {
                           final index = entry.key;
                           final document = entry.value;
                           final original = _has('document${index + 1}File');
-                          final translated =
-                              _has('document${index + 1}TranslatedFile');
                           final thumbnail = _has('document${index + 1}');
+                          final summary = document['koreanSummary'];
+                          final summaryPublished =
+                              summary is Map && summary['published'] == true;
                           return Card(
                             margin: const EdgeInsets.only(bottom: 12),
                             child: InkWell(
@@ -134,11 +136,11 @@ class _WebsiteDocumentListScreenState extends State<WebsiteDocumentListScreen> {
                                       runSpacing: 8,
                                       children: [
                                         _StatusChip(
-                                            label: '원본 PDF',
+                                            label: '원문 미리보기',
                                             registered: original),
                                         _StatusChip(
-                                            label: '번역본 PDF',
-                                            registered: translated),
+                                            label: '한국어 요약',
+                                            registered: summaryPublished),
                                         _StatusChip(
                                             label: '썸네일',
                                             registered: thumbnail),

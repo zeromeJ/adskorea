@@ -4,6 +4,7 @@ import {
   performanceVideoFallbacks,
   products as fallbackProducts,
 } from "@/lib/constants";
+import type { KoreanDocumentSummary } from "@/lib/documentSummaries";
 
 export type CmsSiteContent = {
   siteSettings?: {
@@ -96,6 +97,7 @@ export type CmsSiteContent = {
     previewAvailable?: boolean;
     summary?: string;
     thumbnailUrl?: string;
+    koreanSummary?: KoreanDocumentSummary;
   }>;
   factoryImage?: string;
   catalog?: {
@@ -222,6 +224,12 @@ export async function getWebsiteContent(): Promise<CmsSiteContent | null> {
             documentText(details, "language", document.language) ??
             document.language,
           summary: documentText(details, "summary", document.summary),
+          koreanSummary:
+            details.koreanSummary &&
+            !Array.isArray(details.koreanSummary) &&
+            typeof details.koreanSummary === "object"
+              ? (details.koreanSummary as KoreanDocumentSummary)
+              : document.koreanSummary,
           fileUrl: asset("performance", `document${index + 1}File`) ?? "",
           translatedFileUrl:
             asset("performance", `document${index + 1}TranslatedFile`) ?? "",

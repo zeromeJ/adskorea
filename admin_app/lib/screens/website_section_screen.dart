@@ -32,6 +32,9 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
   final Map<String, PendingFileUpload> pendingFiles = {};
   final Set<String> deleted = {};
   final Map<String, TextEditingController> documentControllers = {};
+  final Map<String, TextEditingController> summaryControllers = {};
+  Map<String, dynamic> summaryStructure = {};
+  bool summaryPublished = false;
   Map<String, dynamic> sectionData = {};
   List<ImageSlot> get slots =>
       widget.slotsOverride ?? websiteImageSlots[widget.summary.key] ?? const [];
@@ -44,6 +47,9 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
   @override
   void dispose() {
     for (final controller in documentControllers.values) {
+      controller.dispose();
+    }
+    for (final controller in summaryControllers.values) {
       controller.dispose();
     }
     super.dispose();
@@ -63,11 +69,139 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
       'expiryDate',
       'relatedProducts',
       'language',
-      'summary',
     ]) {
       documentControllers[key] =
           TextEditingController(text: values[key]?.toString() ?? '');
     }
+    _setSummaryControllers(values['koreanSummary']);
+  }
+
+  void _setSummaryControllers(dynamic rawSummary) {
+    for (final controller in summaryControllers.values) {
+      controller.dispose();
+    }
+    summaryControllers.clear();
+    summaryStructure = rawSummary is Map
+        ? Map<String, dynamic>.from(rawSummary)
+        : <String, dynamic>{};
+    summaryPublished = summaryStructure['published'] == true;
+
+    void add(String key, dynamic value) {
+      summaryControllers[key] =
+          TextEditingController(text: value?.toString() ?? '');
+    }
+
+    for (final field in const ['overview', 'environment']) {
+      final items = summaryStructure[field];
+      if (items is! List) continue;
+      for (var index = 0; index < items.length; index++) {
+        final item = items[index];
+        if (item is! Map) continue;
+        add('$field.$index.label', item['label']);
+        add('$field.$index.value', item['value']);
+      }
+    }
+    final results = summaryStructure['results'];
+    if (results is List) {
+      for (var index = 0; index < results.length; index++) {
+        final item = results[index];
+        if (item is! Map) continue;
+        for (final key in const ['name', 'standard', 'value', 'judgement']) {
+          add('results.$index.$key', item[key]);
+        }
+      }
+    }
+    for (final field in const [
+      'testStandards',
+      'verificationScope',
+      'cautions'
+    ]) {
+      final items = summaryStructure[field];
+      if (items is! List) continue;
+      for (var index = 0; index < items.length; index++) {
+        add('$field.$index', items[index]);
+      }
+    }
+    final highlight = summaryStructure['highlight'];
+    if (highlight is Map) {
+      add('highlight.label', highlight['label']);
+      add('highlight.value', highlight['value']);
+    }
+    final lifecycle = summaryStructure['lifecycleStages'];
+    if (lifecycle is List) {
+      for (var index = 0; index < lifecycle.length; index++) {
+        final item = lifecycle[index];
+        if (item is! Map) continue;
+        add('lifecycleStages.$index.label', item['label']);
+        add('lifecycleStages.$index.value', item['value']);
+      }
+    }
+  }
+
+  Map<String, dynamic> _summaryData() {
+    List<Map<String, String>> pairs(String field) {
+      final source = summaryStructure[field];
+      if (source is! List) return [];
+      return List.generate(
+          source.length,
+          (index) => {
+                'label': summaryControllers['$field.$index.label']!.text.trim(),
+                'value': summaryControllers['$field.$index.value']!.text.trim(),
+              });
+    }
+
+    List<String> strings(String field) {
+      final source = summaryStructure[field];
+      if (source is! List) return [];
+      return List.generate(source.length,
+          (index) => summaryControllers['$field.$index']!.text.trim());
+    }
+
+    final resultSource = summaryStructure['results'];
+    final results = resultSource is List
+        ? List.generate(
+            resultSource.length,
+            (index) => {
+                  for (final key in const [
+                    'name',
+                    'standard',
+                    'value',
+                    'judgement'
+                  ])
+                    key: summaryControllers['results.$index.$key']!.text.trim(),
+                })
+        : <Map<String, String>>[];
+    final lifecycleSource = summaryStructure['lifecycleStages'];
+    final lifecycle = lifecycleSource is List
+        ? List.generate(
+            lifecycleSource.length,
+            (index) => {
+                  'label': summaryControllers['lifecycleStages.$index.label']!
+                      .text
+                      .trim(),
+                  'value': double.tryParse(
+                          summaryControllers['lifecycleStages.$index.value']!
+                              .text
+                              .trim()) ??
+                      0,
+                })
+        : <Map<String, dynamic>>[];
+    return {
+      'published': summaryPublished,
+      'kind': summaryStructure['kind']?.toString() ?? 'test',
+      'overview': pairs('overview'),
+      'results': results,
+      'testStandards': strings('testStandards'),
+      'environment': pairs('environment'),
+      'verificationScope': strings('verificationScope'),
+      'cautions': strings('cautions'),
+      if (summaryStructure['highlight'] is Map)
+        'highlight': {
+          'label': summaryControllers['highlight.label']!.text.trim(),
+          'value': summaryControllers['highlight.value']!.text.trim(),
+        },
+      if (lifecycleSource is List) 'lifecycleStages': lifecycle,
+    };
   }
 
   Future<void> _load() async {
@@ -217,6 +351,8 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
         deleted.remove(slot.key);
         dirty = true;
       });
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('이미지 편집을 적용했습니다. 하단의 저장 버튼을 눌러 반영해 주세요.')));
     }
   }
 
@@ -256,6 +392,11 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
               !pending.containsKey(a.itemKey) &&
               !pendingFiles.containsKey(a.itemKey))
           .toList();
+      if (widget.documentIndex != null) {
+        next.removeWhere((asset) =>
+            asset.itemKey ==
+            'document${widget.documentIndex! + 1}TranslatedFile');
+      }
       if (pending.containsKey('heroDesktop') ||
           deleted.contains('heroDesktop')) {
         next.removeWhere((asset) => asset.itemKey == 'heroMobile');
@@ -297,6 +438,7 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
         documents[documentIndex] = {
           for (final entry in documentControllers.entries)
             entry.key: entry.value.text.trim(),
+          'koreanSummary': _summaryData(),
         };
         data = {...sectionData, 'documents': documents};
       }
@@ -325,7 +467,6 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
       ('expiryDate', '유효기간', 1),
       ('relatedProducts', '적용 제품', 2),
       ('language', '언어 표시', 1),
-      ('summary', '핵심 내용 요약', 3),
     ];
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
@@ -356,6 +497,169 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
                 )),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _summaryTextField(String key, String label,
+      {int lines = 1, TextInputType? keyboardType}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextField(
+        controller: summaryControllers[key],
+        keyboardType: keyboardType,
+        maxLines: lines,
+        minLines: lines,
+        onChanged: (_) => setState(() => dirty = true),
+        decoration: InputDecoration(
+          labelText: label,
+          alignLabelWithHint: lines > 1,
+          border: const OutlineInputBorder(),
+        ),
+      ),
+    );
+  }
+
+  Widget _summaryPairList(String field, String heading) {
+    final source = summaryStructure[field];
+    if (source is! List || source.isEmpty) return const SizedBox.shrink();
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(heading,
+          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+      const SizedBox(height: 10),
+      ...List.generate(
+          source.length,
+          (index) => Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                      child: _summaryTextField(
+                          '$field.$index.label', '항목명 ${index + 1}')),
+                  const SizedBox(width: 8),
+                  Expanded(
+                      flex: 2,
+                      child: _summaryTextField(
+                          '$field.$index.value', '내용 ${index + 1}')),
+                ],
+              )),
+      const SizedBox(height: 8),
+    ]);
+  }
+
+  Widget _summaryStringList(String field, String heading) {
+    final source = summaryStructure[field];
+    if (source is! List || source.isEmpty) return const SizedBox.shrink();
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(heading,
+          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+      const SizedBox(height: 10),
+      ...List.generate(
+          source.length,
+          (index) => _summaryTextField(
+              '$field.$index', '${heading.replaceAll('사항', '')} ${index + 1}',
+              lines: 2)),
+      const SizedBox(height: 8),
+    ]);
+  }
+
+  Widget _buildSummaryInformation() {
+    final results = summaryStructure['results'];
+    final highlight = summaryStructure['highlight'];
+    final lifecycle = summaryStructure['lifecycleStages'];
+    return Card(
+      margin: const EdgeInsets.only(bottom: 14),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('한국어 요약',
+              style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 6),
+          const Text('HTML이나 표 코드 없이 구조화된 항목만 입력합니다.',
+              style: TextStyle(color: Color(0xFF667085))),
+          const SizedBox(height: 8),
+          SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('요약 공개',
+                style: TextStyle(fontWeight: FontWeight.w800)),
+            subtitle: const Text('끄면 홈페이지에 한국어 요약 버튼이 표시되지 않습니다.'),
+            value: summaryPublished,
+            onChanged: (value) => setState(() {
+              summaryPublished = value;
+              dirty = true;
+            }),
+          ),
+          const Divider(height: 28),
+          if (highlight is Map) ...[
+            const Text('핵심 결과',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 10),
+            _summaryTextField('highlight.label', '핵심 수치 항목명'),
+            _summaryTextField('highlight.value', '핵심 수치'),
+            const SizedBox(height: 8),
+          ],
+          _summaryPairList('overview', '문서 개요'),
+          if (results is List && results.isNotEmpty) ...[
+            const Text('주요 결과 목록',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 10),
+            ...List.generate(
+                results.length,
+                (index) => Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F3EF),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Column(children: [
+                        _summaryTextField('results.$index.name', '시험항목'),
+                        Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                  child: _summaryTextField(
+                                      'results.$index.standard', '기준값')),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                  child: _summaryTextField(
+                                      'results.$index.value', '시험값')),
+                            ]),
+                        _summaryTextField('results.$index.judgement', '판정'),
+                      ]),
+                    )),
+            const SizedBox(height: 8),
+          ],
+          _summaryStringList('testStandards', '시험 기준'),
+          _summaryPairList('environment', '시험 환경'),
+          _summaryStringList('verificationScope', '검증 범위'),
+          if (lifecycle is List && lifecycle.isNotEmpty) ...[
+            const Text('생애주기 단계별 값',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 6),
+            const Text('입력값으로 홈페이지 가로 막대그래프가 자동 생성됩니다.',
+                style: TextStyle(color: Color(0xFF667085))),
+            const SizedBox(height: 10),
+            ...List.generate(
+                lifecycle.length,
+                (index) => Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                            child: _summaryTextField(
+                                'lifecycleStages.$index.label', '단계명')),
+                        const SizedBox(width: 8),
+                        Expanded(
+                            child: _summaryTextField(
+                                'lifecycleStages.$index.value', 'kg CO₂e',
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        signed: true, decimal: true))),
+                      ],
+                    )),
+            const SizedBox(height: 8),
+          ],
+          _summaryStringList('cautions', '주의사항'),
+        ]),
       ),
     );
   }
@@ -521,6 +825,8 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
                               style: TextStyle(fontWeight: FontWeight.w800))),
                     if (widget.documentIndex != null)
                       _buildDocumentInformation(),
+                    if (widget.documentIndex != null)
+                      _buildSummaryInformation(),
                     if (slots.isEmpty)
                       const Card(
                           child: Padding(
@@ -586,10 +892,24 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
                                                                   '등록된 파일 없음')))),
                                           const SizedBox(height: 12),
                                           if (local != null)
-                                            Text('선택한 파일: ${local.fileName}',
-                                                maxLines: 2,
-                                                overflow:
-                                                    TextOverflow.ellipsis),
+                                            Container(
+                                                width: double.infinity,
+                                                padding:
+                                                    const EdgeInsets.all(10),
+                                                decoration: BoxDecoration(
+                                                    color:
+                                                        const Color(0xFFFFF4D6),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8)),
+                                                child: Text(
+                                                    '저장 대기 · ${local.fileName}\n하단의 저장 버튼을 눌러야 반영됩니다.',
+                                                    maxLines: 3,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w700))),
                                           const SizedBox(height: 10),
                                           Wrap(
                                               spacing: 8,

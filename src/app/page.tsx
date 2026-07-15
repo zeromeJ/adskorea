@@ -39,13 +39,18 @@ export default async function Home() {
   );
   const cmsDocuments: DocumentItem[] | undefined = cms?.documents?.map(
     (item) => ({
-      ...item,
+      title: item.title,
+      documentType: item.documentType,
+      issuer: item.issuer,
       reportNumber: item.reportNumber,
       issueDate: item.issueDate,
       expiryDate: item.expiryDate || "별도 유효기간 기재 없음",
       relatedProducts: item.relatedProducts?.join(", "),
+      language: item.language,
       fileUrl: item.fileUrl || "",
-      translatedFileUrl: item.translatedFileUrl || "",
+      previewUrl: item.previewUrl,
+      thumbnailUrl: item.thumbnailUrl,
+      koreanSummary: item.koreanSummary,
     }),
   );
   const visibility = new Map(
