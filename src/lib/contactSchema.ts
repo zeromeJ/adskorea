@@ -83,10 +83,8 @@ export function validateContactForm(data: ContactFormData) {
   if (!data.contactPerson.trim()) return "담당자명을 입력해 주세요.";
   if (!data.phone.trim()) return "연락처를 입력해 주세요.";
   if (!isValidPhone(data.phone)) return "올바른 전화번호 형식으로 입력해 주세요. 국가번호도 입력할 수 있습니다.";
-  if (!data.email.trim()) return "이메일을 입력해 주세요.";
-  if (!isValidEmail(data.email)) return "올바른 이메일 형식을 입력해 주세요.";
+  if (data.email.trim() && !isValidEmail(data.email)) return "올바른 이메일 형식을 입력해 주세요.";
   if (!data.responseMethod) return "회신 방법을 선택해 주세요.";
-  if (data.message.trim() && data.message.trim().length < 10) return "문의 내용을 입력하는 경우 10자 이상 작성해 주세요.";
   if (data.message.length > 1500) return "문의 내용은 최대 1,500자까지 입력해 주세요.";
 
   if (data.inquiryType === "quote") {

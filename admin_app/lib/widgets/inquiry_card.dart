@@ -52,84 +52,110 @@ class InquiryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         side: const BorderSide(color: AppColors.line),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                StatusChip(status: inquiry.status),
-                const Spacer(),
-                Text(date,
-                    style: const TextStyle(
-                        color: AppColors.subText, fontSize: 12)),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              inquiry.companyName,
-              style: const TextStyle(
-                color: AppColors.text,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onOpen,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  StatusChip(status: inquiry.status),
+                  const Spacer(),
+                  Text(date,
+                      style: const TextStyle(
+                          color: AppColors.subText, fontSize: 12)),
+                ],
               ),
-            ),
-            const SizedBox(height: 6),
-            _info('담당자', inquiry.contactPerson),
-            if (inquiry.inquiryType?.isNotEmpty == true)
-              _info('문의 유형', inquiryTypeLabel(inquiry.inquiryType)),
-            _info(
-              '연락처',
-              inquiry.phone?.isNotEmpty == true ? inquiry.phone! : '연락처 없음',
-            ),
-            if (inquiry.productInterest?.isNotEmpty == true)
-              _info('관심 제품', inquiry.productInterest!),
-            if (inquiry.cargoType?.isNotEmpty == true)
-              _info('화물 종류', inquiry.cargoType!),
-            if (inquiry.loadPerPallet?.isNotEmpty == true)
-              _info('팔레트당 중량', inquiry.loadPerPallet!),
-            if (inquiry.estimatedQuantity?.isNotEmpty == true)
-              _info('예상 수량', inquiry.estimatedQuantity!),
-            if (inquiry.message?.isNotEmpty == true) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               Text(
-                inquiry.message!,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: AppColors.subText),
+                inquiry.companyName,
+                style: const TextStyle(
+                  color: AppColors.text,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              _info('담당자', inquiry.contactPerson),
+              if (inquiry.inquiryType?.isNotEmpty == true)
+                _info('문의 유형', inquiryTypeLabel(inquiry.inquiryType)),
+              _info(
+                '연락처',
+                inquiry.phone?.isNotEmpty == true ? inquiry.phone! : '연락처 없음',
+              ),
+              if (inquiry.productInterest?.isNotEmpty == true)
+                _info('관심 제품', inquiry.productInterest!),
+              if (inquiry.cargoType?.isNotEmpty == true)
+                _info('화물 종류', inquiry.cargoType!),
+              if (inquiry.loadPerPallet?.isNotEmpty == true)
+                _info('팔레트당 중량', inquiry.loadPerPallet!),
+              if (inquiry.estimatedQuantity?.isNotEmpty == true)
+                _info('예상 수량', inquiry.estimatedQuantity!),
+              if (inquiry.message?.isNotEmpty == true) ...[
+                const SizedBox(height: 8),
+                Text(
+                  inquiry.message!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: AppColors.subText),
+                ),
+              ],
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: onCall,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        minimumSize: const Size(0, 48),
+                      ),
+                      child: Text(
+                        onCall == null ? '연락처 없음' : '전화하기',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: onOpen,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        minimumSize: const Size(0, 48),
+                      ),
+                      child: const Text(
+                        '상세보기',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                  if (onComplete != null) ...[
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: onComplete,
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          minimumSize: const Size(0, 48),
+                        ),
+                        child: const Text(
+                          '처리 완료',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ],
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                OutlinedButton(
-                  onPressed: onCall,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.phone, size: 22),
-                      const SizedBox(width: 6),
-                      Text(onCall == null ? '연락처 없음' : '전화하기'),
-                    ],
-                  ),
-                ),
-                OutlinedButton.icon(
-                  onPressed: onOpen,
-                  icon: const Icon(Icons.description_outlined, size: 20),
-                  label: const Text('상세 보기'),
-                ),
-                if (onComplete != null)
-                  FilledButton.icon(
-                    onPressed: onComplete,
-                    icon: const Icon(Icons.check, size: 21),
-                    label: const Text('처리 완료'),
-                  ),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     );

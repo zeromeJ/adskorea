@@ -46,9 +46,9 @@ export function validateContactBody(data: ReturnType<typeof normalizeContactBody
   if (!data.contactPerson || data.contactPerson.length > 50) return "입력값을 확인해 주세요.";
   if (data.department.length > 100) return "입력값을 확인해 주세요.";
   if (!data.phone || data.phone.length > 30 || !isValidPhone(data.phone)) return "올바른 전화번호 형식으로 입력해 주세요.";
-  if (!data.email || data.email.length > 254 || !isValidEmail(data.email)) return "올바른 이메일 형식을 입력해 주세요.";
+  if (data.email.length > 254 || (data.email && !isValidEmail(data.email))) return "올바른 이메일 형식을 입력해 주세요.";
   if (!data.responseMethod) return "회신 방법을 확인해 주세요.";
-  if ((data.message && data.message.length < 10) || data.message.length > 1500) return "문의 내용은 입력하는 경우 10자 이상, 최대 1,500자입니다.";
+  if (data.message.length > 1500) return "문의 내용은 최대 1,500자입니다.";
   if (data.productInterest.length > 100 || data.estimatedQuantity.length > 100 || data.industry.length > 100) return "입력값을 확인해 주세요.";
 
   if (data.inquiryType === "quote") {
