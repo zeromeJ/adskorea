@@ -178,9 +178,9 @@ export async function getWebsiteContent(): Promise<CmsSiteContent | null> {
         heroMobileImage: assetWithLegacy("home", "heroMobile", "main-images"),
         overviewImage: assetWithLegacy("product-overview", "overview", "main-images"),
         verificationImage: assetWithLegacy("performance", "verification", "main-images"),
-        verificationReportThumbnail: assetThumbnail("performance", "verificationReportFile") ?? assetWithLegacy("performance", "verificationReport", "main-images"),
+        verificationReportThumbnail: assetWithLegacy("performance", "verificationReport", "main-images") ?? assetThumbnail("performance", "verificationReportFile"),
         verificationReportFile: asset("performance", "verificationReportFile"),
-        sustainabilityStatementThumbnail: assetThumbnail("environment", "carbonStatementFile") ?? assetWithLegacy("environment", "carbonStatement", "main-images"),
+        sustainabilityStatementThumbnail: assetWithLegacy("environment", "carbonStatement", "main-images") ?? assetThumbnail("environment", "carbonStatementFile"),
         sustainabilityStatementFile: asset("environment", "carbonStatementFile"),
         productOverviewVideo: asset("product-overview", "productOverviewVideo") ?? videoData.productOverviewVideo,
         productOverviewPoster: assetWithLegacy("product-overview", "productOverviewPoster", "intro-videos"),
@@ -227,8 +227,8 @@ export async function getWebsiteContent(): Promise<CmsSiteContent | null> {
             asset("performance", `document${index + 1}TranslatedFile`) ?? "",
           previewUrl: asset("performance", `document${index + 1}File`) ?? "",
           thumbnailUrl:
-            assetThumbnail("performance", `document${index + 1}File`) ??
-            asset("performance", `document${index + 1}`),
+            asset("performance", `document${index + 1}`) ??
+            assetThumbnail("performance", `document${index + 1}File`),
           publicDownload: Boolean(
             asset("performance", `document${index + 1}File`),
           ),
@@ -245,7 +245,7 @@ export async function getWebsiteContent(): Promise<CmsSiteContent | null> {
         pages: "PDF",
         updatedAt: "최신 등록본",
         fileSize: "",
-        thumbnailUrl: assetThumbnail("company", "catalogFile") ?? asset("company", "catalogCover"),
+        thumbnailUrl: asset("company", "catalogCover") ?? assetThumbnail("company", "catalogFile"),
         fileUrl: asset("company", "catalogFile"),
       } : undefined,
     };

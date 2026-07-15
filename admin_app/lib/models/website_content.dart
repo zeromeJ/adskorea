@@ -125,7 +125,7 @@ List<ImageSlot> websiteDocumentSlots(int index) => [
           ratio: 'A4 세로형',
           width: 900,
           height: 1273,
-          description: '원본 PDF를 기준으로 홈페이지 썸네일이 자동 생성됩니다.',
+          description: '홈페이지에서 내려받을 원본 PDF를 등록하세요.',
           type: WebsiteSlotType.pdf),
       ImageSlot(
           key: 'document${index + 1}TranslatedFile',
@@ -135,6 +135,13 @@ List<ImageSlot> websiteDocumentSlots(int index) => [
           height: 1273,
           description: '번역본이 있을 때만 등록하세요.',
           type: WebsiteSlotType.pdf),
+      ImageSlot(
+          key: 'document${index + 1}',
+          label: '문서 썸네일',
+          ratio: 'A4 세로형',
+          width: 900,
+          height: 1273,
+          description: '홈페이지 문서 카드에 표시할 표지 이미지를 직접 등록하세요.'),
     ];
 
 class ImageSlot {
@@ -181,6 +188,13 @@ final websiteImageSlots = <String, List<ImageSlot>>{
         description: 'MP4, WEBM 영상 원본 파일',
         type: WebsiteSlotType.video),
     ImageSlot(
+        key: 'productOverviewPoster',
+        label: '제품 구조 소개영상 썸네일',
+        ratio: '16:9',
+        width: 1280,
+        height: 720,
+        description: '영상 재생 전 표시할 대표 이미지를 직접 등록하세요.'),
+    ImageSlot(
         key: 'processVideo',
         label: '제조공정 영상',
         ratio: '16:9',
@@ -188,6 +202,13 @@ final websiteImageSlots = <String, List<ImageSlot>>{
         height: 720,
         description: 'MP4, WEBM 영상 원본 파일',
         type: WebsiteSlotType.video),
+    ImageSlot(
+        key: 'processPoster',
+        label: '제조공정 영상 썸네일',
+        ratio: '16:9',
+        width: 1280,
+        height: 720,
+        description: '영상 재생 전 표시할 대표 이미지를 직접 등록하세요.'),
   ],
   'performance-verification': const [
     ImageSlot(
@@ -203,20 +224,36 @@ final websiteImageSlots = <String, List<ImageSlot>>{
         ratio: 'A4 세로형',
         width: 900,
         height: 1273,
-        description: '원본 PDF를 올리면 미리보기 표지가 자동 생성됩니다.',
+        description: '홈페이지에서 열어볼 시험성적서 PDF를 등록하세요.',
         type: WebsiteSlotType.pdf),
+    ImageSlot(
+        key: 'verificationReport',
+        label: '시험성적서 썸네일',
+        ratio: 'A4 세로형',
+        width: 900,
+        height: 1273,
+        description: '시험성적서 옆에 표시할 표지 이미지를 직접 등록하세요.'),
   ],
   'performance-videos': [
     ...List.generate(
         6,
-        (i) => ImageSlot(
-            key: 'video${i + 1}File',
-            label: '성능 시연 영상 ${i + 1}',
-            ratio: '16:9',
-            width: 1280,
-            height: 720,
-            description: 'MP4, WEBM 영상 원본 파일',
-            type: WebsiteSlotType.video)),
+        (i) => [
+              ImageSlot(
+                  key: 'video${i + 1}File',
+                  label: '성능 시연 영상 ${i + 1}',
+                  ratio: '16:9',
+                  width: 1280,
+                  height: 720,
+                  description: 'MP4, WEBM 영상 원본 파일',
+                  type: WebsiteSlotType.video),
+              ImageSlot(
+                  key: 'video${i + 1}',
+                  label: '성능 시연 영상 ${i + 1} 썸네일',
+                  ratio: '16:9',
+                  width: 1280,
+                  height: 720,
+                  description: '영상 재생 전 표시할 대표 이미지를 직접 등록하세요.'),
+            ]).expand((slots) => slots),
   ],
   'performance-documents': [
     ...List.generate(4, websiteDocumentSlots).expand((slots) => slots),
@@ -259,8 +296,15 @@ final websiteImageSlots = <String, List<ImageSlot>>{
         ratio: 'A4 세로형',
         width: 900,
         height: 1273,
-        description: '원본 PDF를 올리면 미리보기 표지가 자동 생성됩니다.',
+        description: '홈페이지에서 열어볼 검증 성명서 PDF를 등록하세요.',
         type: WebsiteSlotType.pdf),
+    ImageSlot(
+        key: 'carbonStatement',
+        label: '검증 성명서 썸네일',
+        ratio: 'A4 세로형',
+        width: 900,
+        height: 1273,
+        description: '환경 데이터 영역에 표시할 표지 이미지를 직접 등록하세요.'),
   ],
   'company': const [
     ImageSlot(
@@ -279,13 +323,27 @@ final websiteImageSlots = <String, List<ImageSlot>>{
         description: 'MP4, WEBM 영상 원본 파일',
         type: WebsiteSlotType.video),
     ImageSlot(
+        key: 'companyOverviewPoster',
+        label: '회사·생산 소개영상 썸네일',
+        ratio: '16:9',
+        width: 1280,
+        height: 720,
+        description: '영상 재생 전 표시할 대표 이미지를 직접 등록하세요.'),
+    ImageSlot(
         key: 'catalogFile',
         label: '제품 카탈로그 PDF',
         ratio: 'A4 세로형',
         width: 900,
         height: 1273,
-        description: '원본 PDF를 올리면 카탈로그 표지가 자동 생성됩니다.',
+        description: '홈페이지에서 내려받을 카탈로그 PDF를 등록하세요.',
         type: WebsiteSlotType.pdf),
+    ImageSlot(
+        key: 'catalogCover',
+        label: '제품 카탈로그 썸네일',
+        ratio: 'A4 세로형',
+        width: 900,
+        height: 1273,
+        description: '카탈로그 카드에 표시할 표지 이미지를 직접 등록하세요.'),
   ],
 };
 

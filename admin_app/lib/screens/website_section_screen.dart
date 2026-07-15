@@ -416,12 +416,6 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
                 ),
               ]),
             ),
-            if (isPdf)
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: Text('표지 이미지는 서버에서 자동으로 생성됩니다.',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF667085))),
-              ),
             const SizedBox(height: 12),
             Wrap(spacing: 8, runSpacing: 8, children: [
               FilledButton.icon(

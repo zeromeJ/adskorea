@@ -1,11 +1,11 @@
 export const websiteSections = [
   { key: "home", title: "홈", requiredCount: 2 },
-  { key: "product-overview", title: "제품 소개", requiredCount: 3 },
+  { key: "product-overview", title: "제품 소개", requiredCount: 5 },
   { key: "performance", title: "성능·기술", requiredCount: 12 },
   { key: "product-lineup", title: "제품 라인업", requiredCount: 4 },
   { key: "applications", title: "적용 분야", requiredCount: 0 },
-  { key: "environment", title: "환경 데이터", requiredCount: 1 },
-  { key: "company", title: "회사·생산", requiredCount: 3 },
+  { key: "environment", title: "환경 데이터", requiredCount: 2 },
+  { key: "company", title: "회사·생산", requiredCount: 5 },
   { key: "site-settings", title: "사이트 기본정보", requiredCount: 1 },
 ] as const;
 
