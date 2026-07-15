@@ -4,6 +4,7 @@ export const inquiryAttachmentBucket =
   process.env.SUPABASE_INQUIRY_BUCKET || "inquiry-attachments";
 export const websiteContentBucket =
   process.env.SUPABASE_CONTENT_BUCKET || "website-content";
+export const websiteContentMaxFileSize = 50 * 1024 * 1024;
 
 export function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -20,10 +21,16 @@ export async function ensureWebsiteContentBucket() {
   const supabase = getSupabaseAdmin();
   if (!supabase) return null;
 
-  const { data } = await supabase.storage.getBucket(websiteContentBucket);
+  const { data: buckets, error: listError } =
+    await supabase.storage.listBuckets();
+  if (listError) throw listError;
+
+  const bucketExists = buckets.some(
+    (bucket) => bucket.id === websiteContentBucket,
+  );
   const bucketOptions = {
     public: true,
-    fileSizeLimit: 200 * 1024 * 1024,
+    fileSizeLimit: websiteContentMaxFileSize,
     allowedMimeTypes: [
       "application/pdf",
       "image/jpeg",
@@ -34,7 +41,7 @@ export async function ensureWebsiteContentBucket() {
       "video/quicktime",
     ],
   };
-  if (!data) {
+  if (!bucketExists) {
     const { error } = await supabase.storage.createBucket(websiteContentBucket, {
       ...bucketOptions,
     });

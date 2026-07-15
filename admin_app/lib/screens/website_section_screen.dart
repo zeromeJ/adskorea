@@ -132,13 +132,13 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
       fileName = selected.name;
       extension = fileName.split('.').last.toLowerCase();
     }
-    final maxBytes = isPdf ? 30 * 1024 * 1024 : 150 * 1024 * 1024;
+    final maxBytes = isPdf ? 30 * 1024 * 1024 : 50 * 1024 * 1024;
     if (bytes.length > maxBytes) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text(isPdf
                 ? 'PDF는 30MB 이하만 등록할 수 있습니다.'
-                : '영상은 150MB 이하만 등록할 수 있습니다.')));
+                : '영상은 50MB 이하만 등록할 수 있습니다.')));
       }
       return;
     }
