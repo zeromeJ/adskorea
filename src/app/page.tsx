@@ -45,6 +45,7 @@ export default async function Home() {
       expiryDate: item.expiryDate || "별도 유효기간 기재 없음",
       relatedProducts: item.relatedProducts?.join(", "),
       fileUrl: item.fileUrl || "",
+      translatedFileUrl: item.translatedFileUrl || "",
     }),
   );
   const visibility = new Map(

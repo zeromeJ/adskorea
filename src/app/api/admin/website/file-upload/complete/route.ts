@@ -52,7 +52,7 @@ export async function POST(request: Request) {
   const url = supabase.storage.from(websiteContentBucket).getPublicUrl(storagePath).data.publicUrl;
   let thumbnailUrl: string | undefined;
   let thumbnailStoragePath: string | undefined;
-  if (assetType === "PDF") {
+  if (assetType === "PDF" && !itemKey.endsWith("TranslatedFile")) {
     const cover = await createPdfCover(label);
     thumbnailStoragePath = `${sectionKey}/generated/${itemKey}-${Date.now()}-cover.webp`;
     const uploaded = await supabase.storage.from(websiteContentBucket).upload(thumbnailStoragePath, cover, { contentType: "image/webp", upsert: true });

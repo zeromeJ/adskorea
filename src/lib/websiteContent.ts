@@ -89,10 +89,12 @@ export type CmsSiteContent = {
     relatedProducts?: string[];
     language: string;
     fileUrl?: string;
+    translatedFileUrl?: string;
     previewUrl?: string;
     publicDownload?: boolean;
     publicPreview?: boolean;
     previewAvailable?: boolean;
+    summary?: string;
     thumbnailUrl?: string;
   }>;
   factoryImage?: string;
@@ -150,6 +152,25 @@ export async function getWebsiteContent(): Promise<CmsSiteContent | null> {
       ...item,
       imageUrl: productImages.get(productKeys[index]) ?? undefined,
     }));
+    const performanceData = byKey.get("performance")?.data;
+    const storedDocuments =
+      performanceData &&
+      !Array.isArray(performanceData) &&
+      typeof performanceData === "object" &&
+      Array.isArray((performanceData as Record<string, unknown>).documents)
+        ? ((performanceData as Record<string, unknown>).documents as unknown[])
+        : [];
+    const documentDetails = (index: number) => {
+      const value = storedDocuments[index];
+      return value && !Array.isArray(value) && typeof value === "object"
+        ? (value as Record<string, unknown>)
+        : {};
+    };
+    const documentText = (
+      details: Record<string, unknown>,
+      key: string,
+      fallback?: string,
+    ) => (typeof details[key] === "string" ? details[key] as string : fallback);
     return {
       siteSettings: settings,
       homePage: {
@@ -174,15 +195,48 @@ export async function getWebsiteContent(): Promise<CmsSiteContent | null> {
         videoUrl: asset("performance", `video${index + 1}File`),
         poster: asset("performance", `video${index + 1}`),
       })),
-      documents: fallbackDocuments.map((document, index) => ({
-        ...document,
-        relatedProducts: document.relatedProducts ? [document.relatedProducts] : [],
-        fileUrl: asset("performance", `document${index + 1}File`) ?? "",
-        previewUrl: asset("performance", `document${index + 1}File`) ?? "",
-        thumbnailUrl: assetThumbnail("performance", `document${index + 1}File`) ?? asset("performance", `document${index + 1}`),
-        publicDownload: Boolean(asset("performance", `document${index + 1}File`)),
-        previewAvailable: Boolean(asset("performance", `document${index + 1}File`)),
-      })),
+      documents: fallbackDocuments.map((document, index) => {
+        const details = documentDetails(index);
+        const relatedProducts = documentText(
+          details,
+          "relatedProducts",
+          document.relatedProducts,
+        );
+        return {
+          ...document,
+          title: documentText(details, "title", document.title) ?? document.title,
+          documentType:
+            documentText(details, "documentType", document.documentType) ??
+            document.documentType,
+          issuer:
+            documentText(details, "issuer", document.issuer) ?? document.issuer,
+          reportNumber: documentText(
+            details,
+            "reportNumber",
+            document.reportNumber,
+          ),
+          issueDate: documentText(details, "issueDate", document.issueDate),
+          expiryDate: documentText(details, "expiryDate", document.expiryDate),
+          relatedProducts: relatedProducts ? [relatedProducts] : [],
+          language:
+            documentText(details, "language", document.language) ??
+            document.language,
+          summary: documentText(details, "summary", document.summary),
+          fileUrl: asset("performance", `document${index + 1}File`) ?? "",
+          translatedFileUrl:
+            asset("performance", `document${index + 1}TranslatedFile`) ?? "",
+          previewUrl: asset("performance", `document${index + 1}File`) ?? "",
+          thumbnailUrl:
+            assetThumbnail("performance", `document${index + 1}File`) ??
+            asset("performance", `document${index + 1}`),
+          publicDownload: Boolean(
+            asset("performance", `document${index + 1}File`),
+          ),
+          previewAvailable: Boolean(
+            asset("performance", `document${index + 1}File`),
+          ),
+        };
+      }),
       factoryImage: asset("company", "factory"),
       catalog: asset("company", "catalogFile") ? {
         title: "ADS Korea 제품 카탈로그",

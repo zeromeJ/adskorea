@@ -15,6 +15,7 @@ export type DocumentItem = {
   relatedProducts?: string;
   language: string;
   fileUrl: string;
+  translatedFileUrl?: string;
   previewUrl?: string;
   publicDownload?: boolean;
   publicPreview?: boolean;
@@ -169,23 +170,13 @@ export default function DocumentLibrarySection({
                 mobileRatio="9:16"
                 src={item.thumbnailUrl}
               />
-              {item.fileUrl ? (
-                <a
-                  aria-label={`${item.title} PDF 다운로드`}
-                  className="absolute top-4 right-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-md bg-black/[0.055] text-[var(--sub-text)] transition-colors hover:bg-black/[0.1] hover:text-[var(--primary-dark)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)]"
-                  download={`${item.title}.pdf`}
-                  href={item.fileUrl}
-                  title="PDF 다운로드"
-                >
-                  <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24">
-                    <path d="M12 3v11m0 0 4-4m-4 4-4-4M5 18v2h14v-2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-                  </svg>
-                </a>
-              ) : null}
-              <div className={`flex h-full min-w-0 flex-col ${item.fileUrl ? "pr-12" : ""}`}>
-                <span className="w-fit rounded-md bg-[var(--sub-mint)] px-2.5 py-1 text-[10px] font-bold text-[var(--primary-dark)]">
-                  {item.documentType}
-                </span>
+              <div className="flex h-full min-w-0 flex-col">
+                <div className="flex min-w-0 items-start justify-between gap-1">
+                  <span className="min-w-0 rounded-md bg-[var(--sub-mint)] px-2 py-1 text-[9px] leading-4 font-bold whitespace-normal text-[var(--primary-dark)] [overflow-wrap:anywhere]">
+                    {item.documentType}
+                  </span>
+                  <DocumentDownloadActions item={item} />
+                </div>
                 <h3 className="mt-1.5 [overflow-wrap:anywhere] leading-6 font-bold text-[var(--text)]">
                   {item.title}
                 </h3>
@@ -225,5 +216,56 @@ export default function DocumentLibrarySection({
         ) : null}
       </div>
     </section>
+  );
+}
+
+function DocumentDownloadActions({ item }: { item: DocumentItem }) {
+  const baseClass =
+    "inline-flex h-7 items-center justify-center gap-px rounded-md px-1.5 text-[9px] font-bold whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)]";
+  return (
+    <div className="flex shrink-0 items-center gap-1">
+      {item.fileUrl ? (
+        <a
+          aria-label={`${item.title} 원본 PDF 다운로드`}
+          className={`${baseClass} bg-black/[0.055] text-[var(--sub-text)] transition-colors hover:bg-black/[0.1] hover:text-[var(--primary-dark)]`}
+          download={`${item.title}-원본.pdf`}
+          href={item.fileUrl}
+          title="원본 PDF 다운로드"
+        >
+          원본
+          <DownloadIcon />
+        </a>
+      ) : (
+        <span aria-disabled="true" className={`${baseClass} bg-black/[0.035] text-[var(--sub-text)]/45`} title="원본 PDF 준비 중">
+          원본
+          <DownloadIcon />
+        </span>
+      )}
+      {item.translatedFileUrl ? (
+        <a
+          aria-label={`${item.title} 번역본 PDF 다운로드`}
+          className={`${baseClass} bg-black/[0.055] text-[var(--sub-text)] transition-colors hover:bg-black/[0.1] hover:text-[var(--primary-dark)]`}
+          download={`${item.title}-번역본.pdf`}
+          href={item.translatedFileUrl}
+          title="번역본 PDF 다운로드"
+        >
+          번역본
+          <DownloadIcon />
+        </a>
+      ) : (
+        <span aria-disabled="true" className={`${baseClass} bg-black/[0.035] text-[var(--sub-text)]/45`} title="번역본 PDF 준비 중">
+          번역본
+          <DownloadIcon />
+        </span>
+      )}
+    </div>
+  );
+}
+
+function DownloadIcon() {
+  return (
+    <svg aria-hidden="true" className="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24">
+      <path d="M12 3v11m0 0 4-4m-4 4-4-4M5 18v2h14v-2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+    </svg>
   );
 }

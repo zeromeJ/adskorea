@@ -13,11 +13,22 @@ class WebsiteContentService {
   }
 
   Future<List<WebsiteAsset>> assets(String sectionKey) async {
+    return (await content(sectionKey)).assets;
+  }
+
+  Future<WebsiteSectionContent> content(String sectionKey) async {
     final json = await _api.get('/api/admin/website/$sectionKey');
     final section = json['section'] as Map<String, dynamic>;
-    return (section['assets'] as List? ?? [])
+    final assets = (section['assets'] as List? ?? [])
         .map((e) => WebsiteAsset(e as Map<String, dynamic>))
         .toList();
+    final rawData = section['data'];
+    return WebsiteSectionContent(
+      assets: assets,
+      data: rawData is Map
+          ? Map<String, dynamic>.from(rawData)
+          : <String, dynamic>{},
+    );
   }
 
   Future<WebsiteAsset> uploadImage(
@@ -145,8 +156,11 @@ class WebsiteContentService {
     return WebsiteAsset(completed['asset'] as Map<String, dynamic>);
   }
 
-  Future<void> saveSection(String sectionKey, List<WebsiteAsset> assets) async {
-    await _api.put('/api/admin/website/$sectionKey',
-        {'assets': assets.map((e) => e.data).toList()});
+  Future<void> saveSection(String sectionKey, List<WebsiteAsset> assets,
+      {Map<String, dynamic>? data}) async {
+    await _api.put('/api/admin/website/$sectionKey', {
+      'assets': assets.map((e) => e.data).toList(),
+      if (data != null) 'data': data,
+    });
   }
 }

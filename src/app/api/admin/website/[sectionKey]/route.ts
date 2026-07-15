@@ -40,11 +40,14 @@ export async function PUT(request: Request, context: Context) {
   const body = await request.json() as { data?: Prisma.InputJsonValue; assets?: AssetInput[] };
   const previous = await prisma.websiteSection.findUnique({ where: { key: sectionKey }, include: { assets: true } });
   const assets = body.assets ?? [];
+  const nextData = body.data === undefined
+    ? previous?.data ?? Prisma.JsonNull
+    : body.data;
   const section = await prisma.$transaction(async (tx) => {
     const saved = await tx.websiteSection.upsert({
       where: { key: sectionKey },
-      create: { key: sectionKey, title: definition.title, requiredCount: definition.requiredCount, data: body.data ?? Prisma.JsonNull, updatedById: admin.id, updatedByName: admin.displayName ?? admin.username },
-      update: { title: definition.title, requiredCount: definition.requiredCount, data: body.data ?? Prisma.JsonNull, updatedById: admin.id, updatedByName: admin.displayName ?? admin.username },
+      create: { key: sectionKey, title: definition.title, requiredCount: definition.requiredCount, data: nextData, updatedById: admin.id, updatedByName: admin.displayName ?? admin.username },
+      update: { title: definition.title, requiredCount: definition.requiredCount, data: nextData, updatedById: admin.id, updatedByName: admin.displayName ?? admin.username },
     });
     await tx.websiteAsset.deleteMany({ where: { sectionKey } });
     for (const asset of assets) {
@@ -64,7 +67,10 @@ export async function PUT(request: Request, context: Context) {
       sectionKey, sectionTitle: definition.title, action: previous ? "수정" : "등록",
       adminUserId: admin.id, adminUsername: admin.username, adminDisplayName: admin.displayName,
       previousData: previous ? JSON.parse(JSON.stringify(previous)) : Prisma.JsonNull,
-      newData: { data: body.data ?? null, assets },
+      newData: JSON.parse(JSON.stringify({
+        data: nextData === Prisma.JsonNull ? null : nextData,
+        assets,
+      })),
     }});
     return tx.websiteSection.findUnique({ where: { key: saved.key }, include: { assets: { orderBy: { sortOrder: "asc" } } } });
   });
