@@ -1,5 +1,4 @@
 import 'package:http/http.dart' as http;
-import 'package:http_parser/http_parser.dart';
 import '../models/website_content.dart';
 import 'api_client.dart';
 
@@ -76,21 +75,38 @@ class WebsiteContentService {
     ImageSlot slot,
     PendingFileUpload file,
   ) async {
-    final json =
-        await _api.multipart('/api/admin/website/file-upload', fields: {
+    final assetType = slot.type == WebsiteSlotType.pdf ? 'PDF' : 'VIDEO';
+    final prepare = await _api.post('/api/admin/website/file-upload/prepare', {
+      'sectionKey': sectionKey,
+      'itemKey': slot.key,
+      'assetType': assetType,
+      'fileName': file.fileName,
+      'mimeType': file.mimeType,
+      'size': file.bytes.length,
+    });
+    final signedUrl = prepare['signedUrl'] as String?;
+    final storagePath = prepare['storagePath'] as String?;
+    if (signedUrl == null || storagePath == null) {
+      throw const ApiException('업로드 주소를 받지 못했습니다.');
+    }
+    await _api.uploadToSignedUrl(
+      signedUrl,
+      file.bytes,
+      file.mimeType,
+      publishableKey: prepare['publishableKey'] as String?,
+    );
+    final completed =
+        await _api.post('/api/admin/website/file-upload/complete', {
       'sectionKey': sectionKey,
       'itemKey': slot.key,
       'label': slot.label,
-      'assetType': slot.type == WebsiteSlotType.pdf ? 'PDF' : 'VIDEO',
-    }, files: [
-      http.MultipartFile.fromBytes(
-        'file',
-        file.bytes,
-        filename: file.fileName,
-        contentType: MediaType.parse(file.mimeType),
-      ),
-    ]);
-    return WebsiteAsset(json['asset'] as Map<String, dynamic>);
+      'assetType': assetType,
+      'storagePath': storagePath,
+      'fileName': file.fileName,
+      'mimeType': file.mimeType,
+      'size': file.bytes.length,
+    });
+    return WebsiteAsset(completed['asset'] as Map<String, dynamic>);
   }
 
   Future<void> saveSection(String sectionKey, List<WebsiteAsset> assets) async {

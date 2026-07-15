@@ -54,18 +54,32 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
 
   Future<void> _chooseFile(ImageSlot slot) async {
     final isPdf = slot.type == WebsiteSlotType.pdf;
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: isPdf ? const ['pdf'] : const ['mp4', 'webm', 'mov'],
-      withData: true,
-    );
-    if (result == null || result.files.isEmpty) return;
-    final selected = result.files.single;
-    final bytes = selected.bytes ??
-        (selected.path == null
-            ? null
-            : await File(selected.path!).readAsBytes());
-    if (bytes == null) return;
+    late final Uint8List bytes;
+    late final String fileName;
+    String? extension;
+    if (isPdf) {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['pdf'],
+        withData: true,
+      );
+      if (result == null || result.files.isEmpty) return;
+      final selected = result.files.single;
+      final selectedBytes = selected.bytes ??
+          (selected.path == null
+              ? null
+              : await File(selected.path!).readAsBytes());
+      if (selectedBytes == null) return;
+      bytes = selectedBytes;
+      fileName = selected.name;
+      extension = selected.extension?.toLowerCase();
+    } else {
+      final selected = await picker.pickVideo(source: ImageSource.gallery);
+      if (selected == null) return;
+      bytes = await selected.readAsBytes();
+      fileName = selected.name;
+      extension = fileName.split('.').last.toLowerCase();
+    }
     final maxBytes = isPdf ? 30 * 1024 * 1024 : 150 * 1024 * 1024;
     if (bytes.length > maxBytes) {
       if (mounted) {
@@ -76,7 +90,6 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
       }
       return;
     }
-    final extension = selected.extension?.toLowerCase();
     final mimeType = isPdf
         ? 'application/pdf'
         : extension == 'webm'
@@ -87,7 +100,7 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
     if (!mounted) return;
     setState(() {
       pendingFiles[slot.key] = PendingFileUpload(
-          bytes: bytes, fileName: selected.name, mimeType: mimeType);
+          bytes: bytes, fileName: fileName, mimeType: mimeType);
       deleted.remove(slot.key);
       dirty = true;
     });
@@ -159,6 +172,7 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
     final yes = await showDialog<bool>(
         context: context,
         builder: (_) => AlertDialog(
+                scrollable: true,
                 title: Text(slot.type == WebsiteSlotType.image
                     ? '이 이미지를 삭제하시겠습니까?'
                     : '이 파일을 삭제하시겠습니까?'),
@@ -313,6 +327,7 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
     return await showDialog<bool>(
             context: context,
             builder: (_) => AlertDialog(
+                    scrollable: true,
                     title: const Text('저장하지 않은 변경사항이 있습니다.'),
                     content: const Text('저장하지 않고 페이지를 나가시겠습니까?'),
                     actions: [
@@ -335,10 +350,12 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
         }
       },
       child: Scaffold(
-        appBar: AppBar(title: Text(widget.summary.title)),
+        appBar: AppBar(
+            title: Text(widget.summary.title,
+                maxLines: 1, overflow: TextOverflow.ellipsis)),
         bottomNavigationBar: SafeArea(
             child: Container(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
                 decoration: const BoxDecoration(
                     color: Colors.white,
                     border: Border(top: BorderSide(color: Color(0xFFE0E2DD)))),
@@ -346,8 +363,8 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
                   Expanded(
                       child: OutlinedButton(
                           onPressed: dirty && !saving ? _load : null,
-                          child: const Text('변경 취소'))),
-                  const SizedBox(width: 10),
+                          child: const Text('취소', maxLines: 1))),
+                  const SizedBox(width: 8),
                   Expanded(
                       flex: 2,
                       child: FilledButton.icon(
@@ -358,7 +375,7 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
                                   child:
                                       CircularProgressIndicator(strokeWidth: 2))
                               : const Icon(Icons.save),
-                          label: const Text('변경사항 저장')))
+                          label: const Text('저장', maxLines: 1)))
                 ]))),
         body: loading
             ? const Center(child: CircularProgressIndicator())

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import '../constants/api.dart';
 
@@ -97,6 +98,43 @@ class ApiClient {
     return _send(http.put(uri(path), headers: headers, body: jsonEncode(body)));
   }
 
+  Future<void> uploadToSignedUrl(
+    String signedUrl,
+    Uint8List bytes,
+    String mimeType, {
+    String? publishableKey,
+  }) async {
+    try {
+      final response = await http
+          .put(
+            Uri.parse(signedUrl),
+            headers: {
+              'Content-Type': mimeType,
+              'cache-control': 'max-age=3600',
+              'x-upsert': 'false',
+              if (publishableKey != null && publishableKey.isNotEmpty)
+                'apikey': publishableKey,
+              if (publishableKey != null && publishableKey.isNotEmpty)
+                'Authorization': 'Bearer $publishableKey',
+            },
+            body: bytes,
+          )
+          .timeout(const Duration(minutes: 5));
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw ApiException(
+          response.statusCode == 413
+              ? '파일이 저장소 허용 크기를 넘었습니다.'
+              : '파일을 저장소에 전송하지 못했습니다.',
+          statusCode: response.statusCode,
+        );
+      }
+    } on TimeoutException {
+      throw const ApiException('파일 전송이 지연되고 있습니다. 다시 시도해 주세요.');
+    } on SocketException {
+      throw const ApiException('파일 저장소에 연결할 수 없습니다.');
+    }
+  }
+
   Future<Map<String, dynamic>> _send(Future<http.Response> request) async {
     try {
       final response = await request.timeout(_timeout);
@@ -113,7 +151,19 @@ class ApiClient {
   }
 
   Map<String, dynamic> _decode(http.Response response) {
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    Map<String, dynamic> json;
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) throw const FormatException();
+      json = decoded;
+    } on FormatException {
+      throw ApiException(
+        response.statusCode == 413
+            ? '파일이 서버 허용 크기를 넘었습니다.'
+            : '서버 응답을 처리할 수 없습니다. 잠시 후 다시 시도해 주세요.',
+        statusCode: response.statusCode,
+      );
+    }
 
     if (response.statusCode >= 400 || json['success'] != true) {
       throw ApiException(

@@ -140,6 +140,24 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
             borderSide: const BorderSide(color: AppColors.line),
           ),
         ),
+        dialogTheme: DialogThemeData(
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          titleTextStyle: const TextStyle(
+            color: AppColors.text,
+            fontSize: 21,
+            height: 1.35,
+            fontWeight: FontWeight.w800,
+          ),
+          contentTextStyle: const TextStyle(
+            color: AppColors.subText,
+            fontSize: 17,
+            height: 1.55,
+          ),
+        ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
             minimumSize: const Size(0, 48),
