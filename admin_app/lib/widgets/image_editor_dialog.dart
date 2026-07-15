@@ -175,151 +175,179 @@ class _ImageEditorDialogState extends State<ImageEditorDialog> {
         (_width < widget.slot.width || _height < widget.slot.height);
     return Scaffold(
       appBar: AppBar(
-          title: Text(widget.slot.label),
+          title: Text(widget.slot.label,
+              maxLines: 1, overflow: TextOverflow.ellipsis),
           leading: IconButton(
               icon: const Icon(Icons.close),
               tooltip: '취소',
               onPressed: () => Navigator.pop(context))),
-      body: SafeArea(
-          child: Column(children: [
-        Container(
-            width: double.infinity,
-            color: const Color(0xFFF4F5F1),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: Wrap(spacing: 18, runSpacing: 6, children: [
-              Text('권장 비율: ${widget.slot.ratio}',
-                  style: const TextStyle(fontWeight: FontWeight.w700)),
-              Text('현재 크기: ${_width > 0 ? '$_width × $_height px' : '확인 중'}'),
-            ])),
-        if (low)
-          Container(
-              width: double.infinity,
-              color: const Color(0xFFFFE8E8),
-              padding: const EdgeInsets.all(12),
-              child: const Text('이미지 해상도가 낮아 화면에서 흐리게 보일 수 있습니다.',
-                  style: TextStyle(
-                      color: Color(0xFFB42318), fontWeight: FontWeight.w700))),
-        Expanded(
-            child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: LayoutBuilder(builder: (context, constraints) {
-                  final editor = ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Crop(
-                        image: _working,
-                        controller: _controller,
-                        onCropped: _onCropped,
-                        aspectRatio: widget.slot.aspect,
-                        interactive: true,
-                        fixCropRect: true,
-                        baseColor: const Color(0xFF15251D),
-                        maskColor: Colors.black.withValues(alpha: .55),
-                        radius: 8,
-                        onMoved: (_, imageRect) => _imageArea = imageRect,
-                        onStatusChanged: (status) {
-                          if (mounted) {
-                            setState(() => _ready = status == CropStatus.ready);
-                            if (status == CropStatus.ready &&
-                                !_initialApplied &&
-                                widget.initialCrop?.length == 4) {
-                              _initialApplied = true;
-                              final sourceW =
-                                  (_rotation % 180 == 0 ? _width : _height)
-                                      .toDouble();
-                              final sourceH =
-                                  (_rotation % 180 == 0 ? _height : _width)
-                                      .toDouble();
-                              final crop = widget.initialCrop!;
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                _controller.area = Rect.fromLTWH(
-                                    crop[0] * sourceW,
-                                    crop[1] * sourceH,
-                                    crop[2] * sourceW,
-                                    crop[3] * sourceH);
-                              });
-                            }
-                          }
-                        },
-                        cornerDotBuilder: (size, edge) =>
-                            const DotControl(color: Colors.white),
-                      ));
-                  final preview = Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('홈페이지 표시 비율 미리보기',
-                            style: TextStyle(fontWeight: FontWeight.w800)),
-                        const SizedBox(height: 8),
-                        AspectRatio(
-                            aspectRatio: widget.slot.aspect,
-                            child: ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child:
-                                    Image.memory(_working, fit: BoxFit.cover))),
-                      ]);
-                  if (constraints.maxWidth > 800) {
-                    return Row(children: [
-                      Expanded(flex: 3, child: editor),
-                      const SizedBox(width: 20),
-                      Expanded(flex: 2, child: preview)
-                    ]);
-                  }
-                  return Column(children: [
-                    Expanded(child: editor),
-                    const SizedBox(height: 12),
-                    SizedBox(height: 120, child: preview)
-                  ]);
-                }))),
-        Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      body: SafeArea(child: LayoutBuilder(builder: (context, viewport) {
+        final editorHeight = (viewport.maxWidth > 800
+                ? viewport.maxHeight * .6
+                : viewport.maxHeight * .5)
+            .clamp(viewport.maxWidth > 800 ? 360.0 : 280.0,
+                viewport.maxWidth > 800 ? 620.0 : 430.0)
+            .toDouble();
+
+        return SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
             child: Column(children: [
-              Row(children: [
-                const Text('확대 / 축소',
-                    style: TextStyle(fontWeight: FontWeight.w700)),
-                Expanded(
-                    child: Slider(
-                        value: _zoom,
-                        min: 1,
-                        max: 4,
-                        divisions: 30,
-                        label: '${_zoom.toStringAsFixed(1)}배',
-                        onChanged: _setZoom))
-              ]),
-              Wrap(spacing: 8, runSpacing: 8, children: [
-                OutlinedButton.icon(
-                    onPressed: _rotate,
-                    icon: const Icon(Icons.rotate_right),
-                    label: const Text('회전')),
-                OutlinedButton.icon(
-                    onPressed: _autoFit,
-                    icon: const Icon(Icons.fit_screen),
-                    label: const Text('자동 맞춤')),
-                OutlinedButton.icon(
-                    onPressed: _reset,
-                    icon: const Icon(Icons.restore),
-                    label: const Text('원본으로 되돌리기')),
-              ]),
-            ])),
-        Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: Color(0xFFE0E2DD)))),
-            child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-              OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('취소')),
-              const SizedBox(width: 10),
-              FilledButton.icon(
-                  onPressed: _ready && !_cropping ? _apply : null,
-                  icon: _cropping
-                      ? const SizedBox.square(
-                          dimension: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.check),
-                  label: const Text('적용')),
-            ])),
-      ])),
+              Container(
+                  width: double.infinity,
+                  color: const Color(0xFFF4F5F1),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                  child: Text(
+                      '권장 ${widget.slot.ratio}  ·  ${_width > 0 ? '$_width × $_height px' : '크기 확인 중'}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w700))),
+              if (low)
+                Container(
+                    width: double.infinity,
+                    color: const Color(0xFFFFE8E8),
+                    padding: const EdgeInsets.all(12),
+                    child: const Text('이미지 해상도가 낮아 화면에서 흐리게 보일 수 있습니다.',
+                        style: TextStyle(
+                            color: Color(0xFFB42318),
+                            fontWeight: FontWeight.w700))),
+              Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                  child: SizedBox(
+                      height: editorHeight,
+                      child: LayoutBuilder(builder: (context, constraints) {
+                        final editor = ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Crop(
+                              image: _working,
+                              controller: _controller,
+                              onCropped: _onCropped,
+                              aspectRatio: widget.slot.aspect,
+                              interactive: true,
+                              fixCropRect: true,
+                              baseColor: const Color(0xFF15251D),
+                              maskColor: Colors.black.withValues(alpha: .55),
+                              radius: 8,
+                              onMoved: (_, imageRect) => _imageArea = imageRect,
+                              onStatusChanged: (status) {
+                                if (mounted) {
+                                  setState(() =>
+                                      _ready = status == CropStatus.ready);
+                                  if (status == CropStatus.ready &&
+                                      !_initialApplied &&
+                                      widget.initialCrop?.length == 4) {
+                                    _initialApplied = true;
+                                    final sourceW = (_rotation % 180 == 0
+                                            ? _width
+                                            : _height)
+                                        .toDouble();
+                                    final sourceH = (_rotation % 180 == 0
+                                            ? _height
+                                            : _width)
+                                        .toDouble();
+                                    final crop = widget.initialCrop!;
+                                    WidgetsBinding.instance
+                                        .addPostFrameCallback((_) {
+                                      _controller.area = Rect.fromLTWH(
+                                          crop[0] * sourceW,
+                                          crop[1] * sourceH,
+                                          crop[2] * sourceW,
+                                          crop[3] * sourceH);
+                                    });
+                                  }
+                                }
+                              },
+                              cornerDotBuilder: (size, edge) =>
+                                  const DotControl(color: Colors.white),
+                            ));
+                        final preview = Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('홈페이지 표시 비율 미리보기',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.w800)),
+                              const SizedBox(height: 8),
+                              AspectRatio(
+                                  aspectRatio: widget.slot.aspect,
+                                  child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Image.memory(_working,
+                                          fit: BoxFit.cover))),
+                            ]);
+                        if (constraints.maxWidth > 800) {
+                          return Row(children: [
+                            Expanded(flex: 3, child: editor),
+                            const SizedBox(width: 20),
+                            Expanded(flex: 2, child: preview)
+                          ]);
+                        }
+                        return editor;
+                      }))),
+              Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+                  child: Column(children: [
+                    Row(children: [
+                      const Text('크기',
+                          style: TextStyle(fontWeight: FontWeight.w700)),
+                      Expanded(
+                          child: Slider(
+                              value: _zoom,
+                              min: 1,
+                              max: 4,
+                              divisions: 30,
+                              label: '${_zoom.toStringAsFixed(1)}배',
+                              onChanged: _setZoom))
+                    ]),
+                    LayoutBuilder(builder: (context, constraints) {
+                      final itemWidth = (constraints.maxWidth - 8) / 2;
+                      return Wrap(spacing: 8, runSpacing: 8, children: [
+                        SizedBox(
+                            width: itemWidth,
+                            child: OutlinedButton.icon(
+                                onPressed: _rotate,
+                                icon: const Icon(Icons.rotate_right),
+                                label: const Text('회전', maxLines: 1))),
+                        SizedBox(
+                            width: itemWidth,
+                            child: OutlinedButton.icon(
+                                onPressed: _autoFit,
+                                icon: const Icon(Icons.fit_screen),
+                                label: const Text('자동 맞춤', maxLines: 1))),
+                        SizedBox(
+                            width: itemWidth,
+                            child: OutlinedButton.icon(
+                                onPressed: _reset,
+                                icon: const Icon(Icons.restore),
+                                label: const Text('원본 복원', maxLines: 1))),
+                      ]);
+                    }),
+                  ])),
+              Container(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                  decoration: const BoxDecoration(
+                      color: Colors.white,
+                      border:
+                          Border(top: BorderSide(color: Color(0xFFE0E2DD)))),
+                  child: Row(children: [
+                    Expanded(
+                        child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('취소', maxLines: 1))),
+                    const SizedBox(width: 8),
+                    Expanded(
+                        child: FilledButton.icon(
+                            onPressed: _ready && !_cropping ? _apply : null,
+                            icon: _cropping
+                                ? const SizedBox.square(
+                                    dimension: 18,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2))
+                                : const Icon(Icons.check),
+                            label: const Text('적용', maxLines: 1))),
+                  ])),
+            ]));
+      })),
     );
   }
 }
