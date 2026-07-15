@@ -22,6 +22,7 @@ type MediaPlaceholderProps = {
   desktopFill?: boolean;
   fillContainer?: boolean;
   expandable?: boolean;
+  emptyLabel?: string;
 };
 
 function ratioValue(value: string) {
@@ -48,10 +49,14 @@ export default function MediaPlaceholder({
   desktopFill = false,
   fillContainer = false,
   expandable = true,
+  emptyLabel,
 }: MediaPlaceholderProps) {
   const [expandedSrc, setExpandedSrc] = useState("");
-  const resolvedDesktopSrc = desktopSrc ?? src;
-  const resolvedMobileSrc = mobileSrc ?? src;
+  const [failedSources, setFailedSources] = useState<Set<string>>(new Set());
+  const desktopCandidate = desktopSrc ?? src;
+  const mobileCandidate = mobileSrc ?? src;
+  const resolvedDesktopSrc = desktopCandidate && !failedSources.has(desktopCandidate) ? desktopCandidate : undefined;
+  const resolvedMobileSrc = mobileCandidate && !failedSources.has(mobileCandidate) ? mobileCandidate : undefined;
 
   useEffect(() => {
     if (!expandedSrc) return;
@@ -99,6 +104,7 @@ export default function MediaPlaceholder({
             alt={alt}
             className="object-contain"
             fill
+            onError={() => setFailedSources((current) => new Set(current).add(mediaSrc))}
             sizes="(max-width: 767px) 100vw, 50vw"
             src={mediaSrc}
             unoptimized={mediaSrc.startsWith("http")}
@@ -140,25 +146,15 @@ export default function MediaPlaceholder({
         ) : null}
         {!hasMedia ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center p-5 text-center">
-            <span className="text-sm font-bold text-[var(--primary-dark)]">
-              [{label}]
-            </span>
-            <span className="mt-2 text-xs leading-5 text-[var(--sub-text)]">
-              {mediaType === "video"
-                ? "Video"
-                : mediaType === "document"
-                  ? "Document"
-                  : "Image"}
-              {required ? " · Required" : " · Optional"}
-            </span>
-            <span className="mt-1 text-xs leading-5 text-[var(--sub-text)]">
-              {guide}
-            </span>
-            {process.env.NODE_ENV !== "production" ? (
-              <code className="mt-3 rounded bg-white/70 px-2 py-1 text-[10px] text-[var(--primary)]">
-                CMS: {fieldName}
-              </code>
-            ) : null}
+            {emptyLabel ? <span className="text-xs font-bold leading-5 text-[var(--sub-text)]">{emptyLabel}</span> : <>
+              <span className="text-sm font-bold text-[var(--primary-dark)]">{label}</span>
+              <span className="mt-2 text-xs leading-5 text-[var(--sub-text)]">
+                {mediaType === "video" ? "Video" : mediaType === "document" ? "Document" : "Image"}
+                {required ? " · Required" : " · Optional"}
+              </span>
+              <span className="mt-1 text-xs leading-5 text-[var(--sub-text)]">{guide}</span>
+              {process.env.NODE_ENV !== "production" ? <code className="mt-3 rounded bg-white/70 px-2 py-1 text-[10px] text-[var(--primary)]">CMS: {fieldName}</code> : null}
+            </>}
           </div>
         ) : null}
       </div>

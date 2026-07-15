@@ -11,7 +11,7 @@ export default function FloatingContactButtons() {
         href="#inquiry"
         onClick={(event) => {
           event.preventDefault();
-          scrollToSection("contact");
+          scrollToSection("inquiry");
         }}
       >
         견적 문의하기
