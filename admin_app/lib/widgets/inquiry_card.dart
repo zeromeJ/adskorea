@@ -107,13 +107,14 @@ class InquiryCard extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton(
+                    child: OutlinedButton.icon(
                       onPressed: onCall,
                       style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
                         minimumSize: const Size(0, 48),
                       ),
-                      child: Text(
+                      icon: const Icon(Icons.phone_rounded, size: 21),
+                      label: Text(
                         onCall == null ? '연락처 없음' : '전화하기',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -122,38 +123,41 @@ class InquiryCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: OutlinedButton(
+                    child: OutlinedButton.icon(
                       onPressed: onOpen,
                       style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
                         minimumSize: const Size(0, 48),
                       ),
-                      child: const Text(
+                      icon: const Icon(Icons.visibility_rounded, size: 21),
+                      label: const Text(
                         '상세보기',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ),
-                  if (onComplete != null) ...[
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: onComplete,
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          minimumSize: const Size(0, 48),
-                        ),
-                        child: const Text(
-                          '처리 완료',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                  ],
                 ],
               ),
+              if (onComplete != null) ...[
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: onComplete,
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      minimumSize: const Size.fromHeight(50),
+                    ),
+                    icon: const Icon(Icons.check_circle_rounded, size: 22),
+                    label: const Text(
+                      '처리 완료',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
