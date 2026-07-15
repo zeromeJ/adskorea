@@ -1,7 +1,7 @@
 name: ads_inquiry_admin
 description: ADS 문의관리 Android admin app.
 publish_to: "none"
-version: 1.0.13+21
+version: 1.0.14+23
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
