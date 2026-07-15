@@ -1,4 +1,3 @@
-import 'package:http/http.dart' as http;
 import '../models/website_content.dart';
 import 'api_client.dart';
 
@@ -23,25 +22,62 @@ class WebsiteContentService {
 
   Future<WebsiteAsset> uploadImage(
       String sectionKey, ImageSlot slot, PendingImageEdit edit) async {
-    final json = await _api.multipart('/api/admin/website/upload', fields: {
+    final extension = edit.fileName.split('.').last.toLowerCase();
+    final originalMimeType = extension == 'png'
+        ? 'image/png'
+        : extension == 'webp'
+            ? 'image/webp'
+            : 'image/jpeg';
+    final prepare = await _api.post('/api/admin/website/image-upload/prepare', {
+      'sectionKey': sectionKey,
+      'itemKey': slot.key,
+      'fileName': edit.fileName,
+      'originalMimeType': originalMimeType,
+      'originalSize': edit.original.length,
+      'editedSize': edit.edited.length,
+    });
+    final originalSignedUrl = prepare['originalSignedUrl'] as String?;
+    final editedSignedUrl = prepare['editedSignedUrl'] as String?;
+    final originalStoragePath = prepare['originalStoragePath'] as String?;
+    final editedStoragePath = prepare['editedStoragePath'] as String?;
+    if (originalSignedUrl == null ||
+        editedSignedUrl == null ||
+        originalStoragePath == null ||
+        editedStoragePath == null) {
+      throw const ApiException('이미지 업로드 주소를 받지 못했습니다.');
+    }
+    final publishableKey = prepare['publishableKey'] as String?;
+    await _api.uploadToSignedUrl(
+      originalSignedUrl,
+      edit.original,
+      originalMimeType,
+      publishableKey: publishableKey,
+    );
+    await _api.uploadToSignedUrl(
+      editedSignedUrl,
+      edit.edited,
+      'image/png',
+      publishableKey: publishableKey,
+    );
+    final json = await _api.post('/api/admin/website/image-upload/complete', {
       'sectionKey': sectionKey,
       'itemKey': slot.key,
       'label': slot.label,
+      'originalStoragePath': originalStoragePath,
+      'editedStoragePath': editedStoragePath,
+      'originalFileName': edit.fileName,
+      'originalMimeType': originalMimeType,
+      'originalSize': edit.original.length,
       'aspectRatio': slot.ratio,
-      'outputWidth': '${slot.width}',
-      'outputHeight': '${slot.height}',
-      'cropX': '${edit.crop[0]}',
-      'cropY': '${edit.crop[1]}',
-      'cropWidth': '${edit.crop[2]}',
-      'cropHeight': '${edit.crop[3]}',
-      'zoom': '${edit.zoom}',
-      'rotation': '${edit.rotation}',
-    }, files: [
-      http.MultipartFile.fromBytes('original', edit.original,
-          filename: edit.fileName),
-      http.MultipartFile.fromBytes('edited', edit.edited,
-          filename: 'edited-${edit.fileName}'),
-    ]);
+      'outputWidth': slot.width,
+      'outputHeight': slot.height,
+      'cropX': edit.crop[0],
+      'cropY': edit.crop[1],
+      'cropWidth': edit.crop[2],
+      'cropHeight': edit.crop[3],
+      'zoom': edit.zoom,
+      'rotation': edit.rotation,
+    });
     return WebsiteAsset(json['asset'] as Map<String, dynamic>);
   }
 

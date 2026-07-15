@@ -157,11 +157,17 @@ class ApiClient {
       if (decoded is! Map<String, dynamic>) throw const FormatException();
       json = decoded;
     } on FormatException {
+      final status = response.statusCode;
+      final message = switch (status) {
+        404 => '서버에 최신 업로드 기능이 아직 반영되지 않았습니다. 서버를 다시 배포해 주세요.',
+        413 => '파일이 서버 허용 크기를 넘었습니다.',
+        500 => '서버 내부 오류가 발생했습니다. 서버 설정과 로그를 확인해 주세요.',
+        502 || 503 || 504 => '서버 또는 파일 저장소가 준비되지 않았습니다. 잠시 후 다시 시도해 주세요.',
+        _ => '서버 응답을 처리할 수 없습니다. (오류 코드 $status)',
+      };
       throw ApiException(
-        response.statusCode == 413
-            ? '파일이 서버 허용 크기를 넘었습니다.'
-            : '서버 응답을 처리할 수 없습니다. 잠시 후 다시 시도해 주세요.',
-        statusCode: response.statusCode,
+        message,
+        statusCode: status,
       );
     }
 

@@ -47,6 +47,8 @@ class _ImageEditorDialogState extends State<ImageEditorDialog> {
   final _controller = CropController();
   late Uint8List _working;
   Rect? _imageArea;
+  Rect? _viewportCropRect;
+  Rect? _viewportImageRect;
   int _width = 0, _height = 0, _rotation = 0;
   double _zoom = 1;
   bool _ready = false, _cropping = false, _initialApplied = false;
@@ -86,6 +88,8 @@ class _ImageEditorDialogState extends State<ImageEditorDialog> {
       _rotation = 0;
       _zoom = 1;
       _imageArea = null;
+      _viewportCropRect = null;
+      _viewportImageRect = null;
       _ready = false;
     });
     _controller.image = widget.bytes;
@@ -96,6 +100,8 @@ class _ImageEditorDialogState extends State<ImageEditorDialog> {
     setState(() {
       _zoom = 1;
       _imageArea = null;
+      _viewportCropRect = null;
+      _viewportImageRect = null;
     });
   }
 
@@ -107,8 +113,38 @@ class _ImageEditorDialogState extends State<ImageEditorDialog> {
     _rotation = (_rotation + 90) % 360;
     _zoom = 1;
     _imageArea = null;
+    _viewportCropRect = null;
+    _viewportImageRect = null;
     _controller.image = _working;
     setState(() {});
+  }
+
+  Rect? _cropAreaFromViewport() {
+    final cropRect = _viewportCropRect;
+    final imageRect = _viewportImageRect;
+    if (cropRect == null || imageRect == null || imageRect.isEmpty) return null;
+    final sourceWidth = (_rotation % 180 == 0 ? _width : _height).toDouble();
+    final sourceHeight = (_rotation % 180 == 0 ? _height : _width).toDouble();
+    if (sourceWidth <= 0 || sourceHeight <= 0) return null;
+
+    final left =
+        ((cropRect.left - imageRect.left) / imageRect.width * sourceWidth)
+            .clamp(0.0, sourceWidth);
+    final top =
+        ((cropRect.top - imageRect.top) / imageRect.height * sourceHeight)
+            .clamp(0.0, sourceHeight);
+    final right =
+        ((cropRect.right - imageRect.left) / imageRect.width * sourceWidth)
+            .clamp(left, sourceWidth);
+    final bottom =
+        ((cropRect.bottom - imageRect.top) / imageRect.height * sourceHeight)
+            .clamp(top, sourceHeight);
+    return Rect.fromLTRB(left, top, right, bottom);
+  }
+
+  void _updateViewportImage(Rect imageRect) {
+    _viewportImageRect = imageRect;
+    _imageArea = _cropAreaFromViewport() ?? _imageArea;
   }
 
   void _setZoom(double value) {
@@ -134,7 +170,16 @@ class _ImageEditorDialogState extends State<ImageEditorDialog> {
   void _apply() {
     if (_ready && !_cropping) {
       setState(() => _cropping = true);
-      _controller.crop();
+      final exactArea = _cropAreaFromViewport() ?? _imageArea;
+      if (exactArea != null && !exactArea.isEmpty) {
+        _imageArea = exactArea;
+        _controller.area = exactArea;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _controller.crop();
+        });
+      } else {
+        _controller.crop();
+      }
     }
   }
 
@@ -181,6 +226,31 @@ class _ImageEditorDialogState extends State<ImageEditorDialog> {
               icon: const Icon(Icons.close),
               tooltip: '취소',
               onPressed: () => Navigator.pop(context))),
+      bottomNavigationBar: SafeArea(
+          top: false,
+          child: Container(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+              decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: Border(top: BorderSide(color: Color(0xFFE0E2DD)))),
+              child: Row(children: [
+                Expanded(
+                    child: OutlinedButton(
+                        onPressed:
+                            _cropping ? null : () => Navigator.pop(context),
+                        child: const Text('취소', maxLines: 1))),
+                const SizedBox(width: 8),
+                Expanded(
+                    child: FilledButton.icon(
+                        onPressed: _ready && !_cropping ? _apply : null,
+                        icon: _cropping
+                            ? const SizedBox.square(
+                                dimension: 18,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2))
+                            : const Icon(Icons.check),
+                        label: const Text('적용', maxLines: 1))),
+              ]))),
       body: SafeArea(child: LayoutBuilder(builder: (context, viewport) {
         final editorHeight = (viewport.maxWidth > 800
                 ? viewport.maxHeight * .6
@@ -228,7 +298,11 @@ class _ImageEditorDialogState extends State<ImageEditorDialog> {
                               baseColor: const Color(0xFF15251D),
                               maskColor: Colors.black.withValues(alpha: .55),
                               radius: 8,
-                              onMoved: (_, imageRect) => _imageArea = imageRect,
+                              onMoved: (cropRect, imageArea) {
+                                _viewportCropRect = cropRect;
+                                _imageArea = imageArea;
+                              },
+                              onImageMoved: _updateViewportImage,
                               onStatusChanged: (status) {
                                 if (mounted) {
                                   setState(() =>
@@ -323,29 +397,7 @@ class _ImageEditorDialogState extends State<ImageEditorDialog> {
                       ]);
                     }),
                   ])),
-              Container(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-                  decoration: const BoxDecoration(
-                      color: Colors.white,
-                      border:
-                          Border(top: BorderSide(color: Color(0xFFE0E2DD)))),
-                  child: Row(children: [
-                    Expanded(
-                        child: OutlinedButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('취소', maxLines: 1))),
-                    const SizedBox(width: 8),
-                    Expanded(
-                        child: FilledButton.icon(
-                            onPressed: _ready && !_cropping ? _apply : null,
-                            icon: _cropping
-                                ? const SizedBox.square(
-                                    dimension: 18,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2))
-                                : const Icon(Icons.check),
-                            label: const Text('적용', maxLines: 1))),
-                  ])),
+              const SizedBox(height: 20),
             ]));
       })),
     );
