@@ -2,7 +2,11 @@ import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import sharp from "sharp";
 import { getAdminFromRequest, unauthorizedResponse } from "@/lib/admin/auth";
-import { ensureWebsiteContentBucket, websiteContentBucket } from "@/lib/supabaseAdmin";
+import {
+  ensureWebsiteContentBucket,
+  websiteContentBucket,
+  websiteContentMaxFileSize,
+} from "@/lib/supabaseAdmin";
 import { getWebsiteSection } from "@/lib/websiteSections";
 
 const pdfTypes = new Set(["application/pdf"]);
@@ -49,9 +53,9 @@ export async function POST(request: Request) {
   if (!isPdf && !isVideo) {
     return NextResponse.json({ success: false, message: "PDF 또는 MP4·WEBM 영상만 등록할 수 있습니다." }, { status: 400 });
   }
-  const maxBytes = isPdf ? 30 * 1024 * 1024 : 150 * 1024 * 1024;
+  const maxBytes = isPdf ? 30 * 1024 * 1024 : websiteContentMaxFileSize;
   if (file.size > maxBytes) {
-    return NextResponse.json({ success: false, message: isPdf ? "PDF는 30MB 이하만 등록할 수 있습니다." : "영상은 150MB 이하만 등록할 수 있습니다." }, { status: 400 });
+    return NextResponse.json({ success: false, message: isPdf ? "PDF는 30MB 이하만 등록할 수 있습니다." : "영상은 50MB 이하만 등록할 수 있습니다." }, { status: 400 });
   }
 
   const supabase = await ensureWebsiteContentBucket();
