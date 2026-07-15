@@ -82,7 +82,7 @@ class _WebsiteDocumentListScreenState extends State<WebsiteDocumentListScreen> {
                             style: TextStyle(
                                 fontSize: 20, fontWeight: FontWeight.w800)),
                         const SizedBox(height: 6),
-                        const Text('문서 정보와 원본·번역본 PDF를 문서별로 관리합니다.'),
+                        const Text('문서 정보와 원본·번역본 PDF, 썸네일을 문서별로 관리합니다.'),
                         const SizedBox(height: 18),
                         ...documents.asMap().entries.map((entry) {
                           final index = entry.key;
@@ -90,6 +90,7 @@ class _WebsiteDocumentListScreenState extends State<WebsiteDocumentListScreen> {
                           final original = _has('document${index + 1}File');
                           final translated =
                               _has('document${index + 1}TranslatedFile');
+                          final thumbnail = _has('document${index + 1}');
                           return Card(
                             margin: const EdgeInsets.only(bottom: 12),
                             child: InkWell(
@@ -138,6 +139,9 @@ class _WebsiteDocumentListScreenState extends State<WebsiteDocumentListScreen> {
                                         _StatusChip(
                                             label: '번역본 PDF',
                                             registered: translated),
+                                        _StatusChip(
+                                            label: '썸네일',
+                                            registered: thumbnail),
                                       ],
                                     ),
                                     const SizedBox(height: 12),

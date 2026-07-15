@@ -45,13 +45,18 @@ class ImageEditorDialog extends StatefulWidget {
 
 class _ImageEditorDialogState extends State<ImageEditorDialog> {
   final _controller = CropController();
+  final ValueNotifier<Rect?> _previewArea = ValueNotifier(null);
   late Uint8List _working;
   Rect? _imageArea;
-  Rect? _viewportCropRect;
-  Rect? _viewportImageRect;
   int _width = 0, _height = 0, _rotation = 0;
   double _zoom = 1;
   bool _ready = false, _cropping = false, _initialApplied = false;
+
+  @override
+  void dispose() {
+    _previewArea.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -88,10 +93,9 @@ class _ImageEditorDialogState extends State<ImageEditorDialog> {
       _rotation = 0;
       _zoom = 1;
       _imageArea = null;
-      _viewportCropRect = null;
-      _viewportImageRect = null;
       _ready = false;
     });
+    _previewArea.value = null;
     _controller.image = widget.bytes;
   }
 
@@ -100,9 +104,8 @@ class _ImageEditorDialogState extends State<ImageEditorDialog> {
     setState(() {
       _zoom = 1;
       _imageArea = null;
-      _viewportCropRect = null;
-      _viewportImageRect = null;
     });
+    _previewArea.value = null;
   }
 
   void _rotate() {
@@ -113,38 +116,9 @@ class _ImageEditorDialogState extends State<ImageEditorDialog> {
     _rotation = (_rotation + 90) % 360;
     _zoom = 1;
     _imageArea = null;
-    _viewportCropRect = null;
-    _viewportImageRect = null;
+    _previewArea.value = null;
     _controller.image = _working;
     setState(() {});
-  }
-
-  Rect? _cropAreaFromViewport() {
-    final cropRect = _viewportCropRect;
-    final imageRect = _viewportImageRect;
-    if (cropRect == null || imageRect == null || imageRect.isEmpty) return null;
-    final sourceWidth = (_rotation % 180 == 0 ? _width : _height).toDouble();
-    final sourceHeight = (_rotation % 180 == 0 ? _height : _width).toDouble();
-    if (sourceWidth <= 0 || sourceHeight <= 0) return null;
-
-    final left =
-        ((cropRect.left - imageRect.left) / imageRect.width * sourceWidth)
-            .clamp(0.0, sourceWidth);
-    final top =
-        ((cropRect.top - imageRect.top) / imageRect.height * sourceHeight)
-            .clamp(0.0, sourceHeight);
-    final right =
-        ((cropRect.right - imageRect.left) / imageRect.width * sourceWidth)
-            .clamp(left, sourceWidth);
-    final bottom =
-        ((cropRect.bottom - imageRect.top) / imageRect.height * sourceHeight)
-            .clamp(top, sourceHeight);
-    return Rect.fromLTRB(left, top, right, bottom);
-  }
-
-  void _updateViewportImage(Rect imageRect) {
-    _viewportImageRect = imageRect;
-    _imageArea = _cropAreaFromViewport() ?? _imageArea;
   }
 
   void _setZoom(double value) {
@@ -170,17 +144,51 @@ class _ImageEditorDialogState extends State<ImageEditorDialog> {
   void _apply() {
     if (_ready && !_cropping) {
       setState(() => _cropping = true);
-      final exactArea = _cropAreaFromViewport() ?? _imageArea;
+      final exactArea = _imageArea;
       if (exactArea != null && !exactArea.isEmpty) {
         _imageArea = exactArea;
-        _controller.area = exactArea;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _controller.crop();
-        });
-      } else {
-        _controller.crop();
+        _previewArea.value = exactArea;
       }
+      // CropController already owns the exact area currently visible inside
+      // the fixed frame. Re-applying a converted area here moves the image a
+      // second time and can make the saved result differ from the preview.
+      _controller.crop();
     }
+  }
+
+  Widget _buildCropPreview() {
+    return ValueListenableBuilder<Rect?>(
+      valueListenable: _previewArea,
+      builder: (context, area, _) {
+        final sourceWidth =
+            (_rotation % 180 == 0 ? _width : _height).toDouble();
+        final sourceHeight =
+            (_rotation % 180 == 0 ? _height : _width).toDouble();
+        if (area == null ||
+            area.isEmpty ||
+            sourceWidth <= 0 ||
+            sourceHeight <= 0) {
+          return Image.memory(_working, fit: BoxFit.cover);
+        }
+        return LayoutBuilder(builder: (context, constraints) {
+          final scale = constraints.maxWidth / area.width;
+          return ClipRect(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Positioned(
+                  left: -area.left * scale,
+                  top: -area.top * scale,
+                  width: sourceWidth * scale,
+                  height: sourceHeight * scale,
+                  child: Image.memory(_working, fit: BoxFit.fill),
+                ),
+              ],
+            ),
+          );
+        });
+      },
+    );
   }
 
   void _onCropped(CropResult result) {
@@ -268,7 +276,7 @@ class _ImageEditorDialogState extends State<ImageEditorDialog> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
                   child: Text(
-                      '권장 ${widget.slot.ratio}  ·  ${_width > 0 ? '$_width × $_height px' : '크기 확인 중'}',
+                      '권장 ${widget.slot.ratio}  ·  선택 영역을 드래그해 이동하고 모서리로 크기를 조정하세요.\n${_width > 0 ? '원본 $_width × $_height px' : '크기 확인 중'}',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontWeight: FontWeight.w700))),
@@ -293,16 +301,15 @@ class _ImageEditorDialogState extends State<ImageEditorDialog> {
                               controller: _controller,
                               onCropped: _onCropped,
                               aspectRatio: widget.slot.aspect,
-                              interactive: true,
-                              fixCropRect: true,
+                              interactive: false,
+                              fixCropRect: false,
                               baseColor: const Color(0xFF15251D),
                               maskColor: Colors.black.withValues(alpha: .55),
                               radius: 8,
-                              onMoved: (cropRect, imageArea) {
-                                _viewportCropRect = cropRect;
+                              onMoved: (_, imageArea) {
                                 _imageArea = imageArea;
+                                _previewArea.value = imageArea;
                               },
-                              onImageMoved: _updateViewportImage,
                               onStatusChanged: (status) {
                                 if (mounted) {
                                   setState(() =>
@@ -346,8 +353,7 @@ class _ImageEditorDialogState extends State<ImageEditorDialog> {
                                   aspectRatio: widget.slot.aspect,
                                   child: ClipRRect(
                                       borderRadius: BorderRadius.circular(10),
-                                      child: Image.memory(_working,
-                                          fit: BoxFit.cover))),
+                                      child: _buildCropPreview())),
                             ]);
                         if (constraints.maxWidth > 800) {
                           return Row(children: [
