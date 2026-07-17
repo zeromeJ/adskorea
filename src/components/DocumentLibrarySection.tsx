@@ -214,7 +214,7 @@ export default function DocumentLibrarySection({
                       <button
                         aria-controls={`summary-${index}`}
                         aria-expanded={isOpen}
-                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-[var(--sub-mint)] px-3 py-2 text-xs font-bold text-[var(--primary-dark)] transition-colors hover:bg-[var(--sub-sage)]"
+                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-[var(--sub-mint)] px-3 py-2 text-[11px] font-bold text-[var(--primary-dark)] transition-colors hover:bg-[var(--sub-sage)]"
                         onClick={() => toggleSummary(itemKey)}
                         type="button"
                       >
@@ -222,10 +222,10 @@ export default function DocumentLibrarySection({
                         <ChevronIcon open={isOpen} />
                       </button>
                     ) : (
-                      <span aria-disabled="true" className="inline-flex min-h-11 items-center justify-center rounded-md bg-black/[0.035] px-3 py-2 text-xs font-bold text-[var(--sub-text)]/55">한국어 요약 준비 중</span>
+                      <span aria-disabled="true" className="inline-flex min-h-11 items-center justify-center rounded-md bg-black/[0.035] px-3 py-2 text-[11px] font-bold text-[var(--sub-text)]/55">한국어 요약 준비 중</span>
                     )}
                     <button
-                      className="inline-flex min-h-11 items-center justify-center rounded-md border border-[var(--primary)] px-3 py-2 text-xs font-bold text-[var(--primary-dark)] transition-colors hover:bg-[var(--muted-surface)] disabled:cursor-not-allowed disabled:border-[var(--line)] disabled:text-[var(--sub-text)]/45"
+                      className="inline-flex min-h-11 items-center justify-center rounded-md border border-[var(--primary)] px-3 py-2 text-[11px] font-bold text-[var(--primary-dark)] transition-colors hover:bg-[var(--muted-surface)] disabled:cursor-not-allowed disabled:border-[var(--line)] disabled:text-[var(--sub-text)]/45"
                       disabled={!previewUrl}
                       onClick={() => previewUrl && setPreviewItem(item)}
                       type="button"
