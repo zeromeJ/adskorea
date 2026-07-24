@@ -31,7 +31,7 @@ function DimensionInput({ id, label, value, onChange }: { id: string; label: str
   );
 }
 
-export default function InquirySection({ phoneHref = "" }: { phoneHref?: string }) {
+export default function InquirySection({ phone = "" }: { phone?: string }) {
   const [formData, setFormData] = useState<ContactFormData>(initialContactFormData);
   const [isLoading, setIsLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -39,6 +39,7 @@ export default function InquirySection({ phoneHref = "" }: { phoneHref?: string 
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const [phoneTouched, setPhoneTouched] = useState(false);
+  const [phoneCopyMessage, setPhoneCopyMessage] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
   const [attachmentInputKey, setAttachmentInputKey] = useState(0);
 
@@ -64,6 +65,44 @@ export default function InquirySection({ phoneHref = "" }: { phoneHref?: string 
     }
     setAttachments((current) => [...current, ...nextFiles]);
     setAttachmentInputKey((current) => current + 1);
+  }
+
+  async function handlePhoneAction(event: React.MouseEvent<HTMLAnchorElement>) {
+    const isMobileDevice =
+      window.matchMedia("(pointer: coarse)").matches ||
+      /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    if (isMobileDevice) return;
+
+    event.preventDefault();
+    let copied = false;
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(phone);
+        copied = true;
+      } catch {
+        copied = false;
+      }
+    }
+    if (!copied) {
+      const temporaryInput = document.createElement("textarea");
+      try {
+        temporaryInput.value = phone;
+        temporaryInput.style.position = "fixed";
+        temporaryInput.style.opacity = "0";
+        document.body.appendChild(temporaryInput);
+        temporaryInput.select();
+        copied = document.execCommand("copy");
+      } catch {
+        copied = false;
+      } finally {
+        temporaryInput.remove();
+      }
+    }
+    if (copied) {
+      setPhoneCopyMessage("전화번호가 복사되었습니다.");
+    } else {
+      setPhoneCopyMessage(`복사하지 못했습니다. 전화번호: ${phone}`);
+    }
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -104,6 +143,7 @@ export default function InquirySection({ phoneHref = "" }: { phoneHref?: string 
 
   const isQuote = formData.inquiryType === "quote";
   const isConsulting = formData.inquiryType === "consulting";
+  const phoneHref = phone ? `tel:${phone.replace(/[^+\d]/g, "")}` : "";
 
   return (
     <section id="inquiry" className="bg-[var(--primary-dark)] px-5 pt-12 pb-20 lg:px-8 lg:pb-[72px]">
@@ -116,7 +156,27 @@ export default function InquirySection({ phoneHref = "" }: { phoneHref?: string 
               {["문의 유형별 맞춤 입력", "필요한 정보만 간편하게 작성", "맞춤 규격 및 적용 환경 상담", "도면과 현장사진 첨부 가능", "전화·문자·이메일 회신 지원"].map((item) => <li className="flex min-w-0 items-center gap-3" key={item}><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--accent-gold)] text-[11px] font-black text-[var(--primary-deep)]">✓</span><span className="min-w-0">{item}</span></li>)}
             </ul>
           </aside>
-          {phoneHref ? <LinkButton className="mt-3 w-full" href={phoneHref} variant="light">전화하기</LinkButton> : null}
+          {phoneHref ? (
+            <>
+              <LinkButton
+                className="mt-3 w-full gap-2"
+                href={phoneHref}
+                onClick={(event) => void handlePhoneAction(event)}
+                variant="light"
+              >
+                <svg aria-hidden="true" className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24">
+                  <path d="M7.1 3.7 9.5 7.9 7.8 9.6c1.2 2.6 3.3 4.7 5.9 5.9l1.7-1.7 4.2 2.4c.5.3.7.8.6 1.4l-.5 2.4c-.1.6-.7 1-1.3 1C9.9 21 3 14.1 3 5.6c0-.6.4-1.2 1-1.3l2.4-.5c.2-.1.5-.1.7-.1Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.6" />
+                </svg>
+                전화하기
+              </LinkButton>
+              <p className="mt-2 text-center text-xs leading-5 text-white/60">
+                모바일은 바로 통화 · PC는 전화번호 복사
+              </p>
+              <p aria-live="polite" className="mt-1 min-h-5 text-center text-xs font-bold text-[var(--accent-gold)]">
+                {phoneCopyMessage}
+              </p>
+            </>
+          ) : null}
         </div>
 
         <form className="min-w-0 max-w-full rounded-lg bg-white p-5 sm:p-8" noValidate onSubmit={handleSubmit}>

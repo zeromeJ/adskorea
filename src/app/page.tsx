@@ -190,7 +190,7 @@ export default async function Home() {
       key: "contact",
       element: (
         <InquirySection
-          phoneHref={settings?.phone ? `tel:${settings.phone.replace(/[^+\d]/g, "")}` : ""}
+          phone={settings?.phone}
         />
       ),
     },
