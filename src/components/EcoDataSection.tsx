@@ -4,12 +4,10 @@ import { sustainabilityData, sustainabilityPoints } from "@/lib/constants";
 
 type EcoDataSectionProps = {
   statementThumbnailUrl?: string;
-  statementFileUrl?: string;
 };
 
 export default function EcoDataSection({
   statementThumbnailUrl,
-  statementFileUrl,
 }: EcoDataSectionProps) {
   return (
     <section
@@ -28,6 +26,7 @@ export default function EcoDataSection({
           <MediaPlaceholder
             alt="SGS 제품 탄소발자국 검증 성명서 표지"
             desktopRatio="210:297"
+            expandable={false}
             fieldName="homePage.sustainability.statementThumbnail"
             guide="SGS 제품 탄소발자국 검증 성명서 A4 표지"
             label="검증 성명서 썸네일"
@@ -35,7 +34,6 @@ export default function EcoDataSection({
             mobileRatio="210:297"
             src={statementThumbnailUrl}
           />
-          {statementFileUrl ? <a aria-label="탄소발자국 검증 성명서 PDF 열기" className="absolute right-2 bottom-2 z-20 rounded-md bg-white px-3 py-2 text-xs font-bold text-[var(--primary-dark)]" href={statementFileUrl} rel="noreferrer" target="_blank">PDF 열기</a> : null}
           </div>
           <div className="flex h-full flex-col gap-4">
             <article className="rounded-lg border border-white/12 bg-white/[0.04] p-6">

@@ -15,10 +15,6 @@ export type DocumentItem = {
   expiryDate?: string;
   relatedProducts?: string;
   language: string;
-  fileUrl: string;
-  previewUrl?: string;
-  publicPreview?: boolean;
-  previewAvailable?: boolean;
   summary?: string;
   thumbnailUrl?: string;
   koreanSummary?: KoreanDocumentSummary;
@@ -32,7 +28,6 @@ export default function DocumentLibrarySection({
   const [category, setCategory] = useState("전체");
   const [query, setQuery] = useState("");
   const [openSummaries, setOpenSummaries] = useState<Set<string>>(new Set());
-  const [previewItem, setPreviewItem] = useState<DocumentItem | null>(null);
   const filterRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -71,20 +66,6 @@ export default function DocumentLibrarySection({
     ).find((button) => button.dataset.filterCategory === category);
     selectedButton?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
   }, [category]);
-
-  useEffect(() => {
-    if (!previewItem) return;
-    const previousOverflow = document.body.style.overflow;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setPreviewItem(null);
-    };
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [previewItem]);
 
   function scrollFilters(direction: -1 | 1) {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -169,15 +150,14 @@ export default function DocumentLibrarySection({
           />
         </div>
 
-        <div className="mt-6 grid items-start gap-4 md:grid-cols-2">
+        <div className="mt-6 grid items-stretch gap-4 md:auto-rows-fr md:grid-cols-2">
           {filteredItems.map((item, index) => {
             const itemKey = item.reportNumber || item.title;
             const isOpen = openSummaries.has(itemKey);
             const summary = item.koreanSummary?.published ? item.koreanSummary : undefined;
-            const previewUrl = item.previewUrl || item.fileUrl;
             return (
-              <article className="min-w-0 overflow-hidden rounded-lg border border-[var(--line)] bg-white" key={itemKey}>
-                <div className="grid min-w-0 grid-cols-[104px_minmax(0,1fr)] gap-5 p-4 sm:grid-cols-[120px_minmax(0,1fr)] sm:gap-6">
+              <article className="flex h-full min-w-0 flex-col overflow-hidden rounded-lg border border-[var(--line)] bg-white" key={itemKey}>
+                <div className="grid flex-1 min-w-0 grid-cols-[104px_minmax(0,1fr)] grid-rows-[1fr_auto] gap-5 p-4 sm:grid-cols-[120px_minmax(0,1fr)] sm:gap-6">
                   {item.thumbnailUrl ? (
                     <MediaPlaceholder
                       alt={`${item.title} 문서 표지`}
@@ -209,7 +189,7 @@ export default function DocumentLibrarySection({
                       {item.language ? <div>원문 언어: {item.language}</div> : null}
                     </dl>
                   </div>
-                  <div className="col-span-full grid grid-cols-1 gap-2 min-[360px]:grid-cols-2">
+                  <div className="col-span-full grid grid-cols-1 gap-2">
                     {summary ? (
                       <button
                         aria-controls={`summary-${index}`}
@@ -224,14 +204,6 @@ export default function DocumentLibrarySection({
                     ) : (
                       <span aria-disabled="true" className="inline-flex min-h-11 items-center justify-center rounded-md bg-black/[0.035] px-3 py-2 text-[11px] font-bold text-[var(--sub-text)]/55">한국어 요약 준비 중</span>
                     )}
-                    <button
-                      className="inline-flex min-h-11 items-center justify-center rounded-md border border-[var(--primary)] px-3 py-2 text-[11px] font-bold text-[var(--primary-dark)] transition-colors hover:bg-[var(--muted-surface)] disabled:cursor-not-allowed disabled:border-[var(--line)] disabled:text-[var(--sub-text)]/45"
-                      disabled={!previewUrl}
-                      onClick={() => previewUrl && setPreviewItem(item)}
-                      type="button"
-                    >
-                      원문 미리보기
-                    </button>
                   </div>
                 </div>
                 {summary ? (
@@ -251,7 +223,6 @@ export default function DocumentLibrarySection({
         </div>
         {filteredItems.length === 0 ? <p className="mt-6 rounded-lg border border-[var(--line)] bg-white p-5 text-sm text-[var(--sub-text)]">조건에 맞는 공개 문서가 없습니다.</p> : null}
       </div>
-      {previewItem ? <PdfPreviewModal item={previewItem} onClose={() => setPreviewItem(null)} /> : null}
     </section>
   );
 }
@@ -326,23 +297,6 @@ function CarbonLifecycleChart({ stages }: { stages: LifecycleStage[] }) {
         })}
       </div>
       <p className="mt-4 text-xs leading-5 text-[var(--sub-text)]">폐기 단계의 음수값을 포함한 생애주기 단계별 합계입니다.</p>
-    </div>
-  );
-}
-
-function PdfPreviewModal({ item, onClose }: { item: DocumentItem; onClose: () => void }) {
-  const source = item.previewUrl || item.fileUrl;
-  const viewerSource = `${source}${source.includes("#") ? "&" : "#"}toolbar=0&navpanes=0&statusbar=0&view=FitH`;
-  return (
-    <div aria-label={`${item.title} 원문 미리보기`} aria-modal="true" className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-3 sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }} role="dialog">
-      <div className="flex h-[min(92dvh,900px)] w-full max-w-[1000px] min-w-0 flex-col overflow-hidden rounded-lg bg-white shadow-2xl">
-        <div className="flex min-w-0 items-center justify-between gap-3 border-b border-[var(--line)] px-4 py-3">
-          <div className="min-w-0"><p className="truncate text-sm font-bold text-[var(--text)]">{item.title}</p><p className="mt-0.5 text-xs text-[var(--sub-text)]">원문 PDF 미리보기 · 다운로드 기능은 제공하지 않습니다.</p></div>
-          <button aria-label="원문 미리보기 닫기" autoFocus className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[var(--line)] text-xl text-[var(--text)]" onClick={onClose} type="button">×</button>
-        </div>
-        <iframe className="min-h-0 flex-1 border-0 bg-[var(--muted-surface)]" src={viewerSource} title={`${item.title} PDF 원문`} />
-        <p className="border-t border-[var(--line)] px-4 py-2 text-[10px] leading-4 text-[var(--sub-text)]">브라우저 환경에 따라 기본 PDF 기능을 완전히 제한할 수는 없으며, 이 화면에서는 별도 다운로드·인쇄 UI를 제공하지 않습니다.</p>
-      </div>
     </div>
   );
 }

@@ -47,8 +47,6 @@ export default async function Home() {
       expiryDate: item.expiryDate || "별도 유효기간 기재 없음",
       relatedProducts: item.relatedProducts?.join(", "),
       language: item.language,
-      fileUrl: item.fileUrl || "",
-      previewUrl: item.previewUrl,
       thumbnailUrl: item.thumbnailUrl,
       koreanSummary: item.koreanSummary,
     }),
@@ -136,9 +134,6 @@ export default async function Home() {
       element: (
         <PerformanceSection
           groups={completeCmsTestResults?.length ? completeCmsTestResults : undefined}
-          reportThumbnailUrl={home?.verificationReportThumbnail}
-          reportFileUrl={home?.verificationReportFile}
-          testImageUrl={home?.verificationImage}
         />
       ),
     },
@@ -162,7 +157,6 @@ export default async function Home() {
       element: (
         <EcoDataSection
           statementThumbnailUrl={home?.sustainabilityStatementThumbnail}
-          statementFileUrl={home?.sustainabilityStatementFile}
         />
       ),
     },

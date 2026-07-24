@@ -19,7 +19,16 @@ export async function GET(request: Request) {
   const byKey = new Map(stored.map((section) => [section.key, section]));
   const sections = websiteSections.map((definition) => {
     const section = byKey.get(definition.key);
-    const registeredCount = section?.assets.length ?? 0;
+    const data =
+      section?.data && !Array.isArray(section.data) && typeof section.data === "object"
+        ? section.data as Record<string, unknown>
+        : {};
+    const registeredCount =
+      definition.key === "site-settings"
+        ? ["email", "phone"].filter(
+            (key) => typeof data[key] === "string" && data[key].trim().length > 0,
+          ).length
+        : section?.assets.length ?? 0;
     return {
       ...definition,
       registeredCount,

@@ -82,13 +82,11 @@ class _WebsiteDocumentListScreenState extends State<WebsiteDocumentListScreen> {
                             style: TextStyle(
                                 fontSize: 20, fontWeight: FontWeight.w800)),
                         const SizedBox(height: 6),
-                        const Text(
-                            '문서 정보와 한국어 요약, 원문 미리보기 PDF, 썸네일을 문서별로 관리합니다.'),
+                        const Text('문서 정보와 한국어 요약, 썸네일을 문서별로 관리합니다.'),
                         const SizedBox(height: 18),
                         ...documents.asMap().entries.map((entry) {
                           final index = entry.key;
                           final document = entry.value;
-                          final original = _has('document${index + 1}File');
                           final thumbnail = _has('document${index + 1}');
                           final summary = document['koreanSummary'];
                           final summaryPublished =
@@ -108,8 +106,8 @@ class _WebsiteDocumentListScreenState extends State<WebsiteDocumentListScreen> {
                                         title: document['title']?.toString() ??
                                             '기술자료 ${index + 1}',
                                         requiredCount: 1,
-                                        registeredCount: original ? 1 : 0,
-                                        status: original ? '등록 완료' : '미등록',
+                                        registeredCount: thumbnail ? 1 : 0,
+                                        status: thumbnail ? '등록 완료' : '미등록',
                                       ),
                                       slotsOverride:
                                           websiteDocumentSlots(index),
@@ -135,9 +133,6 @@ class _WebsiteDocumentListScreenState extends State<WebsiteDocumentListScreen> {
                                       spacing: 8,
                                       runSpacing: 8,
                                       children: [
-                                        _StatusChip(
-                                            label: '원문 미리보기',
-                                            registered: original),
                                         _StatusChip(
                                             label: '한국어 요약',
                                             registered: summaryPublished),

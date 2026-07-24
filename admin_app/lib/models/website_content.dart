@@ -290,14 +290,6 @@ final websiteDocumentDefaults = <Map<String, dynamic>>[
 
 List<ImageSlot> websiteDocumentSlots(int index) => [
       ImageSlot(
-          key: 'document${index + 1}File',
-          label: '원본 PDF',
-          ratio: 'A4 세로형',
-          width: 900,
-          height: 1273,
-          description: '홈페이지 원문 미리보기에서 표시할 PDF를 등록하세요.',
-          type: WebsiteSlotType.pdf),
-      ImageSlot(
           key: 'document${index + 1}',
           label: '문서 썸네일',
           ratio: 'A4 세로형',
@@ -356,45 +348,6 @@ final websiteImageSlots = <String, List<ImageSlot>>{
         width: 1280,
         height: 720,
         description: '영상 재생 전 표시할 대표 이미지를 직접 등록하세요.'),
-    ImageSlot(
-        key: 'processVideo',
-        label: '제조공정 영상',
-        ratio: '16:9',
-        width: 1280,
-        height: 720,
-        description: 'MP4, WEBM 영상 원본 파일',
-        type: WebsiteSlotType.video),
-    ImageSlot(
-        key: 'processPoster',
-        label: '제조공정 영상 썸네일',
-        ratio: '16:9',
-        width: 1280,
-        height: 720,
-        description: '영상 재생 전 표시할 대표 이미지를 직접 등록하세요.'),
-  ],
-  'performance-verification': const [
-    ImageSlot(
-        key: 'verification',
-        label: '성능 시험 대표 이미지',
-        ratio: '4:3',
-        width: 1200,
-        height: 900,
-        description: '성능 검증 영역에 표시되는 대표 이미지'),
-    ImageSlot(
-        key: 'verificationReportFile',
-        label: '시험성적서 PDF',
-        ratio: 'A4 세로형',
-        width: 900,
-        height: 1273,
-        description: '홈페이지에서 열어볼 시험성적서 PDF를 등록하세요.',
-        type: WebsiteSlotType.pdf),
-    ImageSlot(
-        key: 'verificationReport',
-        label: '시험성적서 썸네일',
-        ratio: 'A4 세로형',
-        width: 900,
-        height: 1273,
-        description: '시험성적서 옆에 표시할 표지 이미지를 직접 등록하세요.'),
   ],
   'performance-videos': [
     ...List.generate(
@@ -452,14 +405,6 @@ final websiteImageSlots = <String, List<ImageSlot>>{
   ],
   'applications': const [],
   'environment': const [
-    ImageSlot(
-        key: 'carbonStatementFile',
-        label: '탄소발자국 검증 성명서 PDF',
-        ratio: 'A4 세로형',
-        width: 900,
-        height: 1273,
-        description: '홈페이지에서 열어볼 검증 성명서 PDF를 등록하세요.',
-        type: WebsiteSlotType.pdf),
     ImageSlot(
         key: 'carbonStatement',
         label: '검증 성명서 썸네일',

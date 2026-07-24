@@ -27,6 +27,7 @@ export default function CatalogSection({ catalog }: { catalog?: Catalog }) {
           <MediaPlaceholder
             alt={catalog ? `${catalog.title} 표지` : ""}
             desktopRatio="210:297"
+            expandable={false}
             fieldName="siteSettings.catalogDocument"
             guide="최신 공개 카탈로그 A4 표지"
             label="카탈로그 썸네일"
@@ -44,21 +45,13 @@ export default function CatalogSection({ catalog }: { catalog?: Catalog }) {
               {catalog.fileSize ? <div>파일 크기: {catalog.fileSize}</div> : null}
             </dl>
             <div className="mt-5 flex flex-wrap gap-2">
-                <a
-                  className="rounded-md border border-[var(--line)] bg-white px-4 py-3 text-sm font-bold text-[var(--text)]"
-                  href={catalog.fileUrl}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  미리보기
-                </a>
-                <a
-                  className="rounded-md bg-[var(--primary)] px-4 py-3 text-sm font-bold text-white"
-                  download
-                  href={catalog.fileUrl}
-                >
-                  다운로드
-                </a>
+              <a
+                className="rounded-md bg-[var(--primary)] px-4 py-3 text-sm font-bold text-white"
+                download
+                href={catalog.fileUrl}
+              >
+                다운로드
+              </a>
             </div>
           </div>
         </div>
