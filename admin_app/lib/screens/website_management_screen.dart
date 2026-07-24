@@ -30,9 +30,7 @@ class _WebsiteManagementScreenState extends State<WebsiteManagementScreen> {
       error = null;
     });
     try {
-      final loadedSections = (await widget.service.sections())
-          .where((section) => section.key != 'site-settings')
-          .toList();
+      final loadedSections = await widget.service.sections();
       final performanceAssets =
           loadedSections.any((item) => item.key == 'performance')
               ? await widget.service.assets('performance')
@@ -40,8 +38,6 @@ class _WebsiteManagementScreenState extends State<WebsiteManagementScreen> {
       sections = loadedSections.expand((section) {
         if (section.key != 'performance') return [section];
         return [
-          _performanceSummary(
-              section, 'performance-verification', '성능 검증', performanceAssets),
           _performanceSummary(
               section, 'performance-videos', '성능 시연 영상', performanceAssets),
           _performanceSummary(

@@ -33,6 +33,7 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
   final Set<String> deleted = {};
   final Map<String, TextEditingController> documentControllers = {};
   final Map<String, TextEditingController> summaryControllers = {};
+  final Map<String, TextEditingController> settingsControllers = {};
   Map<String, dynamic> summaryStructure = {};
   bool summaryPublished = false;
   Map<String, dynamic> sectionData = {};
@@ -52,7 +53,30 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
     for (final controller in summaryControllers.values) {
       controller.dispose();
     }
+    for (final controller in settingsControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
+  }
+
+  void _setSettingsControllers(Map<String, dynamic> values) {
+    for (final controller in settingsControllers.values) {
+      controller.dispose();
+    }
+    settingsControllers.clear();
+    for (final key in const [
+      'brandName',
+      'brandNameEn',
+      'legalCompanyName',
+      'manufacturerName',
+      'salesCompanyName',
+      'email',
+      'phone',
+      'address',
+    ]) {
+      settingsControllers[key] =
+          TextEditingController(text: values[key]?.toString() ?? '');
+    }
   }
 
   void _setDocumentControllers(Map<String, dynamic> values) {
@@ -214,6 +238,9 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
           .content(websiteStorageSectionKey(widget.summary.key));
       assets = content.assets;
       sectionData = content.data;
+      if (widget.summary.key == 'site-settings') {
+        _setSettingsControllers(sectionData);
+      }
       final documentIndex = widget.documentIndex;
       if (documentIndex != null) {
         final storedDocuments = sectionData['documents'];
@@ -437,6 +464,12 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
           'koreanSummary': _summaryData(),
         };
         data = {...sectionData, 'documents': documents};
+      } else if (widget.summary.key == 'site-settings') {
+        data = {
+          ...sectionData,
+          for (final entry in settingsControllers.entries)
+            entry.key: entry.value.text.trim(),
+        };
       }
       await widget.service.saveSection(storageSectionKey, next, data: data);
       if (!mounted) return;
@@ -487,6 +520,58 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
                     decoration: InputDecoration(
                       labelText: field.$2,
                       alignLabelWithHint: field.$3 > 1,
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsInformation() {
+    const fields = [
+      ('brandName', '브랜드명', '예: ADS 아델슨', 1),
+      ('brandNameEn', '영문 브랜드명', '예: ADS', 1),
+      ('legalCompanyName', '법인명', '푸터에 표시할 법인명', 1),
+      ('manufacturerName', '제조사', '푸터에 표시할 제조사명', 1),
+      ('salesCompanyName', '판매사', '푸터에 표시할 판매사명', 1),
+      ('email', '대표 이메일', '예: hello@example.com', 1),
+      ('phone', '대표 전화번호', '예: 02-1234-5678', 1),
+      ('address', '주소', '푸터에 표시할 주소', 2),
+    ];
+    return Card(
+      margin: const EdgeInsets.only(bottom: 14),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('사이트 기본정보',
+                style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 6),
+            const Text('대표 이메일과 전화번호는 푸터 및 견적문의 전화 버튼에 반영됩니다.',
+                style: TextStyle(color: Color(0xFF667085))),
+            const SizedBox(height: 16),
+            ...fields.map((field) => Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: TextField(
+                    controller: settingsControllers[field.$1],
+                    keyboardType: field.$1 == 'email'
+                        ? TextInputType.emailAddress
+                        : field.$1 == 'phone'
+                            ? TextInputType.phone
+                            : field.$4 > 1
+                                ? TextInputType.multiline
+                                : TextInputType.text,
+                    maxLines: field.$4,
+                    minLines: field.$4,
+                    onChanged: (_) => setState(() => dirty = true),
+                    decoration: InputDecoration(
+                      labelText: field.$2,
+                      hintText: field.$3,
+                      alignLabelWithHint: field.$4 > 1,
                       border: const OutlineInputBorder(),
                     ),
                   ),
@@ -823,7 +908,11 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
                       _buildDocumentInformation(),
                     if (widget.documentIndex != null)
                       _buildSummaryInformation(),
-                    if (slots.isEmpty)
+                    if (widget.summary.key == 'site-settings')
+                      _buildSettingsInformation(),
+                    if (slots.isEmpty &&
+                        widget.documentIndex == null &&
+                        widget.summary.key != 'site-settings')
                       const Card(
                           child: Padding(
                               padding: EdgeInsets.all(20),

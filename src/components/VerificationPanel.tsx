@@ -21,7 +21,6 @@ export type TestGroup = {
   testDate: string;
   specimen: string;
   results: TestResult[];
-  reportFileUrl?: string;
   relatedVideoIds?: string[];
   notices?: string[];
 };
@@ -113,19 +112,11 @@ export default function VerificationPanel({ groups }: { groups: TestGroup[] }) {
             <p>시험기간: {activeGroup.testDate}</p>
             <p>적용 시료: {activeGroup.specimen}</p>
             {activeGroup.notices?.length ? <ul className="mt-3 grid gap-1 text-xs">{activeGroup.notices.map((notice) => <li key={notice}>• {notice}</li>)}</ul> : null}
-            {activeGroup.reportFileUrl || activeGroup.relatedVideoIds?.length ? <div className="mt-3 flex flex-wrap items-center gap-2">
-            {activeGroup.reportFileUrl ? (
-              <a
-                className="inline-flex min-h-10 items-center justify-center rounded-md border border-[var(--line)] px-3 py-2 text-xs font-bold text-[var(--text)]"
-                href={activeGroup.reportFileUrl}
-                rel="noreferrer"
-                target="_blank"
-              >
-                PDF 보기
-              </a>
+            {activeGroup.relatedVideoIds?.length ? (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <a className="inline-flex min-h-10 items-center justify-center rounded-md border border-[var(--line)] px-3 py-2 text-xs font-bold text-[var(--text)]" href="#performance-videos">관련 영상 보기</a>
+              </div>
             ) : null}
-            {activeGroup.relatedVideoIds?.length ? <a className="inline-flex min-h-10 items-center justify-center rounded-md border border-[var(--line)] px-3 py-2 text-xs font-bold text-[var(--text)]" href="#performance-videos">관련 영상 보기</a> : null}
-            </div> : null}
           </div>
         </details>
       </div>

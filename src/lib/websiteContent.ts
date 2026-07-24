@@ -23,17 +23,11 @@ export type CmsSiteContent = {
     heroMobileImage?: string;
     heroMobileAspectRatio?: string;
     overviewImage?: string;
-    processVideo?: string;
-    processPoster?: string;
     productOverviewVideo?: string;
     productOverviewPoster?: string;
     companyOverviewVideo?: string;
     companyOverviewPoster?: string;
-    verificationImage?: string;
-    verificationReportThumbnail?: string;
-    verificationReportFile?: string;
     sustainabilityStatementThumbnail?: string;
-    sustainabilityStatementFile?: string;
     sectionOrder?: string[];
     sectionVisibility?: Array<{ section: string; visible: boolean }>;
   };
@@ -62,7 +56,6 @@ export type CmsSiteContent = {
     testDate: string;
     specimen: string;
     results: Array<{ name: string; value: string; referenceValue?: string; judgement?: string }>;
-    reportFileUrl?: string;
   }>;
   industries?: Array<{
     title: string;
@@ -90,12 +83,6 @@ export type CmsSiteContent = {
     expiryDate?: string;
     relatedProducts?: string[];
     language: string;
-    fileUrl?: string;
-    translatedFileUrl?: string;
-    previewUrl?: string;
-    publicDownload?: boolean;
-    publicPreview?: boolean;
-    previewAvailable?: boolean;
     summary?: string;
     thumbnailUrl?: string;
     koreanSummary?: KoreanDocumentSummary;
@@ -193,17 +180,11 @@ export async function getWebsiteContent(): Promise<CmsSiteContent | null> {
             ? `${heroWidth}:${heroHeight}`
             : undefined,
         overviewImage: assetWithLegacy("product-overview", "overview", "main-images"),
-        verificationImage: assetWithLegacy("performance", "verification", "main-images"),
-        verificationReportThumbnail: assetWithLegacy("performance", "verificationReport", "main-images") ?? assetThumbnail("performance", "verificationReportFile"),
-        verificationReportFile: asset("performance", "verificationReportFile"),
-        sustainabilityStatementThumbnail: assetWithLegacy("environment", "carbonStatement", "main-images") ?? assetThumbnail("environment", "carbonStatementFile"),
-        sustainabilityStatementFile: asset("environment", "carbonStatementFile"),
+        sustainabilityStatementThumbnail: assetWithLegacy("environment", "carbonStatement", "main-images"),
         productOverviewVideo: asset("product-overview", "productOverviewVideo") ?? videoData.productOverviewVideo,
         productOverviewPoster: assetWithLegacy("product-overview", "productOverviewPoster", "intro-videos"),
         companyOverviewVideo: asset("company", "companyOverviewVideo") ?? videoData.companyOverviewVideo,
         companyOverviewPoster: assetWithLegacy("company", "companyOverviewPoster", "intro-videos"),
-        processVideo: asset("product-overview", "processVideo") ?? videoData.processVideo,
-        processPoster: assetWithLegacy("product-overview", "processPoster", "intro-videos"),
       },
       products: mappedProducts,
       performanceVideos: performanceVideoFallbacks.map((video, index) => ({
@@ -244,19 +225,7 @@ export async function getWebsiteContent(): Promise<CmsSiteContent | null> {
             typeof details.koreanSummary === "object"
               ? (details.koreanSummary as KoreanDocumentSummary)
               : document.koreanSummary,
-          fileUrl: asset("performance", `document${index + 1}File`) ?? "",
-          translatedFileUrl:
-            asset("performance", `document${index + 1}TranslatedFile`) ?? "",
-          previewUrl: asset("performance", `document${index + 1}File`) ?? "",
-          thumbnailUrl:
-            asset("performance", `document${index + 1}`) ??
-            assetThumbnail("performance", `document${index + 1}File`),
-          publicDownload: Boolean(
-            asset("performance", `document${index + 1}File`),
-          ),
-          previewAvailable: Boolean(
-            asset("performance", `document${index + 1}File`),
-          ),
+          thumbnailUrl: asset("performance", `document${index + 1}`),
         };
       }),
       factoryImage: asset("company", "factory"),

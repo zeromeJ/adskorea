@@ -16,6 +16,7 @@ export default function ProductIntroSection({
           alt="MDI 압축성형 목재 팔레트 제품 구조"
           className="order-2 lg:order-1"
           desktopRatio="4:3"
+          expandable={false}
           fieldName="homePage.overview.image"
           guide="배경을 제거한 실제 제품 또는 제품 구조 확인 이미지"
           label="제품 개요 이미지"
