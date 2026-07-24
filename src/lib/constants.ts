@@ -262,7 +262,7 @@ export const products = [
     mediaField: "product.doubleDeck.gallery",
   },
   {
-    title: "川자형 몰드 팔레트",
+    title: "川자형 압축 목재 팔레트",
     englishLabel: "3-Runner Compressed Wood Pallet",
     description:
       "3열 받침 구조를 적용해 지게차 운용, 적재 안정성과 운송 효율을 함께 고려한 압축 목재 팔레트입니다.",
@@ -270,7 +270,7 @@ export const products = [
     mediaField: "product.threeRunner.gallery",
   },
   {
-    title: "특수 몰드 팔레트",
+    title: "특수 압축 목재 팔레트",
     englishLabel: "Custom Compressed Wood Pallet",
     description:
       "제품 특성, 보관 환경과 수출 조건에 따라 특수 규격과 구조를 상담할 수 있습니다.",
@@ -477,7 +477,7 @@ export const currentPalletTypeOptions = [
 export const productInterestOptions = [
   "단면 압축 목재 팔레트",
   "양면 압축 목재 팔레트",
-  "川자형 몰드 팔레트",
-  "특수 몰드 팔레트",
+  "川자형 압축 목재 팔레트",
+  "특수 압축 목재 팔레트",
   "아직 정하지 않음",
 ];
