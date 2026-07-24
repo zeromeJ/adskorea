@@ -5,11 +5,13 @@ import { heroMetrics } from "@/lib/constants";
 type HeroSectionProps = {
   desktopImage?: string;
   mobileImage?: string;
+  mobileAspectRatio?: string;
 };
 
 export default function HeroSection({
   desktopImage,
   mobileImage,
+  mobileAspectRatio,
 }: HeroSectionProps) {
   return (
     <section
@@ -43,11 +45,12 @@ export default function HeroSection({
           alt="MDI 압축성형 목재 팔레트 또는 수출 적재 현장"
           desktopRatio="16:9"
           desktopSrc={desktopImage}
-          fieldName="homePage.hero.desktopImage / mobileImage"
-          guide="실제 압축성형 목재 팔레트 또는 수출 적재 현장"
+          fieldName="homePage.hero.desktopImage"
+          guide="PC는 16:9 편집본, 모바일은 업로드한 원본 비율로 표시"
           label="히어로 이미지"
-          mobileRatio="4:5"
-          mobileSrc={mobileImage}
+          mobileRatio={mobileAspectRatio ?? "16:9"}
+          mobileSrc={mobileImage ?? desktopImage}
+          expandable={false}
           required
         />
       </div>

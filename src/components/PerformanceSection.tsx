@@ -32,22 +32,23 @@ export default function PerformanceSection({
         <div className="mx-auto mt-8 grid max-w-[920px] gap-4 min-[520px]:grid-cols-[minmax(0,256fr)_minmax(0,81fr)] min-[520px]:items-start">
           <MediaPlaceholder
             alt="압축성형 목재 팔레트 성능 시험 현장"
-            desktopRatio="16:9"
+            desktopRatio="4:3"
+            expandable={false}
             fieldName="homePage.verification.testImage"
             guide="시험 장비, 적용 시료와 하중 조건이 함께 보이는 실제 시험 사진"
             label="성능 시험 사진"
-            mobileRatio="16:9"
+            mobileRatio="4:3"
             src={testImageUrl}
           />
           <div className="relative">
             <MediaPlaceholder
               alt="제품 성능 시험성적서 표지"
-              desktopRatio="9:16"
+              desktopRatio="210:297"
               fieldName="homePage.verification.reportThumbnail"
               guide="공개 가능한 시험성적서 A4 표지 또는 핵심 페이지"
               label="시험성적서 썸네일"
               mediaType="document"
-              mobileRatio="9:16"
+              mobileRatio="210:297"
               src={reportThumbnailUrl}
             />
             {reportFileUrl ? <a aria-label="시험성적서 PDF 열기" className="absolute right-2 bottom-2 z-20 rounded-md bg-[var(--primary)] px-3 py-2 text-xs font-bold text-white" href={reportFileUrl} rel="noreferrer" target="_blank">PDF 열기</a> : null}

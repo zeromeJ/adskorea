@@ -328,7 +328,7 @@ const homeImageSlots = [
       ratio: '16:9',
       width: 1920,
       height: 1080,
-      description: '한 장만 등록하면 PC 16:9와 모바일 4:5 이미지가 자동으로 생성됩니다.'),
+      description: 'PC는 16:9 편집본을 사용하고 모바일은 업로드한 원본 비율을 유지합니다.'),
 ];
 
 final websiteImageSlots = <String, List<ImageSlot>>{

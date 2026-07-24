@@ -21,6 +21,7 @@ export type CmsSiteContent = {
   homePage?: {
     heroDesktopImage?: string;
     heroMobileImage?: string;
+    heroMobileAspectRatio?: string;
     overviewImage?: string;
     processVideo?: string;
     processPoster?: string;
@@ -134,12 +135,18 @@ export async function getWebsiteContent(): Promise<CmsSiteContent | null> {
       const value = (metadata as Record<string, unknown>).thumbnailUrl;
       return typeof value === "string" ? value : undefined;
     };
+    const assetRecordWithLegacy = (
+      section: string,
+      itemKey: string,
+      legacySection: string,
+      legacyItemKey = itemKey,
+    ) => assetRecord(section, itemKey) ?? assetRecord(legacySection, legacyItemKey);
     const assetWithLegacy = (
       section: string,
       itemKey: string,
       legacySection: string,
       legacyItemKey = itemKey,
-    ) => asset(section, itemKey) ?? asset(legacySection, legacyItemKey);
+    ) => assetRecordWithLegacy(section, itemKey, legacySection, legacyItemKey)?.url ?? undefined;
     const settings = (byKey.get("site-settings")?.data ?? {}) as CmsSiteContent["siteSettings"];
     const videoData = (byKey.get("intro-videos")?.data ?? {}) as Record<string, string>;
     const currentProductImages = assets("product-lineup");
@@ -173,11 +180,18 @@ export async function getWebsiteContent(): Promise<CmsSiteContent | null> {
       key: string,
       fallback?: string,
     ) => (typeof details[key] === "string" ? details[key] as string : fallback);
+    const heroAsset = assetRecordWithLegacy("home", "heroDesktop", "main-images");
+    const heroWidth = heroAsset?.width ?? 0;
+    const heroHeight = heroAsset?.height ?? 0;
     return {
       siteSettings: settings,
       homePage: {
-        heroDesktopImage: assetWithLegacy("home", "heroDesktop", "main-images"),
-        heroMobileImage: assetWithLegacy("home", "heroMobile", "main-images"),
+        heroDesktopImage: heroAsset?.url ?? undefined,
+        heroMobileImage: heroAsset?.originalUrl ?? heroAsset?.url ?? undefined,
+        heroMobileAspectRatio:
+          heroWidth > 0 && heroHeight > 0
+            ? `${heroWidth}:${heroHeight}`
+            : undefined,
         overviewImage: assetWithLegacy("product-overview", "overview", "main-images"),
         verificationImage: assetWithLegacy("performance", "verification", "main-images"),
         verificationReportThumbnail: assetWithLegacy("performance", "verificationReport", "main-images") ?? assetThumbnail("performance", "verificationReportFile"),

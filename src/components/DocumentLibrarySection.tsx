@@ -182,18 +182,18 @@ export default function DocumentLibrarySection({
                     <MediaPlaceholder
                       alt={`${item.title} 문서 표지`}
                       className="self-center"
-                      desktopRatio="9:16"
+                      desktopRatio="210:297"
                       emptyLabel="썸네일을 불러오지 못했습니다"
                       expandable={false}
                       fieldName={`performance.document${index + 1}.thumbnail`}
                       guide="공개 문서 A4 표지"
                       label="문서 썸네일"
                       mediaType="document"
-                      mobileRatio="9:16"
+                      mobileRatio="210:297"
                       src={item.thumbnailUrl}
                     />
                   ) : (
-                    <div className="flex aspect-[9/16] items-center justify-center self-center overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--muted-surface)] px-3 text-center text-xs font-bold leading-5 text-[var(--sub-text)]">
+                    <div className="flex aspect-[210/297] items-center justify-center self-center overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--muted-surface)] px-3 text-center text-xs font-bold leading-5 text-[var(--sub-text)]">
                       썸네일 준비 중
                     </div>
                   )}

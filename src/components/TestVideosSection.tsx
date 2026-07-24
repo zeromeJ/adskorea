@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import MediaPlaceholder from "@/components/ui/MediaPlaceholder";
 import SectionTitle from "@/components/ui/SectionTitle";
 import { performanceVideoFallbacks } from "@/lib/constants";
@@ -22,6 +22,41 @@ function durationLabel(seconds?: number) {
   if (!seconds) return "길이 확인 필요";
   if (seconds < 60) return `${seconds}초`;
   return `${Math.floor(seconds / 60)}분 ${seconds % 60}초`;
+}
+
+function AutoPlayVideo({
+  poster,
+  src,
+  title,
+}: {
+  poster?: string;
+  src: string;
+  title: string;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const player = videoRef.current;
+    if (!player) return;
+    void player.play().catch(() => {
+      player.muted = true;
+      void player.play();
+    });
+  }, [src]);
+
+  return (
+    <video
+      aria-label={`${title} 영상`}
+      autoPlay
+      className="h-full w-full object-contain"
+      controls
+      playsInline
+      poster={poster}
+      preload="auto"
+      ref={videoRef}
+      src={src}
+    />
+  );
 }
 
 export default function TestVideosSection({
@@ -110,16 +145,23 @@ export default function TestVideosSection({
               <button className="shrink-0 rounded-md border border-[var(--line)] px-3 py-1.5 text-xs font-bold" onClick={() => setSelectedVideo(null)} type="button">닫기</button>
             </div>
             <div className="min-h-0 overflow-x-hidden overflow-y-auto [overscroll-behavior:contain]">
-            <MediaPlaceholder
-              desktopRatio="16:9"
-              embedUrl={selectedVideo.streamId ? `https://iframe.videodelivery.net/${selectedVideo.streamId}` : undefined}
-              fieldName="performanceVideo.streamId / externalUrl"
-              guide="제조사 제공 원본 시연영상"
-              label={selectedVideo.title}
-              mediaType="video"
-              poster={selectedVideo.poster}
-              src={selectedVideo.videoUrl}
-            />
+            <div className="aspect-video overflow-hidden rounded-lg border border-[var(--line)] bg-black">
+              {selectedVideo.streamId ? (
+                <iframe
+                  allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+                  allowFullScreen
+                  className="h-full w-full border-0"
+                  src={`https://iframe.videodelivery.net/${selectedVideo.streamId}?autoplay=true`}
+                  title={selectedVideo.title}
+                />
+              ) : selectedVideo.videoUrl ? (
+                <AutoPlayVideo
+                  poster={selectedVideo.poster}
+                  src={selectedVideo.videoUrl}
+                  title={selectedVideo.title}
+                />
+              ) : null}
+            </div>
             <p className="mt-4 text-sm leading-6 text-[var(--sub-text)]">{selectedVideo.description}</p>
             <div className="mt-3 rounded-md bg-[var(--muted-surface)] p-4"><p className="text-xs font-bold text-[var(--text)]">시연 조건 및 제한사항</p><p className="mt-2 text-sm leading-6 text-[var(--sub-text)]">{selectedVideo.disclaimer}</p></div>
             </div>
