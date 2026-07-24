@@ -1,5 +1,5 @@
 export const websiteSections = [
-  { key: "home", title: "홈", requiredCount: 2 },
+  { key: "home", title: "홈", requiredCount: 1 },
   { key: "product-overview", title: "제품 소개", requiredCount: 5 },
   { key: "performance", title: "성능·기술", requiredCount: 12 },
   { key: "product-lineup", title: "제품 라인업", requiredCount: 4 },
@@ -10,7 +10,7 @@ export const websiteSections = [
 ] as const;
 
 export const mainImageSlots = [
-  { key: "heroDesktop", label: "Hero 대표 이미지", ratio: "16:9 / 4:5 자동 생성", width: 1920, height: 1080, description: "한 장으로 PC와 모바일 Hero 이미지를 자동 생성" },
+  { key: "heroDesktop", label: "Hero 대표 이미지", ratio: "PC 16:9 / 모바일 원본 비율", width: 1920, height: 1080, description: "PC는 16:9 편집본, 모바일은 업로드한 원본 비율로 표시" },
   { key: "overview", label: "제품 개요 이미지", ratio: "4:3", width: 1200, height: 900, description: "제품 소개 영역에 표시되는 이미지" },
   { key: "verification", label: "성능 시험 대표 이미지", ratio: "4:3", width: 1200, height: 900, description: "성능 시험 영역에 표시되는 이미지" },
   { key: "verificationReport", label: "시험성적서 대표 썸네일", ratio: "A4", width: 900, height: 1273, description: "시험성적서 미리보기 이미지" },

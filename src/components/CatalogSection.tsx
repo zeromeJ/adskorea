@@ -26,12 +26,12 @@ export default function CatalogSection({ catalog }: { catalog?: Catalog }) {
         <div className="mt-8 grid items-center gap-6 rounded-lg border border-[var(--line)] bg-[var(--muted-surface)] p-5 sm:grid-cols-[180px_1fr] sm:p-6">
           <MediaPlaceholder
             alt={catalog ? `${catalog.title} 표지` : ""}
-            desktopRatio="9:16"
+            desktopRatio="210:297"
             fieldName="siteSettings.catalogDocument"
             guide="최신 공개 카탈로그 A4 표지"
             label="카탈로그 썸네일"
             mediaType="document"
-            mobileRatio="9:16"
+            mobileRatio="210:297"
             src={catalog?.thumbnailUrl}
           />
           <div className="self-center">

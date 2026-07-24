@@ -106,6 +106,7 @@ export default async function Home() {
         <HeroSection
           desktopImage={home?.heroDesktopImage}
           mobileImage={home?.heroMobileImage}
+          mobileAspectRatio={home?.heroMobileAspectRatio}
         />
       ),
     },

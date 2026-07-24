@@ -15,10 +15,12 @@ export default function AboutSection({ factoryImageUrl }: AboutSectionProps) {
           <div className="order-2 min-w-0 lg:order-1">
             <MediaPlaceholder
               alt="ADS 아델슨 생산시설 전경"
-              desktopRatio="16:9"
+              desktopRatio="4:3"
+              expandable={false}
               fieldName="companyGallery.featured.image"
               guide="위치와 촬영일을 확인할 수 있는 실제 공장 전경"
               label="회사·공장 대표 이미지"
+              mobileRatio="4:3"
               src={factoryImageUrl}
             />
             <p className="mt-3 text-xs leading-5 text-[var(--sub-text)]">투자액, 부지면적, 설계 생산능력과 특허·관련 증서 수는 회사 제공 자료 기준입니다.</p>

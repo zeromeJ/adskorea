@@ -405,12 +405,8 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
       for (final slot in slots) {
         final edit = pending[slot.key];
         if (edit != null) {
-          if (widget.summary.key == 'home' && slot.key == 'heroDesktop') {
-            next.addAll(await widget.service.uploadHeroImages(edit, slot));
-          } else {
-            next.add(await widget.service
-                .uploadImage(storageSectionKey, slot, edit));
-          }
+          next.add(
+              await widget.service.uploadImage(storageSectionKey, slot, edit));
         }
         final file = pendingFiles[slot.key];
         if (file != null) {

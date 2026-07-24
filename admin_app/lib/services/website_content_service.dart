@@ -92,31 +92,6 @@ class WebsiteContentService {
     return WebsiteAsset(json['asset'] as Map<String, dynamic>);
   }
 
-  Future<List<WebsiteAsset>> uploadHeroImages(
-      PendingImageEdit edit, ImageSlot desktopSlot) async {
-    final desktop = await uploadImage('home', desktopSlot, edit);
-    const mobileSlot = ImageSlot(
-      key: 'heroMobile',
-      label: 'Hero 모바일 이미지',
-      ratio: '4:5',
-      width: 1080,
-      height: 1350,
-      description: 'Hero 대표 이미지에서 자동 생성된 모바일 이미지',
-    );
-    final mobileEdit = PendingImageEdit(
-      original: edit.original,
-      edited: edit.original,
-      fileName: edit.fileName,
-      width: edit.width,
-      height: edit.height,
-      crop: const [0, 0, 1, 1],
-      zoom: 1,
-      rotation: 0,
-    );
-    final mobile = await uploadImage('home', mobileSlot, mobileEdit);
-    return [desktop, mobile];
-  }
-
   Future<WebsiteAsset> uploadFile(
     String sectionKey,
     ImageSlot slot,

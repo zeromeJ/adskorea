@@ -24,17 +24,15 @@ export default function EcoDataSection({
           description="적용 모델과 검증 기준이 확인된 탄소발자국 값을 제공합니다."
         />
         <div className="mt-8 grid gap-6 md:grid-cols-[0.42fr_1fr] md:items-stretch">
-          <div className="relative mx-auto w-full max-w-[150px] self-center md:h-full md:max-w-none">
+          <div className="relative mx-auto w-full max-w-[210px] self-center">
           <MediaPlaceholder
             alt="SGS 제품 탄소발자국 검증 성명서 표지"
-            className="h-full"
-            desktopRatio="9:16"
+            desktopRatio="210:297"
             fieldName="homePage.sustainability.statementThumbnail"
             guide="SGS 제품 탄소발자국 검증 성명서 A4 표지"
             label="검증 성명서 썸네일"
             mediaType="document"
-            mobileRatio="9:16"
-            desktopFill
+            mobileRatio="210:297"
             src={statementThumbnailUrl}
           />
           {statementFileUrl ? <a aria-label="탄소발자국 검증 성명서 PDF 열기" className="absolute right-2 bottom-2 z-20 rounded-md bg-white px-3 py-2 text-xs font-bold text-[var(--primary-dark)]" href={statementFileUrl} rel="noreferrer" target="_blank">PDF 열기</a> : null}
