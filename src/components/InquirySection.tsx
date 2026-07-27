@@ -22,6 +22,32 @@ import {
 
 const usePurposes = ["보관", "국내 운송", "수출 운송", "랙 적재", "자동화 설비", "기타"];
 const yesNoUnknown = ["예", "아니오", "미정"];
+const validationFieldOrder = [
+  "inquiryType",
+  "phone",
+  "email",
+  "responseMethod",
+  "deliveryRegion",
+  "message",
+  "privacyAgreed",
+] as const;
+type ValidationField = (typeof validationFieldOrder)[number];
+const validationTargetIds: Record<ValidationField, string> = {
+  inquiryType: "inquiry-type-field",
+  phone: "phone",
+  email: "email",
+  responseMethod: "response-method-field",
+  deliveryRegion: "deliveryRegion",
+  message: "message",
+  privacyAgreed: "privacyAgreed",
+};
+
+function focusValidationField(field: ValidationField) {
+  const target = document.getElementById(validationTargetIds[field]);
+  if (!target) return;
+  target.scrollIntoView({ behavior: "smooth", block: "center" });
+  target.focus({ preventScroll: true });
+}
 
 function DimensionInput({ id, label, value, onChange }: { id: string; label: string; value: string; onChange: (value: string) => void }) {
   return (
@@ -156,6 +182,12 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
     setPhoneTouched(true);
     if (Object.keys(validationErrors).length > 0) {
       setError("");
+      const firstInvalidField = validationFieldOrder.find(
+        (field) => validationErrors[field],
+      );
+      if (firstInvalidField) {
+        requestAnimationFrame(() => focusValidationField(firstInvalidField));
+      }
       return;
     }
     setIsLoading(true);
@@ -254,6 +286,8 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
               aria-describedby={inquiryTypeError ? "inquiry-type-error" : undefined}
               aria-invalid={Boolean(inquiryTypeError)}
               className="col-span-full min-w-0"
+              id="inquiry-type-field"
+              tabIndex={-1}
             >
               <legend className="mb-2 flex min-h-6 items-center text-sm font-bold text-[var(--text)]">문의 유형 (필수)</legend>
               <div className={`grid min-w-0 gap-2 sm:grid-cols-2 ${inquiryTypeError ? "rounded-lg border border-[var(--alert)] p-2" : ""}`}>
@@ -299,7 +333,7 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
             </div>
             <Input id="companyName" label="회사명 (선택)" maxLength={100} onChange={(event) => updateField("companyName", event.target.value)} value={formData.companyName} />
             <Input id="contactPerson" label="담당자명 (선택)" maxLength={50} onChange={(event) => updateField("contactPerson", event.target.value)} value={formData.contactPerson} />
-            <fieldset aria-describedby={responseMethodError ? "response-method-error" : undefined} aria-invalid={Boolean(responseMethodError)} className="col-span-full min-w-0"><legend className="mb-2 flex min-h-6 items-center text-sm font-bold">연락 선호 방식 (선택)</legend><div className={`grid min-w-0 grid-cols-2 gap-2 rounded-lg sm:grid-cols-4 ${responseMethodError ? "border border-[var(--alert)] p-2" : ""}`}>{[{ value: "EMAIL", label: "이메일" }, { value: "PHONE", label: "전화" }, { value: "TEXT", label: "문자" }, { value: "ANY", label: "상관없음" }].map((option) => { const selected = formData.responseMethod === option.value; return <button aria-pressed={selected} className={`inline-flex min-h-12 min-w-0 items-center justify-center rounded-lg border px-3 text-sm font-bold transition ${selected ? "border-[var(--primary)] bg-[var(--primary)] text-white" : "border-[var(--line)] bg-white text-[var(--text)] hover:border-[var(--primary)]"}`} key={option.value} onClick={() => updateField("responseMethod", option.value as ContactFormData["responseMethod"])} type="button">{option.label}</button>; })}</div>{responseMethodError ? <p className="mt-2 text-sm font-bold text-[var(--alert)]" id="response-method-error">{responseMethodError}</p> : null}</fieldset>
+            <fieldset aria-describedby={responseMethodError ? "response-method-error" : undefined} aria-invalid={Boolean(responseMethodError)} className="col-span-full min-w-0" id="response-method-field" tabIndex={-1}><legend className="mb-2 flex min-h-6 items-center text-sm font-bold">연락 선호 방식 (선택)</legend><div className={`grid min-w-0 grid-cols-2 gap-2 rounded-lg sm:grid-cols-4 ${responseMethodError ? "border border-[var(--alert)] p-2" : ""}`}>{[{ value: "EMAIL", label: "이메일" }, { value: "PHONE", label: "전화" }, { value: "TEXT", label: "문자" }, { value: "ANY", label: "상관없음" }].map((option) => { const selected = formData.responseMethod === option.value; return <button aria-pressed={selected} className={`inline-flex min-h-12 min-w-0 items-center justify-center rounded-lg border px-3 text-sm font-bold transition ${selected ? "border-[var(--primary)] bg-[var(--primary)] text-white" : "border-[var(--line)] bg-white text-[var(--text)] hover:border-[var(--primary)]"}`} key={option.value} onClick={() => updateField("responseMethod", option.value as ContactFormData["responseMethod"])} type="button">{option.label}</button>; })}</div>{responseMethodError ? <p className="mt-2 text-sm font-bold text-[var(--alert)]" id="response-method-error">{responseMethodError}</p> : null}</fieldset>
 
             <h3 className="col-span-full mt-2 border-t border-[var(--line)] pt-6 text-lg font-bold text-[var(--text)]">3. 문의 상세</h3>
             <Select containerClassName="col-span-full md:col-span-1" id="productInterest" label="관심 제품 (선택)" onChange={(event) => updateField("productInterest", event.target.value)} options={productInterestOptions} value={formData.productInterest} />
@@ -380,11 +414,31 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
           </div>
 
           <div className={`mt-5 min-w-0 rounded-lg border bg-[var(--muted-surface)] p-4 ${privacyError ? "border-[var(--alert)]" : "border-transparent"}`} id="privacy-details">
-            <label className="flex min-w-0 items-start gap-3 text-sm leading-6 text-[var(--sub-text)]"><input aria-describedby={privacyError ? "privacy-error" : undefined} aria-invalid={Boolean(privacyError)} aria-required="true" checked={formData.privacyAgreed} className="mt-1 h-4 w-4 shrink-0 accent-[var(--primary)]" onChange={(event) => updateField("privacyAgreed", event.target.checked)} type="checkbox" /><span className="min-w-0">개인정보 수집 및 이용에 동의합니다. (필수)</span></label>
+            <label className="flex min-w-0 items-start gap-3 text-sm leading-6 text-[var(--sub-text)]"><input aria-describedby={privacyError ? "privacy-error" : undefined} aria-invalid={Boolean(privacyError)} aria-required="true" checked={formData.privacyAgreed} className="mt-1 h-4 w-4 shrink-0 accent-[var(--primary)]" id="privacyAgreed" onChange={(event) => updateField("privacyAgreed", event.target.checked)} type="checkbox" /><span className="min-w-0">개인정보 수집 및 이용에 동의합니다. (필수)</span></label>
             {privacyError ? <p className="mt-2 text-sm font-bold text-[var(--alert)]" id="privacy-error">{privacyError}</p> : null}
             <details className="mt-3 min-w-0 text-xs leading-6 text-[var(--sub-text)]"><summary className="cursor-pointer font-bold text-[var(--primary)]">수집·이용 내용 보기</summary><div className="mt-2 [overflow-wrap:anywhere]"><p><strong>수집 항목:</strong> 전화번호, 납품 지역 및 사용자가 선택적으로 입력한 회사명·담당자명·이메일·문의 내용·첨부파일·상세정보</p><p><strong>이용 목적:</strong> 문의 확인, 제품 상담, 견적 검토, 자료 제공, 회신 및 고객 응대</p><p><strong>보유기간:</strong> 문의 처리 목적 달성 후 지체 없이 파기하며, 관계 법령에 따라 보존이 필요한 경우 해당 기간 동안 보관합니다.</p><p>동의를 거부할 수 있으나 문의 접수가 제한될 수 있습니다.</p></div></details>
             <a className="mt-2 inline-flex text-xs font-bold text-[var(--primary)] underline underline-offset-2" href="/privacy">개인정보처리방침</a>
           </div>
+
+          {validationAttempted && validationFieldOrder.some((field) => currentFieldErrors[field]) ? (
+            <div aria-labelledby="validation-summary-title" className="mt-5 rounded-lg border border-[var(--alert)] bg-[rgba(185,92,69,0.08)] p-4" role="alert">
+              <p className="font-bold text-[var(--alert)]" id="validation-summary-title">
+                아래 항목을 확인해 주세요.
+              </p>
+              <ul className="mt-2 grid gap-1 text-sm text-[var(--alert)]">
+                {validationFieldOrder.map((field) => {
+                  const fieldError = currentFieldErrors[field];
+                  return fieldError ? (
+                    <li key={field}>
+                      <button className="min-h-9 text-left font-bold underline underline-offset-2" onClick={() => focusValidationField(field)} type="button">
+                        {fieldError}
+                      </button>
+                    </li>
+                  ) : null;
+                })}
+              </ul>
+            </div>
+          ) : null}
 
           {error ? <p aria-live="polite" className="mt-5 max-w-full [overflow-wrap:anywhere] rounded-lg border border-[var(--alert)] bg-[rgba(185,92,69,0.12)] p-4 text-sm font-bold text-[var(--alert)]">{error}</p> : null}
           {success ? <p aria-live="polite" className="mt-5 max-w-full [overflow-wrap:anywhere] rounded-md bg-[var(--sub-mint)] p-4 text-sm font-bold text-[var(--primary-dark)]">{success}</p> : null}
