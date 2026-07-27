@@ -143,7 +143,7 @@ class _InquiryListScreenState extends State<InquiryListScreen>
       builder: (context) => AlertDialog(
         title: const Text('처리 완료로 변경할까요?'),
         content: Text(
-          '${inquiry.companyName} 문의를 처리 완료 목록으로 이동합니다.',
+          '${inquiry.companyNameLabel} 문의를 처리 완료 목록으로 이동합니다.',
         ),
         actions: [
           TextButton(

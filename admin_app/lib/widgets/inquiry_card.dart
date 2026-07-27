@@ -75,7 +75,7 @@ class InquiryCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                inquiry.companyName,
+                inquiry.companyNameLabel,
                 style: const TextStyle(
                   color: AppColors.text,
                   fontSize: 18,
@@ -83,7 +83,7 @@ class InquiryCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 6),
-              _info('고객 담당자', inquiry.contactPerson),
+              _info('고객 담당자', inquiry.contactPersonLabel),
               if (showAssignment)
                 _info('문의 담당 관리자', inquiry.assignedAdminLabel),
               if (inquiry.inquiryType?.isNotEmpty == true)

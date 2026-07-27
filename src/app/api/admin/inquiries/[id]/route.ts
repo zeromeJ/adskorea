@@ -181,7 +181,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       await sendInquiryAssignmentPush(
         item.id,
         nextAssignedAdminId,
-        item.companyName,
+        item.companyName || "회사명 미입력",
       );
     } catch (error) {
       console.error("Inquiry assignment push notification failed:", error);

@@ -54,6 +54,7 @@ export async function POST(request: Request) {
       );
     }
 
+    const companyLabel = data.companyName || "회사명 미입력";
     const inquiry = await prisma.inquiry.create({
       data: {
         companyName: data.companyName,
@@ -90,15 +91,15 @@ export async function POST(request: Request) {
           from: senderEmail,
           to: receiverEmail,
           ...(data.email ? { replyTo: data.email } : {}),
-          subject: `[ADS Website Inquiry] New B2B Inquiry from ${data.companyName}`,
+          subject: `[ADS Website Inquiry] New B2B Inquiry from ${companyLabel}`,
           text: `
 새로운 홈페이지 문의가 접수되었습니다.
 
 접수 시간: ${submittedAt}
 
 문의 유형: ${inquiryTypeLabel(data.inquiryType)}
-회사명: ${data.companyName}
-담당자명: ${data.contactPerson}
+회사명: ${data.companyName || "-"}
+담당자명: ${data.contactPerson || "-"}
 부서/직책: ${data.department || "-"}
 이메일: ${data.email || "-"}
 연락처: ${data.phone || "-"}
