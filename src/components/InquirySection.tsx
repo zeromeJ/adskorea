@@ -12,7 +12,9 @@ import {
   inquiryTypes,
   inquiryTypeLabel,
   isValidPhone,
+  palletSizeOptions,
   submitLabel,
+  unknownPalletSizeOption,
   validateContactForm,
 } from "@/lib/contactSchema";
 
@@ -53,6 +55,33 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
     setFormData((current) => ({ ...current, details: { ...current.details, [field]: value } }));
     setSuccess("");
     setError("");
+  }
+
+  function togglePalletSize(value: string) {
+    setFormData((current) => {
+      const selected = current.requestedPalletSizes;
+      const requestedPalletSizes =
+        value === unknownPalletSizeOption
+          ? selected.includes(unknownPalletSizeOption)
+            ? []
+            : [unknownPalletSizeOption]
+          : selected.includes(value)
+            ? selected.filter((item) => item !== value)
+            : [
+                ...selected.filter((item) => item !== unknownPalletSizeOption),
+                value,
+              ];
+      return { ...current, requestedPalletSizes };
+    });
+    setSuccess("");
+    setError("");
+  }
+
+  function toggleAllPalletSizes() {
+    const allSelected = palletSizeOptions.every((size) =>
+      formData.requestedPalletSizes.includes(size),
+    );
+    updateField("requestedPalletSizes", allSelected ? [] : [...palletSizeOptions]);
   }
 
   function updateAttachments(files: FileList | null) {
@@ -215,9 +244,48 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
 
             <h3 className="col-span-full mt-2 border-t border-[var(--line)] pt-6 text-lg font-bold text-[var(--text)]">3. 문의 상세</h3>
             <Select containerClassName="col-span-full md:col-span-1" id="productInterest" label={`관심 제품 (${isQuote ? "필수" : "선택"})`} onChange={(event) => updateField("productInterest", event.target.value)} options={productInterestOptions} required={isQuote} value={formData.productInterest} />
+            <fieldset className="col-span-full min-w-0">
+              <legend className="mb-2 flex min-h-6 items-center text-sm font-bold text-[var(--text)]">
+                희망 팔레트 규격 (선택 · 복수 선택 가능)
+              </legend>
+              <div className="grid min-w-0 gap-2 sm:grid-cols-2">
+                {[...palletSizeOptions, "모두 선택", unknownPalletSizeOption].map((option) => {
+                  const selected =
+                    option === "모두 선택"
+                      ? palletSizeOptions.every((size) =>
+                          formData.requestedPalletSizes.includes(size),
+                        )
+                      : formData.requestedPalletSizes.includes(option);
+                  return (
+                    <label
+                      className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-sm font-bold transition ${
+                        selected
+                          ? "border-[var(--primary)] bg-[var(--sub-mint)] text-[var(--primary-dark)]"
+                          : "border-[var(--line)] bg-white text-[var(--text)] hover:border-[var(--primary)]"
+                      }`}
+                      key={option}
+                    >
+                      <input
+                        checked={selected}
+                        className="h-4 w-4 shrink-0 accent-[var(--primary)]"
+                        onChange={() =>
+                          option === "모두 선택"
+                            ? toggleAllPalletSizes()
+                            : togglePalletSize(option)
+                        }
+                        type="checkbox"
+                      />
+                      <span>{option}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-xs leading-5 text-[var(--sub-text)]">
+                규격을 모르시면 “잘 모르겠음”을 선택해 주세요. 담당자가 상담 시 확인합니다.
+              </p>
+            </fieldset>
 
             {isQuote ? <>
-              <Input aria-required="true" id="requiredPalletSize" label="필요한 팔레트 규격 (필수)" onChange={(event) => updateDetail("requiredPalletSize", event.target.value)} placeholder="예: 1200 × 1000mm" required value={formData.details.requiredPalletSize || ""} />
               <Input aria-required="true" id="estimatedQuantity" label="예상 수량 (필수)" onChange={(event) => updateField("estimatedQuantity", event.target.value)} required value={formData.estimatedQuantity} />
               <Input aria-required="true" id="deliveryRegion" label="납품 지역 또는 국가 (필수)" onChange={(event) => updateDetail("deliveryRegion", event.target.value)} required value={formData.details.deliveryRegion || ""} />
               <Input id="desiredDeliveryDate" label="희망 납기 (선택)" onChange={(event) => updateDetail("desiredDeliveryDate", event.target.value)} value={formData.details.desiredDeliveryDate || ""} />

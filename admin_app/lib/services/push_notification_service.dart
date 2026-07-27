@@ -26,8 +26,8 @@ class PushNotificationService {
   static const _timeout = Duration(seconds: 10);
   static const _channel = AndroidNotificationChannel(
     'new_inquiries',
-    '새 문의 알림',
-    description: '홈페이지에 새 문의가 등록되었을 때 알립니다.',
+    '문의 알림',
+    description: '새 문의 접수 및 담당자 배정 시 알립니다.',
     importance: Importance.high,
   );
 
@@ -66,12 +66,10 @@ class PushNotificationService {
     if (token == null || token.isEmpty) return;
 
     try {
-      await client
-          .post('/api/admin/device-token', {
-            'token': token,
-            'platform': Platform.isAndroid ? 'android' : Platform.operatingSystem,
-          })
-          .timeout(_timeout);
+      await client.post('/api/admin/device-token', {
+        'token': token,
+        'platform': Platform.isAndroid ? 'android' : Platform.operatingSystem,
+      }).timeout(_timeout);
     } catch (error) {
       _log('Device token registration failed', error);
     }
@@ -83,13 +81,10 @@ class PushNotificationService {
       if (authToken.isEmpty || token.isEmpty) return;
 
       try {
-        await client
-            .post('/api/admin/device-token', {
-              'token': token,
-              'platform':
-                  Platform.isAndroid ? 'android' : Platform.operatingSystem,
-            })
-            .timeout(_timeout);
+        await client.post('/api/admin/device-token', {
+          'token': token,
+          'platform': Platform.isAndroid ? 'android' : Platform.operatingSystem,
+        }).timeout(_timeout);
       } catch (error) {
         _log('Device token refresh registration failed', error);
       }
@@ -131,17 +126,19 @@ class PushNotificationService {
     if (_localNotificationReady || !Platform.isAndroid) return;
 
     try {
-      await _localNotifications.initialize(
-        settings: const InitializationSettings(
-          android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-        ),
-        onDidReceiveNotificationResponse: (response) {
-          final inquiryId = response.payload;
-          if (inquiryId != null && inquiryId.isNotEmpty) {
-            onOpenInquiry(inquiryId);
-          }
-        },
-      ).timeout(_timeout);
+      await _localNotifications
+          .initialize(
+            settings: const InitializationSettings(
+              android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+            ),
+            onDidReceiveNotificationResponse: (response) {
+              final inquiryId = response.payload;
+              if (inquiryId != null && inquiryId.isNotEmpty) {
+                onOpenInquiry(inquiryId);
+              }
+            },
+          )
+          .timeout(_timeout);
 
       await _localNotifications
           .resolvePlatformSpecificImplementation<
@@ -164,12 +161,12 @@ class PushNotificationService {
           .show(
             id: message.messageId.hashCode,
             title: notification.title ?? '아델슨 문의관리',
-            body: notification.body ?? '새로운 문의가 등록되었습니다.',
+            body: notification.body ?? '문의 알림이 도착했습니다.',
             notificationDetails: const NotificationDetails(
               android: AndroidNotificationDetails(
                 'new_inquiries',
-                '새 문의 알림',
-                channelDescription: '홈페이지에 새 문의가 등록되었을 때 알립니다.',
+                '문의 알림',
+                channelDescription: '새 문의 접수 및 담당자 배정 시 알립니다.',
                 importance: Importance.high,
                 priority: Priority.high,
               ),

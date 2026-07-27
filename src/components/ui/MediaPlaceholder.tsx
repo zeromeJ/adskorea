@@ -112,7 +112,7 @@ export default function MediaPlaceholder({
         ) : null}
         {mediaSrc && mediaType === "video" && !embedUrl ? (
           <video
-            className="h-full w-full bg-black object-contain"
+            className="block h-full w-full bg-black object-cover"
             controls
             playsInline
             poster={poster}

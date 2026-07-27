@@ -23,6 +23,14 @@ export const inquiryTypes = [
 
 export type InquiryType = (typeof inquiryTypes)[number]["value"];
 
+export const palletSizeOptions = [
+  "1200 × 1000 × 130mm",
+  "1000 × 1000 × 145mm",
+  "1100 × 1100 × 145mm",
+] as const;
+
+export const unknownPalletSizeOption = "잘 모르겠음";
+
 export type ContactFormData = {
   inquiryType: InquiryType | "";
   companyName: string;
@@ -34,6 +42,7 @@ export type ContactFormData = {
   industry: string;
   productInterest: string;
   estimatedQuantity: string;
+  requestedPalletSizes: string[];
   message: string;
   details: Record<string, string>;
   privacyAgreed: boolean;
@@ -51,6 +60,7 @@ export const initialContactFormData: ContactFormData = {
   industry: "",
   productInterest: "",
   estimatedQuantity: "",
+  requestedPalletSizes: [],
   message: "",
   details: {},
   privacyAgreed: false,
@@ -89,7 +99,6 @@ export function validateContactForm(data: ContactFormData) {
 
   if (data.inquiryType === "quote") {
     if (!data.productInterest) return "관심 제품 또는 제품군을 선택해 주세요.";
-    if (!data.details.requiredPalletSize?.trim()) return "필요한 팔레트 규격을 입력해 주세요.";
     if (!data.estimatedQuantity.trim()) return "예상 주문수량을 입력해 주세요.";
     if (!data.details.deliveryRegion?.trim()) return "납품 희망 지역 또는 국가를 입력해 주세요.";
   }

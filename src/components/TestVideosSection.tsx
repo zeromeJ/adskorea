@@ -48,7 +48,7 @@ function AutoPlayVideo({
     <video
       aria-label={`${title} 영상`}
       autoPlay
-      className="h-full w-full object-contain"
+      className="block h-full w-full object-contain"
       controls
       playsInline
       poster={poster}
@@ -105,7 +105,7 @@ export default function TestVideosSection({
                   type="button"
                 >
                   {video.videoUrl && !video.poster ? (
-                    <video aria-label={`${video.title} 영상 미리보기`} className="aspect-video w-full bg-black object-contain" muted playsInline preload="metadata" src={`${video.videoUrl}#t=0.1`} />
+                    <video aria-label={`${video.title} 영상 미리보기`} className="block aspect-video w-full bg-black object-cover" muted playsInline preload="metadata" src={`${video.videoUrl}#t=0.1`} />
                   ) : (
                     <MediaPlaceholder
                       alt={`${video.title} 영상 썸네일`}

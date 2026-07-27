@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/completion_log.dart';
+import '../models/admin_user.dart';
 import '../services/admin_management_service.dart';
 import '../services/api_client.dart';
 import '../services/inquiry_service.dart';
@@ -12,11 +13,13 @@ import 'inquiry_detail_screen.dart';
 class ActivityLogScreen extends StatefulWidget {
   const ActivityLogScreen({
     required this.adminService,
+    required this.currentAdmin,
     required this.inquiryService,
     super.key,
   });
 
   final AdminManagementService adminService;
+  final AdminUser currentAdmin;
   final InquiryService inquiryService;
 
   @override
@@ -53,6 +56,8 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => InquiryDetailScreen(
+          adminManagementService: widget.adminService,
+          currentAdmin: widget.currentAdmin,
           inquiryId: log.inquiryId,
           inquiryService: widget.inquiryService,
         ),

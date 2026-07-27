@@ -91,6 +91,8 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
       _navigatorKey.currentState?.push(
         MaterialPageRoute(
           builder: (_) => InquiryDetailScreen(
+            adminManagementService: _adminManagementService,
+            currentAdmin: _currentAdmin!,
             inquiryId: inquiryId,
             inquiryService: _inquiryService,
           ),

@@ -211,6 +211,7 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
                     MaterialPageRoute(
                       builder: (_) => ActivityLogScreen(
                         adminService: widget.adminManagementService,
+                        currentAdmin: widget.currentAdmin,
                         inquiryService: widget.inquiryService,
                       ),
                     ),
@@ -324,6 +325,9 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
                                       await Navigator.of(context).push(
                                         MaterialPageRoute(
                                           builder: (_) => InquiryDetailScreen(
+                                            adminManagementService:
+                                                widget.adminManagementService,
+                                            currentAdmin: widget.currentAdmin,
                                             inquiryId: inquiry.id,
                                             inquiryService:
                                                 widget.inquiryService,
@@ -339,6 +343,8 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
                                         inquiry.status == InquiryStatus.pending
                                             ? () => _markCompleted(inquiry)
                                             : null,
+                                    showAssignment:
+                                        widget.currentAdmin.isSuperAdmin,
                                   );
                                 },
                                 separatorBuilder: (_, __) =>
