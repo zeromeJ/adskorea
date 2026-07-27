@@ -8,6 +8,8 @@ import SectionTitle from "@/components/ui/SectionTitle";
 import { productInterestOptions } from "@/lib/constants";
 import {
   ContactFormData,
+  deliveryRegionOptions,
+  estimatedQuantityOptions,
   initialContactFormData,
   inquiryTypes,
   inquiryTypeLabel,
@@ -53,6 +55,17 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
 
   function updateDetail(field: string, value: string) {
     setFormData((current) => ({ ...current, details: { ...current.details, [field]: value } }));
+    setSuccess("");
+    setError("");
+  }
+
+  function updateInquiryType(inquiryType: ContactFormData["inquiryType"]) {
+    setFormData((current) => ({
+      ...current,
+      inquiryType,
+      requestedPalletSizes:
+        inquiryType === "other" ? [] : current.requestedPalletSizes,
+    }));
     setSuccess("");
     setError("");
   }
@@ -170,8 +183,8 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
     }
   }
 
-  const isQuote = formData.inquiryType === "quote";
   const isConsulting = formData.inquiryType === "consulting";
+  const isCatalog = formData.inquiryType === "other";
   const phoneHref = phone ? `tel:${phone.replace(/[^+\d]/g, "")}` : "";
 
   return (
@@ -221,7 +234,7 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
                       aria-pressed={selected}
                       className={`flex min-h-24 min-w-0 items-center gap-3 rounded-lg border px-4 py-3 text-left transition ${selected ? "border-[var(--primary)] bg-[var(--sub-mint)]" : "border-[var(--line)] bg-white hover:border-[var(--primary)]"}`}
                       key={item.value}
-                      onClick={() => updateField("inquiryType", item.value)}
+                      onClick={() => updateInquiryType(item.value)}
                       type="button"
                     >
                       <span aria-hidden="true" className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${selected ? "border-[var(--primary)] bg-[var(--primary)] text-white" : "border-[var(--sub-sage)]"}`}>{selected ? "✓" : ""}</span>
@@ -233,18 +246,18 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
             </fieldset>
 
             <h3 className="col-span-full mt-2 border-t border-[var(--line)] pt-6 text-lg font-bold text-[var(--text)]">2. 기본 정보</h3>
-            <Input aria-required="true" id="companyName" label="회사명 (필수)" onChange={(event) => updateField("companyName", event.target.value)} required value={formData.companyName} />
-            <Input aria-required="true" id="contactPerson" label="담당자명 (필수)" onChange={(event) => updateField("contactPerson", event.target.value)} required value={formData.contactPerson} />
             <div className="flex min-w-0 flex-col">
-              <Input aria-describedby="phone-error" aria-invalid={phoneTouched && formData.phone.length > 0 ? !isValidPhone(formData.phone) : undefined} aria-required="true" id="phone" inputMode="tel" label="연락처 (필수)" maxLength={30} onBlur={() => setPhoneTouched(true)} onChange={(event) => updateField("phone", event.target.value)} placeholder="연락 가능한 번호를 입력해 주세요" required type="tel" value={formData.phone} />
+              <Input aria-describedby="phone-error" aria-invalid={phoneTouched && formData.phone.length > 0 ? !isValidPhone(formData.phone) : undefined} aria-required="true" id="phone" inputMode="tel" label="전화번호 (필수)" maxLength={30} onBlur={() => setPhoneTouched(true)} onChange={(event) => updateField("phone", event.target.value)} placeholder="연락 가능한 번호를 입력해 주세요" required type="tel" value={formData.phone} />
               <p className="mt-2 min-h-5 text-sm font-bold text-[var(--alert)]" id="phone-error">{phoneTouched && formData.phone && !isValidPhone(formData.phone) ? "전화번호 형식을 확인해 주세요. 국가번호도 입력할 수 있습니다." : ""}</p>
             </div>
             <Input autoComplete="email" id="email" label="이메일 (선택)" maxLength={254} onChange={(event) => updateField("email", event.target.value)} placeholder="name@company.com" type="email" value={formData.email} />
+            <Input id="companyName" label="회사명 (선택)" maxLength={100} onChange={(event) => updateField("companyName", event.target.value)} value={formData.companyName} />
+            <Input id="contactPerson" label="담당자명 (선택)" maxLength={50} onChange={(event) => updateField("contactPerson", event.target.value)} value={formData.contactPerson} />
             <fieldset className="col-span-full min-w-0"><legend className="mb-2 flex min-h-6 items-center text-sm font-bold">연락 선호 방식 (선택)</legend><div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">{[{ value: "EMAIL", label: "이메일" }, { value: "PHONE", label: "전화" }, { value: "TEXT", label: "문자" }, { value: "ANY", label: "상관없음" }].map((option) => { const selected = formData.responseMethod === option.value; return <button aria-pressed={selected} className={`inline-flex min-h-12 min-w-0 items-center justify-center rounded-lg border px-3 text-sm font-bold transition ${selected ? "border-[var(--primary)] bg-[var(--primary)] text-white" : "border-[var(--line)] bg-white text-[var(--text)] hover:border-[var(--primary)]"}`} key={option.value} onClick={() => updateField("responseMethod", option.value as ContactFormData["responseMethod"])} type="button">{option.label}</button>; })}</div></fieldset>
 
             <h3 className="col-span-full mt-2 border-t border-[var(--line)] pt-6 text-lg font-bold text-[var(--text)]">3. 문의 상세</h3>
-            <Select containerClassName="col-span-full md:col-span-1" id="productInterest" label={`관심 제품 (${isQuote ? "필수" : "선택"})`} onChange={(event) => updateField("productInterest", event.target.value)} options={productInterestOptions} required={isQuote} value={formData.productInterest} />
-            <fieldset className="col-span-full min-w-0">
+            <Select containerClassName="col-span-full md:col-span-1" id="productInterest" label="관심 제품 (선택)" onChange={(event) => updateField("productInterest", event.target.value)} options={productInterestOptions} value={formData.productInterest} />
+            {!isCatalog ? <fieldset className="col-span-full min-w-0">
               <legend className="mb-2 flex min-h-6 items-center text-sm font-bold text-[var(--text)]">
                 희망 팔레트 규격 (선택 · 복수 선택 가능)
               </legend>
@@ -283,14 +296,12 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
               <p className="mt-2 text-xs leading-5 text-[var(--sub-text)]">
                 규격을 모르시면 “잘 모르겠음”을 선택해 주세요. 담당자가 상담 시 확인합니다.
               </p>
-            </fieldset>
+            </fieldset> : null}
 
-            {isQuote ? <>
-              <Input aria-required="true" id="estimatedQuantity" label="예상 수량 (필수)" onChange={(event) => updateField("estimatedQuantity", event.target.value)} required value={formData.estimatedQuantity} />
-              <Input aria-required="true" id="deliveryRegion" label="납품 지역 또는 국가 (필수)" onChange={(event) => updateDetail("deliveryRegion", event.target.value)} required value={formData.details.deliveryRegion || ""} />
-              <Input id="desiredDeliveryDate" label="희망 납기 (선택)" onChange={(event) => updateDetail("desiredDeliveryDate", event.target.value)} value={formData.details.desiredDeliveryDate || ""} />
-              <Select id="exportUse" label="수출용 여부 (선택)" onChange={(event) => updateDetail("exportUse", event.target.value)} options={yesNoUnknown} value={formData.details.exportUse || ""} />
-            </> : null}
+            <Select aria-required="true" id="deliveryRegion" label="납품 지역 (필수)" onChange={(event) => updateDetail("deliveryRegion", event.target.value)} options={[...deliveryRegionOptions]} required value={formData.details.deliveryRegion || ""} />
+            <Select id="estimatedQuantity" label="예상 수량 (선택)" onChange={(event) => updateField("estimatedQuantity", event.target.value)} options={[...estimatedQuantityOptions]} value={formData.estimatedQuantity} />
+            <Select id="exportUse" label="수출용 여부 (선택)" onChange={(event) => updateDetail("exportUse", event.target.value)} options={yesNoUnknown} value={formData.details.exportUse || ""} />
+            <Input id="desiredDeliveryDate" label="희망 납기 (선택)" onChange={(event) => updateDetail("desiredDeliveryDate", event.target.value)} value={formData.details.desiredDeliveryDate || ""} />
 
             {isConsulting ? <>
               <Input id="cargoType" label="화물 종류 (선택)" onChange={(event) => updateDetail("cargoType", event.target.value)} value={formData.details.cargoType || ""} />
@@ -299,7 +310,6 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
               <DimensionInput id="cargoWidth" label="화물 너비" onChange={(value) => updateDetail("cargoWidth", value)} value={formData.details.cargoWidth || ""} />
               <DimensionInput id="cargoHeight" label="화물 높이" onChange={(value) => updateDetail("cargoHeight", value)} value={formData.details.cargoHeight || ""} />
               <Select id="usePurpose" label="사용 목적 (선택)" onChange={(event) => updateDetail("usePurpose", event.target.value)} options={usePurposes} value={formData.details.usePurpose || ""} />
-              <Input id="consultingQuantity" label="예상 수량 (선택)" onChange={(event) => updateField("estimatedQuantity", event.target.value)} value={formData.estimatedQuantity} />
               <Select id="forkliftUse" label="지게차 사용 여부 (선택)" onChange={(event) => updateDetail("forkliftUse", event.target.value)} options={yesNoUnknown} value={formData.details.forkliftUse || ""} />
               <Select id="rackUse" label="랙 적재 여부 (선택)" onChange={(event) => updateDetail("rackUse", event.target.value)} options={yesNoUnknown} value={formData.details.rackUse || ""} />
               <Select id="automationUse" label="자동화 설비 사용 여부 (선택)" onChange={(event) => updateDetail("automationUse", event.target.value)} options={yesNoUnknown} value={formData.details.automationUse || ""} />
@@ -318,13 +328,13 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
 
           <div className="mt-5 min-w-0 rounded-lg bg-[var(--muted-surface)] p-4" id="privacy-details">
             <label className="flex min-w-0 items-start gap-3 text-sm leading-6 text-[var(--sub-text)]"><input aria-required="true" checked={formData.privacyAgreed} className="mt-1 h-4 w-4 shrink-0 accent-[var(--primary)]" onChange={(event) => updateField("privacyAgreed", event.target.checked)} type="checkbox" /><span className="min-w-0">개인정보 수집 및 이용에 동의합니다. (필수)</span></label>
-            <details className="mt-3 min-w-0 text-xs leading-6 text-[var(--sub-text)]"><summary className="cursor-pointer font-bold text-[var(--primary)]">수집·이용 내용 보기</summary><div className="mt-2 [overflow-wrap:anywhere]"><p><strong>수집 항목:</strong> 회사명, 담당자명, 연락처 및 사용자가 선택적으로 입력한 이메일·문의 내용·첨부파일·상세정보</p><p><strong>이용 목적:</strong> 문의 확인, 제품 상담, 견적 검토, 자료 제공, 회신 및 고객 응대</p><p><strong>보유기간:</strong> 문의 처리 목적 달성 후 지체 없이 파기하며, 관계 법령에 따라 보존이 필요한 경우 해당 기간 동안 보관합니다.</p><p>동의를 거부할 수 있으나 문의 접수가 제한될 수 있습니다.</p></div></details>
+            <details className="mt-3 min-w-0 text-xs leading-6 text-[var(--sub-text)]"><summary className="cursor-pointer font-bold text-[var(--primary)]">수집·이용 내용 보기</summary><div className="mt-2 [overflow-wrap:anywhere]"><p><strong>수집 항목:</strong> 전화번호, 납품 지역 및 사용자가 선택적으로 입력한 회사명·담당자명·이메일·문의 내용·첨부파일·상세정보</p><p><strong>이용 목적:</strong> 문의 확인, 제품 상담, 견적 검토, 자료 제공, 회신 및 고객 응대</p><p><strong>보유기간:</strong> 문의 처리 목적 달성 후 지체 없이 파기하며, 관계 법령에 따라 보존이 필요한 경우 해당 기간 동안 보관합니다.</p><p>동의를 거부할 수 있으나 문의 접수가 제한될 수 있습니다.</p></div></details>
             <a className="mt-2 inline-flex text-xs font-bold text-[var(--primary)] underline underline-offset-2" href="/privacy">개인정보처리방침</a>
           </div>
 
           {error ? <p aria-live="polite" className="mt-5 max-w-full [overflow-wrap:anywhere] rounded-lg border border-[var(--alert)] bg-[rgba(185,92,69,0.12)] p-4 text-sm font-bold text-[var(--alert)]">{error}</p> : null}
           {success ? <p aria-live="polite" className="mt-5 max-w-full [overflow-wrap:anywhere] rounded-md bg-[var(--sub-mint)] p-4 text-sm font-bold text-[var(--primary-dark)]">{success}</p> : null}
-          <div className="mt-6 flex justify-center"><Button className="w-full sm:min-w-48 sm:w-auto" disabled={isLoading || !formData.inquiryType} type="submit">{uploading ? "첨부파일 업로드 중..." : isLoading ? "접수 중..." : submitLabel(formData.inquiryType)}</Button></div>
+          <div className="mt-6 flex justify-center"><Button className="w-full sm:min-w-48 sm:w-auto" disabled={isLoading} type="submit">{uploading ? "첨부파일 업로드 중..." : isLoading ? "접수 중..." : submitLabel(formData.inquiryType)}</Button></div>
         </form>
       </div>
     </section>

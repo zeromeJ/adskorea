@@ -92,7 +92,8 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
                             child: ListTile(
                               onTap: () => _openInquiry(log),
                               title: Text(
-                                  '${log.companyName} · ${log.contactPerson}'),
+                                '${log.companyNameLabel} · ${log.contactPersonLabel}',
+                              ),
                               subtitle: Text(
                                 '$adminName 님이 처리 완료\n${DateFormat("yyyy.MM.dd HH:mm").format(log.completedAt.toLocal())}',
                               ),

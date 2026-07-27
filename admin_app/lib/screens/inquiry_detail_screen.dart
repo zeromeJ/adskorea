@@ -132,8 +132,8 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
         title: const Text('담당자 배정을 확인해 주세요'),
         content: Text(
           selectedAdmin == null
-              ? '${inquiry.companyName} 문의의 담당자 배정을 해제할까요?'
-              : '${inquiry.companyName} 문의를\n$targetLabel\n담당으로 배정할까요?\n\n확인하면 해당 관리자에게 알림이 전송됩니다.',
+              ? '${inquiry.companyNameLabel} 문의의 담당자 배정을 해제할까요?'
+              : '${inquiry.companyNameLabel} 문의를\n$targetLabel\n담당으로 배정할까요?\n\n확인하면 해당 관리자에게 알림이 전송됩니다.',
         ),
         actions: [
           TextButton(
@@ -268,7 +268,7 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
   String _detailLabel(String key) {
     const labels = {
       'requiredPalletSize': '필요 규격',
-      'deliveryRegion': '납품 지역·국가',
+      'deliveryRegion': '납품 지역',
       'desiredDeliveryDate': '희망 납기',
       'annualUsage': '월·연간 사용량',
       'currentPallet': '현재 사용 팔레트',
@@ -445,8 +445,8 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
                                 ],
                               ),
                             ),
-                            _row('회사명', inquiry.companyName),
-                            _row('담당자명', inquiry.contactPerson),
+                            _row('회사명', inquiry.companyNameLabel),
+                            _row('담당자명', inquiry.contactPersonLabel),
                             _row('부서·직책', inquiry.department),
                             _row(
                                 '문의 유형', inquiryTypeLabel(inquiry.inquiryType)),
@@ -462,7 +462,7 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
                             _row('팔레트당 중량', inquiry.loadPerPallet),
                             _row('예상 수량', inquiry.estimatedQuantity),
                             _row('희망 규격', _palletSizesLabel(inquiry)),
-                            _row('수출 목적국', inquiry.exportCountry),
+                            _row('납품 지역', inquiry.exportCountry),
                             _row('랙 적재', _booleanLabel(inquiry.rackStorage)),
                             _row(
                                 '자동화 설비', _booleanLabel(inquiry.automationUse)),

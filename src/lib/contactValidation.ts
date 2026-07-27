@@ -1,4 +1,6 @@
 import {
+  deliveryRegionOptions,
+  estimatedQuantityOptions,
   inquiryTypes,
   isValidEmail,
   isValidPhone,
@@ -44,8 +46,9 @@ function normalizeRequestedPalletSizes(value: unknown) {
 }
 
 export function normalizeContactBody(body: ContactRequestBody) {
+  const inquiryType = trimValue(body.inquiryType);
   return {
-    inquiryType: trimValue(body.inquiryType),
+    inquiryType,
     companyName: trimValue(body.companyName),
     contactPerson: trimValue(body.contactPerson),
     department: trimValue(body.department),
@@ -55,7 +58,10 @@ export function normalizeContactBody(body: ContactRequestBody) {
     industry: trimValue(body.industry),
     productInterest: trimValue(body.productInterest),
     estimatedQuantity: trimValue(body.estimatedQuantity),
-    requestedPalletSizes: normalizeRequestedPalletSizes(body.requestedPalletSizes),
+    requestedPalletSizes:
+      inquiryType === "other"
+        ? []
+        : normalizeRequestedPalletSizes(body.requestedPalletSizes),
     message: trimValue(body.message),
     details: normalizeDetails(body.details),
     privacyAgreed: body.privacyAgreed === true,
@@ -66,17 +72,15 @@ export function normalizeContactBody(body: ContactRequestBody) {
 export function validateContactBody(data: ReturnType<typeof normalizeContactBody>) {
   if (!data.privacyAgreed) return "입력값을 확인해 주세요.";
   if (!inquiryTypes.some((item) => item.value === data.inquiryType)) return "문의 유형을 확인해 주세요.";
-  if (!data.companyName || data.companyName.length > 100) return "입력값을 확인해 주세요.";
-  if (!data.contactPerson || data.contactPerson.length > 50) return "입력값을 확인해 주세요.";
+  if (data.companyName.length > 100) return "입력값을 확인해 주세요.";
+  if (data.contactPerson.length > 50) return "입력값을 확인해 주세요.";
   if (data.department.length > 100) return "입력값을 확인해 주세요.";
   if (!data.phone || data.phone.length > 30 || !isValidPhone(data.phone)) return "올바른 전화번호 형식으로 입력해 주세요.";
+  if (!deliveryRegionOptions.includes(data.details.deliveryRegion as (typeof deliveryRegionOptions)[number])) return "납품 지역을 확인해 주세요.";
   if (data.email.length > 254 || (data.email && !isValidEmail(data.email))) return "올바른 이메일 형식을 입력해 주세요.";
   if (!data.responseMethod) return "회신 방법을 확인해 주세요.";
   if (data.message.length > 1500) return "문의 내용은 최대 1,500자입니다.";
   if (data.productInterest.length > 100 || data.estimatedQuantity.length > 100 || data.industry.length > 100) return "입력값을 확인해 주세요.";
-
-  if (data.inquiryType === "quote") {
-    if (!data.productInterest || !data.estimatedQuantity || !data.details.deliveryRegion) return "견적 요청 필수 항목을 확인해 주세요.";
-  }
+  if (data.estimatedQuantity && !estimatedQuantityOptions.includes(data.estimatedQuantity as (typeof estimatedQuantityOptions)[number])) return "예상 수량을 확인해 주세요.";
   return "";
 }

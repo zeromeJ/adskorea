@@ -59,7 +59,7 @@ export async function sendNewInquiryPush(
     {
       inquiryId,
       title: "ADS 신규 문의",
-      body: `${companyName} · ${contactPerson}님의 문의가 접수되었습니다.`,
+      body: `${companyName || "회사명 미입력"} · ${contactPerson ? `${contactPerson}님` : "담당자 미입력"}의 문의가 접수되었습니다.`,
       type: "NEW_INQUIRY",
     },
   );

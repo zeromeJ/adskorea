@@ -31,6 +31,26 @@ export const palletSizeOptions = [
 
 export const unknownPalletSizeOption = "잘 모르겠음";
 
+export const estimatedQuantityOptions = [
+  "100개 미만",
+  "100~499개",
+  "500~999개",
+  "1,000~4,999개",
+  "5,000개 이상",
+  "미정",
+] as const;
+
+export const deliveryRegionOptions = [
+  "서울",
+  "경기/인천",
+  "충청남도/대전",
+  "충청북도",
+  "경상남도/부산/울산",
+  "경상북도/대구",
+  "전라남도/광주/제주도",
+  "전라북도",
+] as const;
+
 export type ContactFormData = {
   inquiryType: InquiryType | "";
   companyName: string;
@@ -50,7 +70,7 @@ export type ContactFormData = {
 };
 
 export const initialContactFormData: ContactFormData = {
-  inquiryType: "",
+  inquiryType: "product",
   companyName: "",
   contactPerson: "",
   department: "",
@@ -89,19 +109,12 @@ export function inquiryTypeLabel(value: string) {
 
 export function validateContactForm(data: ContactFormData) {
   if (!data.inquiryType) return "문의 유형을 선택해 주세요.";
-  if (!data.companyName.trim()) return "회사명을 입력해 주세요.";
-  if (!data.contactPerson.trim()) return "담당자명을 입력해 주세요.";
   if (!data.phone.trim()) return "연락처를 입력해 주세요.";
   if (!isValidPhone(data.phone)) return "올바른 전화번호 형식으로 입력해 주세요. 국가번호도 입력할 수 있습니다.";
+  if (!data.details.deliveryRegion?.trim()) return "납품 지역을 선택해 주세요.";
   if (data.email.trim() && !isValidEmail(data.email)) return "올바른 이메일 형식을 입력해 주세요.";
   if (!data.responseMethod) return "회신 방법을 선택해 주세요.";
   if (data.message.length > 1500) return "문의 내용은 최대 1,500자까지 입력해 주세요.";
-
-  if (data.inquiryType === "quote") {
-    if (!data.productInterest) return "관심 제품 또는 제품군을 선택해 주세요.";
-    if (!data.estimatedQuantity.trim()) return "예상 주문수량을 입력해 주세요.";
-    if (!data.details.deliveryRegion?.trim()) return "납품 희망 지역 또는 국가를 입력해 주세요.";
-  }
 
   if (!data.privacyAgreed) return "개인정보 수집 및 이용에 동의해 주세요.";
   return "";
