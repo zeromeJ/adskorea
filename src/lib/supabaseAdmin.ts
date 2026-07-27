@@ -4,7 +4,7 @@ export const inquiryAttachmentBucket =
   process.env.SUPABASE_INQUIRY_BUCKET || "inquiry-attachments";
 export const websiteContentBucket =
   process.env.SUPABASE_CONTENT_BUCKET || "website-content";
-export const websiteContentMaxFileSize = 50 * 1024 * 1024;
+export const websiteContentMaxFileSize = 1024 * 1024 * 1024;
 
 export function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
