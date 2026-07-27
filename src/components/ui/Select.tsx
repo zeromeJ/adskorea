@@ -21,7 +21,7 @@ export default function Select({
       </span>
       <span className="relative block min-w-0 max-w-full overflow-hidden rounded-md">
         <select
-          className={`min-h-12 w-full min-w-0 max-w-full appearance-none overflow-hidden text-ellipsis rounded-md border border-[var(--line)] bg-white py-0 pr-14 pl-4 text-base outline-none transition focus:border-[var(--primary)] focus:ring-4 focus:ring-[rgba(46,92,69,0.12)] ${className}`}
+          className={`min-h-12 w-full min-w-0 max-w-full appearance-none overflow-hidden text-ellipsis rounded-md border border-[var(--line)] bg-white py-0 pr-14 pl-4 text-base outline-none transition focus:border-[var(--primary)] focus:ring-4 focus:ring-[rgba(46,92,69,0.12)] aria-invalid:border-[var(--alert)] aria-invalid:focus:border-[var(--alert)] aria-invalid:focus:ring-[rgba(185,92,69,0.16)] ${className}`}
           id={id}
           {...props}
         >
