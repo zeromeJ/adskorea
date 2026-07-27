@@ -1,4 +1,10 @@
-import { inquiryTypes, isValidEmail, isValidPhone } from "@/lib/contactSchema";
+import {
+  inquiryTypes,
+  isValidEmail,
+  isValidPhone,
+  palletSizeOptions,
+  unknownPalletSizeOption,
+} from "@/lib/contactSchema";
 
 export type ContactRequestBody = Record<string, unknown>;
 
@@ -20,6 +26,23 @@ function normalizeDetails(value: unknown) {
   );
 }
 
+function normalizeRequestedPalletSizes(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  const allowed = new Set<string>([
+    ...palletSizeOptions,
+    unknownPalletSizeOption,
+  ]);
+  const values = [...new Set(
+    value
+      .filter((item): item is string => typeof item === "string")
+      .map((item) => item.trim())
+      .filter((item) => allowed.has(item)),
+  )];
+  return values.includes(unknownPalletSizeOption)
+    ? [unknownPalletSizeOption]
+    : values;
+}
+
 export function normalizeContactBody(body: ContactRequestBody) {
   return {
     inquiryType: trimValue(body.inquiryType),
@@ -32,6 +55,7 @@ export function normalizeContactBody(body: ContactRequestBody) {
     industry: trimValue(body.industry),
     productInterest: trimValue(body.productInterest),
     estimatedQuantity: trimValue(body.estimatedQuantity),
+    requestedPalletSizes: normalizeRequestedPalletSizes(body.requestedPalletSizes),
     message: trimValue(body.message),
     details: normalizeDetails(body.details),
     privacyAgreed: body.privacyAgreed === true,
@@ -52,7 +76,7 @@ export function validateContactBody(data: ReturnType<typeof normalizeContactBody
   if (data.productInterest.length > 100 || data.estimatedQuantity.length > 100 || data.industry.length > 100) return "입력값을 확인해 주세요.";
 
   if (data.inquiryType === "quote") {
-    if (!data.productInterest || !data.estimatedQuantity || !data.details.requiredPalletSize || !data.details.deliveryRegion) return "견적 요청 필수 항목을 확인해 주세요.";
+    if (!data.productInterest || !data.estimatedQuantity || !data.details.deliveryRegion) return "견적 요청 필수 항목을 확인해 주세요.";
   }
   return "";
 }

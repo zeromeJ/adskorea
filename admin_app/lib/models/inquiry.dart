@@ -75,6 +75,7 @@ class Inquiry {
     this.loadPerPallet,
     this.estimatedQuantity,
     this.requiredPalletSize,
+    this.requestedPalletSizes = const [],
     this.exportCountry,
     this.rackStorage,
     this.automationUse,
@@ -82,6 +83,10 @@ class Inquiry {
     this.handPalletTruckUse,
     this.message,
     this.adminMemo,
+    this.assignedAdminId,
+    this.assignedAdminUsername,
+    this.assignedAdminDisplayName,
+    this.assignedAt,
     this.attachments = const [],
   });
 
@@ -102,6 +107,7 @@ class Inquiry {
   final String? loadPerPallet;
   final String? estimatedQuantity;
   final String? requiredPalletSize;
+  final List<String> requestedPalletSizes;
   final String? exportCountry;
   final bool? rackStorage;
   final bool? automationUse;
@@ -110,11 +116,18 @@ class Inquiry {
   final String? message;
   final InquiryStatus status;
   final String? adminMemo;
+  final String? assignedAdminId;
+  final String? assignedAdminUsername;
+  final String? assignedAdminDisplayName;
+  final DateTime? assignedAt;
   final List<InquiryAttachment> attachments;
   final DateTime createdAt;
   final DateTime updatedAt;
 
   factory Inquiry.fromJson(Map<String, dynamic> json) {
+    final assignedAdmin = json['assignedAdmin'] is Map
+        ? Map<String, dynamic>.from(json['assignedAdmin'] as Map)
+        : const <String, dynamic>{};
     return Inquiry(
       id: json['id'] as String? ?? '',
       companyName: json['companyName'] as String? ?? '',
@@ -135,6 +148,10 @@ class Inquiry {
       loadPerPallet: json['loadPerPallet'] as String?,
       estimatedQuantity: json['estimatedQuantity'] as String?,
       requiredPalletSize: json['requiredPalletSize'] as String?,
+      requestedPalletSizes:
+          (json['requestedPalletSizes'] as List<dynamic>? ?? const [])
+              .whereType<String>()
+              .toList(),
       exportCountry: json['exportCountry'] as String?,
       rackStorage: json['rackStorage'] as bool?,
       automationUse: json['automationUse'] as bool?,
@@ -143,6 +160,12 @@ class Inquiry {
       message: json['message'] as String?,
       status: inquiryStatusFromJson(json['status'] as String?),
       adminMemo: json['adminMemo'] as String?,
+      assignedAdminId: json['assignedAdminId'] as String?,
+      assignedAdminUsername: assignedAdmin['username'] as String?,
+      assignedAdminDisplayName: assignedAdmin['displayName'] as String?,
+      assignedAt: json['assignedAt'] == null
+          ? null
+          : DateTime.parse(json['assignedAt'] as String),
       attachments: (json['attachments'] as List<dynamic>? ?? const [])
           .whereType<Map<String, dynamic>>()
           .map(InquiryAttachment.fromJson)
@@ -150,5 +173,13 @@ class Inquiry {
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
+  }
+
+  String get assignedAdminLabel {
+    if (assignedAdminId == null) return '미배정';
+    if (assignedAdminDisplayName?.isNotEmpty == true) {
+      return '$assignedAdminDisplayName ($assignedAdminUsername)';
+    }
+    return assignedAdminUsername ?? '배정된 관리자';
   }
 }

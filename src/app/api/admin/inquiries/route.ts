@@ -1,6 +1,7 @@
 import { InquiryStatus, Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { getAdminFromRequest, unauthorizedResponse } from "@/lib/admin/auth";
+import { inquiryVisibilityWhere } from "@/lib/admin/inquiryAccess";
 import { prisma } from "@/lib/prisma";
 
 function parseStatus(status: string | null) {
@@ -27,6 +28,7 @@ const inquiryListSelect = {
   loadPerPallet: true,
   estimatedQuantity: true,
   requiredPalletSize: true,
+  requestedPalletSizes: true,
   exportCountry: true,
   rackStorage: true,
   automationUse: true,
@@ -34,6 +36,17 @@ const inquiryListSelect = {
   handPalletTruckUse: true,
   message: true,
   status: true,
+  assignedAdminId: true,
+  assignedAt: true,
+  assignedAdmin: {
+    select: {
+      id: true,
+      username: true,
+      displayName: true,
+      isActive: true,
+      isSuperAdmin: true,
+    },
+  },
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.InquirySelect;
@@ -52,6 +65,7 @@ export async function GET(request: Request) {
   const search = searchParams.get("search")?.trim();
 
   const baseWhere: Prisma.InquiryWhereInput = {
+    ...inquiryVisibilityWhere(admin),
     ...(search
       ? {
           OR: [

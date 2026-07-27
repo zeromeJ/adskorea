@@ -10,6 +10,7 @@ class InquiryCard extends StatelessWidget {
     required this.onOpen,
     required this.onCall,
     required this.onComplete,
+    this.showAssignment = false,
     super.key,
   });
 
@@ -17,6 +18,7 @@ class InquiryCard extends StatelessWidget {
   final VoidCallback onOpen;
   final VoidCallback? onCall;
   final VoidCallback? onComplete;
+  final bool showAssignment;
 
   Widget _info(String label, String value) {
     return Padding(
@@ -79,7 +81,9 @@ class InquiryCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 6),
-              _info('담당자', inquiry.contactPerson),
+              _info('고객 담당자', inquiry.contactPerson),
+              if (showAssignment)
+                _info('문의 담당 관리자', inquiry.assignedAdminLabel),
               if (inquiry.inquiryType?.isNotEmpty == true)
                 _info('문의 유형', inquiryTypeLabel(inquiry.inquiryType)),
               _info(
@@ -94,6 +98,8 @@ class InquiryCard extends StatelessWidget {
                 _info('팔레트당 중량', inquiry.loadPerPallet!),
               if (inquiry.estimatedQuantity?.isNotEmpty == true)
                 _info('예상 수량', inquiry.estimatedQuantity!),
+              if (inquiry.requestedPalletSizes.isNotEmpty)
+                _info('희망 규격', inquiry.requestedPalletSizes.join(', ')),
               if (inquiry.message?.isNotEmpty == true) ...[
                 const SizedBox(height: 8),
                 Text(

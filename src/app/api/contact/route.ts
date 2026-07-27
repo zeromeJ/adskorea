@@ -69,7 +69,8 @@ export async function POST(request: Request) {
         cargoType: data.details.cargoType || null,
         loadPerPallet: data.details.totalWeight || null,
         estimatedQuantity: data.estimatedQuantity || null,
-        requiredPalletSize: data.details.requiredPalletSize || null,
+        requiredPalletSize: data.requestedPalletSizes.join(", ") || null,
+        requestedPalletSizes: data.requestedPalletSizes,
         exportCountry: data.details.deliveryRegion || data.details.exportCountry || null,
         message: data.message || null,
       },
@@ -106,7 +107,7 @@ export async function POST(request: Request) {
 화물 종류: ${data.details.cargoType || "-"}
 팔레트당 화물중량: ${data.details.totalWeight || "-"}
 예상 사용수량: ${data.estimatedQuantity}
-필요 팔레트 규격: ${data.details.requiredPalletSize || "-"}
+희망 팔레트 규격: ${data.requestedPalletSizes.join(", ") || "-"}
 관심 제품: ${data.productInterest || "-"}
 
 유형별 상세정보:

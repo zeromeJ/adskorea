@@ -62,6 +62,12 @@ export async function DELETE(request: Request, context: RouteContext) {
     return forbiddenResponse("최고 관리자 계정은 삭제할 수 없습니다.");
   }
 
-  await prisma.adminUser.delete({ where: { id } });
+  await prisma.$transaction([
+    prisma.inquiry.updateMany({
+      where: { assignedAdminId: id },
+      data: { assignedAdminId: null, assignedAt: null },
+    }),
+    prisma.adminUser.delete({ where: { id } }),
+  ]);
   return NextResponse.json({ success: true });
 }

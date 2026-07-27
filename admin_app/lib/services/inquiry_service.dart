@@ -56,4 +56,11 @@ class InquiryService {
 
     return Inquiry.fromJson(json['item'] as Map<String, dynamic>);
   }
+
+  Future<Inquiry> assignInquiry(String id, String? adminId) async {
+    final json = await client.patch('/api/admin/inquiries/$id', {
+      'assignedAdminId': adminId,
+    });
+    return Inquiry.fromJson(json['item'] as Map<String, dynamic>);
+  }
 }

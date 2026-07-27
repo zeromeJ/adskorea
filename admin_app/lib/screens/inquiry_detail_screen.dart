@@ -2,18 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../constants/colors.dart';
+import '../models/admin_user.dart';
 import '../models/inquiry.dart';
+import '../services/admin_management_service.dart';
+import '../services/api_client.dart';
 import '../services/inquiry_service.dart';
+import '../widgets/error_view.dart';
 import '../widgets/loading_view.dart';
 import '../widgets/status_chip.dart';
 
 class InquiryDetailScreen extends StatefulWidget {
   const InquiryDetailScreen({
+    required this.adminManagementService,
+    required this.currentAdmin,
     required this.inquiryId,
     required this.inquiryService,
     super.key,
   });
 
+  final AdminManagementService adminManagementService;
+  final AdminUser currentAdmin;
   final String inquiryId;
   final InquiryService inquiryService;
 
@@ -25,6 +33,9 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
   Inquiry? _inquiry;
   bool _isLoading = true;
   bool _isSaving = false;
+  bool _isAssigning = false;
+  String? _error;
+  List<AdminUser> _admins = [];
   final _memoController = TextEditingController();
 
   @override
@@ -40,13 +51,45 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
   }
 
   Future<void> _load() async {
-    setState(() => _isLoading = true);
-    final inquiry = await widget.inquiryService.fetchInquiry(widget.inquiryId);
     setState(() {
-      _inquiry = inquiry;
-      _memoController.text = inquiry.adminMemo ?? '';
-      _isLoading = false;
+      _isLoading = true;
+      _error = null;
     });
+    try {
+      final inquiry =
+          await widget.inquiryService.fetchInquiry(widget.inquiryId);
+      final admins = widget.currentAdmin.isSuperAdmin
+          ? await widget.adminManagementService.fetchAdmins()
+          : const <AdminUser>[];
+      if (!mounted) return;
+      setState(() {
+        _inquiry = inquiry;
+        _admins = admins.where((admin) => admin.isActive).toList();
+        _memoController.text = inquiry.adminMemo ?? '';
+      });
+    } on ApiException catch (error) {
+      if (mounted) setState(() => _error = error.message);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _assignAdmin(String? adminId) async {
+    if (_isAssigning) return;
+    setState(() => _isAssigning = true);
+    try {
+      await widget.inquiryService.assignInquiry(
+        widget.inquiryId,
+        adminId,
+      );
+      await _load();
+      _showSnack(
+          adminId == null ? '문의 담당자 배정을 해제했습니다.' : '문의 담당자를 배정하고 알림을 전송했습니다.');
+    } on ApiException catch (error) {
+      _showSnack(error.message);
+    } finally {
+      if (mounted) setState(() => _isAssigning = false);
+    }
   }
 
   Future<void> _updateStatus() async {
@@ -155,6 +198,13 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
     return value ? '예' : '아니오';
   }
 
+  String _palletSizesLabel(Inquiry inquiry) {
+    if (inquiry.requestedPalletSizes.isNotEmpty) {
+      return inquiry.requestedPalletSizes.join('\n');
+    }
+    return inquiry.requiredPalletSize ?? '-';
+  }
+
   String _detailLabel(String key) {
     const labels = {
       'requiredPalletSize': '필요 규격',
@@ -224,129 +274,193 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
       appBar: AppBar(title: const Text('문의 상세')),
       body: SafeArea(
         top: false,
-        child: _isLoading || inquiry == null
+        child: _isLoading
             ? const LoadingView()
-            : ListView(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                children: [
-                  _section('기본 정보', [
-                    _row(
-                        '접수 시간',
-                        DateFormat('yyyy.MM.dd HH:mm')
-                            .format(inquiry.createdAt.toLocal())),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
+            : _error != null
+                ? ErrorView(message: _error!, onRetry: _load)
+                : inquiry == null
+                    ? ErrorView(
+                        message: '문의를 찾을 수 없습니다.',
+                        onRetry: _load,
+                      )
+                    : ListView(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                         children: [
-                          const SizedBox(width: 110, child: Text('처리 상태')),
-                          StatusChip(status: inquiry.status),
+                          if (widget.currentAdmin.isSuperAdmin)
+                            _section('문의 담당자 배정', [
+                              DropdownButtonFormField<String>(
+                                key: ValueKey(inquiry.assignedAdminId ?? ''),
+                                initialValue: inquiry.assignedAdminId ?? '',
+                                decoration: const InputDecoration(
+                                  labelText: '담당 관리자',
+                                ),
+                                items: [
+                                  const DropdownMenuItem(
+                                    value: '',
+                                    child: Text('미배정'),
+                                  ),
+                                  ..._admins.map(
+                                    (admin) => DropdownMenuItem(
+                                      value: admin.id,
+                                      child: Text(
+                                        admin.displayName?.isNotEmpty == true
+                                            ? '${admin.displayName} (${admin.username})'
+                                            : admin.username,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                onChanged: _isAssigning
+                                    ? null
+                                    : (value) => _assignAdmin(
+                                          value == null || value.isEmpty
+                                              ? null
+                                              : value,
+                                        ),
+                              ),
+                              if (_isAssigning) ...[
+                                const SizedBox(height: 12),
+                                const LinearProgressIndicator(),
+                              ],
+                              if (inquiry.assignedAt != null) ...[
+                                const SizedBox(height: 10),
+                                Text(
+                                  '마지막 배정: ${DateFormat('yyyy.MM.dd HH:mm').format(inquiry.assignedAt!.toLocal())}',
+                                  style: const TextStyle(
+                                    color: AppColors.subText,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ]),
+                          _section('기본 정보', [
+                            _row(
+                                '접수 시간',
+                                DateFormat('yyyy.MM.dd HH:mm')
+                                    .format(inquiry.createdAt.toLocal())),
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                children: [
+                                  const SizedBox(
+                                      width: 110, child: Text('처리 상태')),
+                                  StatusChip(status: inquiry.status),
+                                ],
+                              ),
+                            ),
+                            _row('회사명', inquiry.companyName),
+                            _row('담당자명', inquiry.contactPerson),
+                            _row('부서·직책', inquiry.department),
+                            _row(
+                                '문의 유형', inquiryTypeLabel(inquiry.inquiryType)),
+                            _row('문의 담당 관리자', inquiry.assignedAdminLabel),
+                            _row('이메일', inquiry.email),
+                            _row('연락처', inquiry.phone),
+                            _row('회신 방법',
+                                _responseMethodLabel(inquiry.responseMethod)),
+                          ]),
+                          _section('문의 조건', [
+                            _row('산업 분야', inquiry.industry),
+                            _row('화물 종류', inquiry.cargoType),
+                            _row('팔레트당 중량', inquiry.loadPerPallet),
+                            _row('예상 수량', inquiry.estimatedQuantity),
+                            _row('희망 규격', _palletSizesLabel(inquiry)),
+                            _row('수출 목적국', inquiry.exportCountry),
+                            _row('랙 적재', _booleanLabel(inquiry.rackStorage)),
+                            _row(
+                                '자동화 설비', _booleanLabel(inquiry.automationUse)),
+                            _row('지게차 사용', _booleanLabel(inquiry.forkliftUse)),
+                            _row('핸드파레트',
+                                _booleanLabel(inquiry.handPalletTruckUse)),
+                            _row('현재 팔레트', inquiry.currentPalletType),
+                            _row('관심 제품', inquiry.productInterest),
+                          ]),
+                          if (inquiry.inquiryDetails.isNotEmpty)
+                            _section('문의 유형별 상세 정보', [
+                              ...inquiry.inquiryDetails.entries.map(
+                                (entry) => _row(
+                                  _detailLabel(entry.key),
+                                  entry.value?.toString() == 'YES'
+                                      ? '예'
+                                      : entry.value?.toString(),
+                                ),
+                              ),
+                            ]),
+                          _section('문의 내용', [
+                            Text(inquiry.message?.isNotEmpty == true
+                                ? inquiry.message!
+                                : '-'),
+                          ]),
+                          if (inquiry.attachments.isNotEmpty)
+                            _section('첨부파일', [
+                              ...inquiry.attachments.map(
+                                (attachment) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: OutlinedButton.icon(
+                                    onPressed:
+                                        attachment.downloadUrl?.isNotEmpty ==
+                                                true
+                                            ? () => launchUrl(
+                                                  Uri.parse(
+                                                      attachment.downloadUrl!),
+                                                  mode: LaunchMode
+                                                      .externalApplication,
+                                                )
+                                            : null,
+                                    icon:
+                                        const Icon(Icons.attach_file, size: 20),
+                                    label: Text(attachment.fileName),
+                                  ),
+                                ),
+                              ),
+                            ]),
+                          _section('관리자 메모', [
+                            TextField(
+                              controller: _memoController,
+                              minLines: 3,
+                              maxLines: 6,
+                              decoration: const InputDecoration(
+                                  hintText: '관리자 메모를 입력하세요.'),
+                            ),
+                            const SizedBox(height: 12),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: FilledButton(
+                                onPressed: _isSaving ? null : _saveMemo,
+                                child: Text(_isSaving ? '저장 중...' : '메모 저장'),
+                              ),
+                            ),
+                          ]),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              OutlinedButton.icon(
+                                onPressed: inquiry.phone?.isNotEmpty == true
+                                    ? () => _launch('tel', inquiry.phone)
+                                    : null,
+                                icon: const Icon(Icons.phone, size: 22),
+                                label: const Text('전화하기'),
+                              ),
+                              OutlinedButton(
+                                onPressed: inquiry.email?.isNotEmpty == true
+                                    ? () => _launch('mailto', inquiry.email)
+                                    : null,
+                                child: const Text('이메일 보내기'),
+                              ),
+                              FilledButton(
+                                onPressed: _updateStatus,
+                                child: Text(
+                                  inquiry.status == InquiryStatus.pending
+                                      ? '처리 완료로 변경'
+                                      : '처리 전으로 되돌리기',
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
-                    ),
-                    _row('회사명', inquiry.companyName),
-                    _row('담당자명', inquiry.contactPerson),
-                    _row('부서·직책', inquiry.department),
-                    _row('문의 유형', inquiryTypeLabel(inquiry.inquiryType)),
-                    _row('이메일', inquiry.email),
-                    _row('연락처', inquiry.phone),
-                    _row('회신 방법', _responseMethodLabel(inquiry.responseMethod)),
-                  ]),
-                  _section('문의 조건', [
-                    _row('산업 분야', inquiry.industry),
-                    _row('화물 종류', inquiry.cargoType),
-                    _row('팔레트당 중량', inquiry.loadPerPallet),
-                    _row('예상 수량', inquiry.estimatedQuantity),
-                    _row('필요 규격', inquiry.requiredPalletSize),
-                    _row('수출 목적국', inquiry.exportCountry),
-                    _row('랙 적재', _booleanLabel(inquiry.rackStorage)),
-                    _row('자동화 설비', _booleanLabel(inquiry.automationUse)),
-                    _row('지게차 사용', _booleanLabel(inquiry.forkliftUse)),
-                    _row('핸드파레트', _booleanLabel(inquiry.handPalletTruckUse)),
-                    _row('현재 팔레트', inquiry.currentPalletType),
-                    _row('관심 제품', inquiry.productInterest),
-                  ]),
-                  if (inquiry.inquiryDetails.isNotEmpty)
-                    _section('문의 유형별 상세 정보', [
-                      ...inquiry.inquiryDetails.entries.map(
-                        (entry) => _row(
-                          _detailLabel(entry.key),
-                          entry.value?.toString() == 'YES'
-                              ? '예'
-                              : entry.value?.toString(),
-                        ),
-                      ),
-                    ]),
-                  _section('문의 내용', [
-                    Text(inquiry.message?.isNotEmpty == true
-                        ? inquiry.message!
-                        : '-'),
-                  ]),
-                  if (inquiry.attachments.isNotEmpty)
-                    _section('첨부파일', [
-                      ...inquiry.attachments.map(
-                        (attachment) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: OutlinedButton.icon(
-                            onPressed:
-                                attachment.downloadUrl?.isNotEmpty == true
-                                    ? () => launchUrl(
-                                          Uri.parse(attachment.downloadUrl!),
-                                          mode: LaunchMode.externalApplication,
-                                        )
-                                    : null,
-                            icon: const Icon(Icons.attach_file, size: 20),
-                            label: Text(attachment.fileName),
-                          ),
-                        ),
-                      ),
-                    ]),
-                  _section('관리자 메모', [
-                    TextField(
-                      controller: _memoController,
-                      minLines: 3,
-                      maxLines: 6,
-                      decoration:
-                          const InputDecoration(hintText: '관리자 메모를 입력하세요.'),
-                    ),
-                    const SizedBox(height: 12),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: FilledButton(
-                        onPressed: _isSaving ? null : _saveMemo,
-                        child: Text(_isSaving ? '저장 중...' : '메모 저장'),
-                      ),
-                    ),
-                  ]),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      OutlinedButton.icon(
-                        onPressed: inquiry.phone?.isNotEmpty == true
-                            ? () => _launch('tel', inquiry.phone)
-                            : null,
-                        icon: const Icon(Icons.phone, size: 22),
-                        label: const Text('전화하기'),
-                      ),
-                      OutlinedButton(
-                        onPressed: inquiry.email?.isNotEmpty == true
-                            ? () => _launch('mailto', inquiry.email)
-                            : null,
-                        child: const Text('이메일 보내기'),
-                      ),
-                      FilledButton(
-                        onPressed: _updateStatus,
-                        child: Text(
-                          inquiry.status == InquiryStatus.pending
-                              ? '처리 완료로 변경'
-                              : '처리 전으로 되돌리기',
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
       ),
     );
   }

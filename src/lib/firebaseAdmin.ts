@@ -15,6 +15,13 @@ const invalidTokenCodes = new Set([
 
 const multicastTokenLimit = 500;
 
+type InquiryPush = {
+  inquiryId: string;
+  title: string;
+  body: string;
+  type: "NEW_INQUIRY" | "ASSIGNED_INQUIRY";
+};
+
 function getFirebaseMessaging() {
   const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
 
@@ -37,6 +44,54 @@ export async function sendNewInquiryPush(
   companyName: string,
   contactPerson: string,
 ) {
+  const devices = await prisma.adminDevice.findMany({
+    where: {
+      adminUser: {
+        isActive: true,
+        isSuperAdmin: true,
+      },
+    },
+    select: { token: true },
+  });
+
+  await sendInquiryPush(
+    devices.map(({ token }) => token),
+    {
+      inquiryId,
+      title: "ADS 신규 문의",
+      body: `${companyName} · ${contactPerson}님의 문의가 접수되었습니다.`,
+      type: "NEW_INQUIRY",
+    },
+  );
+}
+
+export async function sendInquiryAssignmentPush(
+  inquiryId: string,
+  assignedAdminId: string,
+  companyName: string,
+) {
+  const devices = await prisma.adminDevice.findMany({
+    where: {
+      adminUserId: assignedAdminId,
+      adminUser: { isActive: true },
+    },
+    select: { token: true },
+  });
+
+  await sendInquiryPush(
+    devices.map(({ token }) => token),
+    {
+      inquiryId,
+      title: "ADS 문의 담당 배정",
+      body: `${companyName} 문의의 담당자로 배정되었습니다.`,
+      type: "ASSIGNED_INQUIRY",
+    },
+  );
+}
+
+async function sendInquiryPush(tokens: string[], push: InquiryPush) {
+  if (tokens.length === 0) return;
+
   const messaging = getFirebaseMessaging();
 
   if (!messaging) {
@@ -44,13 +99,6 @@ export async function sendNewInquiryPush(
     return;
   }
 
-  const devices = await prisma.adminDevice.findMany({
-    select: { token: true },
-  });
-
-  if (devices.length === 0) return;
-
-  const tokens = devices.map(({ token }) => token);
   const invalidTokens: string[] = [];
 
   for (let index = 0; index < tokens.length; index += multicastTokenLimit) {
@@ -58,12 +106,12 @@ export async function sendNewInquiryPush(
     const response = await messaging.sendEachForMulticast({
       tokens: tokenChunk,
       notification: {
-        title: "ADS 신규 문의",
-        body: `${companyName} · ${contactPerson}님의 문의가 접수되었습니다.`,
+        title: push.title,
+        body: push.body,
       },
       data: {
-        inquiryId,
-        type: "NEW_INQUIRY",
+        inquiryId: push.inquiryId,
+        type: push.type,
       },
       android: {
         priority: "high",
