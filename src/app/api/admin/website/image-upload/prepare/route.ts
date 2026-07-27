@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
-import { getAdminFromRequest, unauthorizedResponse } from "@/lib/admin/auth";
+import { forbiddenResponse, getAdminFromRequest, unauthorizedResponse } from "@/lib/admin/auth";
 import {
   ensureWebsiteContentBucket,
   websiteContentBucket,
@@ -21,6 +21,7 @@ function safeName(name: string) {
 export async function POST(request: Request) {
   const admin = await getAdminFromRequest(request);
   if (!admin) return unauthorizedResponse();
+  if (!admin.isSuperAdmin) return forbiddenResponse();
 
   try {
     const body = (await request.json()) as {

@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import sharp from "sharp";
-import { getAdminFromRequest, unauthorizedResponse } from "@/lib/admin/auth";
+import { forbiddenResponse, getAdminFromRequest, unauthorizedResponse } from "@/lib/admin/auth";
 import {
   ensureWebsiteContentBucket,
   websiteContentBucket,
@@ -13,6 +13,7 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   const admin = await getAdminFromRequest(request);
   if (!admin) return unauthorizedResponse();
+  if (!admin.isSuperAdmin) return forbiddenResponse();
 
   try {
     const body = (await request.json()) as {

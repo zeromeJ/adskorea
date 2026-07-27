@@ -35,6 +35,7 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
   bool _isSaving = false;
   bool _isAssigning = false;
   String? _error;
+  String? _selectedAdminId;
   List<AdminUser> _admins = [];
   final _memoController = TextEditingController();
 
@@ -61,10 +62,19 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
       final admins = widget.currentAdmin.isSuperAdmin
           ? await widget.adminManagementService.fetchAdmins()
           : const <AdminUser>[];
+      final activeAdmins = admins.where((admin) => admin.isActive).toList()
+        ..sort((left, right) {
+          final roleOrder =
+              (left.isSuperAdmin ? 1 : 0).compareTo(right.isSuperAdmin ? 1 : 0);
+          if (roleOrder != 0) return roleOrder;
+          return (left.displayName ?? left.username)
+              .compareTo(right.displayName ?? right.username);
+        });
       if (!mounted) return;
       setState(() {
         _inquiry = inquiry;
-        _admins = admins.where((admin) => admin.isActive).toList();
+        _admins = activeAdmins;
+        _selectedAdminId = inquiry.assignedAdminId;
         _memoController.text = inquiry.adminMemo ?? '';
       });
     } on ApiException catch (error) {
@@ -89,6 +99,56 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
       _showSnack(error.message);
     } finally {
       if (mounted) setState(() => _isAssigning = false);
+    }
+  }
+
+  String _adminLabel(AdminUser admin) {
+    final name = admin.displayName?.isNotEmpty == true
+        ? '${admin.displayName} (${admin.username})'
+        : admin.username;
+    final role = admin.isSuperAdmin ? ' · 최고 관리자' : '';
+    return '$name$role';
+  }
+
+  Future<void> _confirmAssignment() async {
+    final inquiry = _inquiry;
+    if (inquiry == null ||
+        _selectedAdminId == inquiry.assignedAdminId ||
+        _isAssigning) {
+      return;
+    }
+    AdminUser? selectedAdmin;
+    for (final admin in _admins) {
+      if (admin.id == _selectedAdminId) {
+        selectedAdmin = admin;
+        break;
+      }
+    }
+    final targetLabel =
+        selectedAdmin == null ? '미배정 상태' : _adminLabel(selectedAdmin);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('담당자 배정을 확인해 주세요'),
+        content: Text(
+          selectedAdmin == null
+              ? '${inquiry.companyName} 문의의 담당자 배정을 해제할까요?'
+              : '${inquiry.companyName} 문의를\n$targetLabel\n담당으로 배정할까요?\n\n확인하면 해당 관리자에게 알림이 전송됩니다.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(selectedAdmin == null ? '배정 해제' : '배정 확정'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await _assignAdmin(_selectedAdminId);
     }
   }
 
@@ -269,6 +329,10 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final inquiry = _inquiry;
+    final requiresAssignment = inquiry != null &&
+        widget.currentAdmin.isSuperAdmin &&
+        inquiry.status == InquiryStatus.pending &&
+        inquiry.assignedAdminId == null;
 
     return Scaffold(
       appBar: AppBar(title: const Text('문의 상세')),
@@ -288,6 +352,23 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
                         children: [
                           if (widget.currentAdmin.isSuperAdmin)
                             _section('문의 담당자 배정', [
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: inquiry.assignedAdminId == null
+                                      ? const Color(0xFFFFF4E5)
+                                      : const Color(0xFFEEF3EE),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  '현재 담당: ${inquiry.assignedAdminLabel}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
                               DropdownButtonFormField<String>(
                                 key: ValueKey(inquiry.assignedAdminId ?? ''),
                                 initialValue: inquiry.assignedAdminId ?? '',
@@ -302,21 +383,37 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
                                   ..._admins.map(
                                     (admin) => DropdownMenuItem(
                                       value: admin.id,
-                                      child: Text(
-                                        admin.displayName?.isNotEmpty == true
-                                            ? '${admin.displayName} (${admin.username})'
-                                            : admin.username,
-                                      ),
+                                      child: Text(_adminLabel(admin)),
                                     ),
                                   ),
                                 ],
                                 onChanged: _isAssigning
                                     ? null
-                                    : (value) => _assignAdmin(
-                                          value == null || value.isEmpty
-                                              ? null
-                                              : value,
-                                        ),
+                                    : (value) => setState(() {
+                                          _selectedAdminId =
+                                              value == null || value.isEmpty
+                                                  ? null
+                                                  : value;
+                                        }),
+                              ),
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                child: FilledButton.icon(
+                                  onPressed: _selectedAdminId ==
+                                              inquiry.assignedAdminId ||
+                                          _isAssigning
+                                      ? null
+                                      : _confirmAssignment,
+                                  icon: const Icon(Icons.assignment_ind),
+                                  label: Text(
+                                    inquiry.assignedAdminId == null
+                                        ? '담당자 배정 확인'
+                                        : _selectedAdminId == null
+                                            ? '배정 해제 확인'
+                                            : '담당자 변경 확인',
+                                  ),
+                                ),
                               ),
                               if (_isAssigning) ...[
                                 const SizedBox(height: 12),
@@ -450,11 +547,14 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
                                 child: const Text('이메일 보내기'),
                               ),
                               FilledButton(
-                                onPressed: _updateStatus,
+                                onPressed:
+                                    requiresAssignment ? null : _updateStatus,
                                 child: Text(
-                                  inquiry.status == InquiryStatus.pending
-                                      ? '처리 완료로 변경'
-                                      : '처리 전으로 되돌리기',
+                                  requiresAssignment
+                                      ? '담당자 배정 후 처리 가능'
+                                      : inquiry.status == InquiryStatus.pending
+                                          ? '처리 완료로 변경'
+                                          : '처리 전으로 되돌리기',
                                 ),
                               ),
                             ],

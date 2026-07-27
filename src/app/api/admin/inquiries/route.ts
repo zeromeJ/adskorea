@@ -4,7 +4,11 @@ import { getAdminFromRequest, unauthorizedResponse } from "@/lib/admin/auth";
 import { inquiryVisibilityWhere } from "@/lib/admin/inquiryAccess";
 import { prisma } from "@/lib/prisma";
 
-function parseStatus(status: string | null) {
+function parseStatus(status: string | null, isSuperAdmin: boolean) {
+  if (status === "UNASSIGNED" && isSuperAdmin) {
+    return status;
+  }
+
   if (status === "PENDING" || status === "COMPLETED") {
     return status;
   }
@@ -59,7 +63,7 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const status = parseStatus(searchParams.get("status"));
+  const status = parseStatus(searchParams.get("status"), admin.isSuperAdmin);
   const page = Math.max(Number(searchParams.get("page") || 1), 1);
   const limit = Math.min(Math.max(Number(searchParams.get("limit") || 30), 1), 100);
   const search = searchParams.get("search")?.trim();
@@ -80,17 +84,64 @@ export async function GET(request: Request) {
 
   const where: Prisma.InquiryWhereInput = {
     ...baseWhere,
-    ...(status === "ALL" ? {} : { status: status as InquiryStatus }),
+    ...(status === "UNASSIGNED"
+      ? {
+          status: InquiryStatus.PENDING,
+          assignedAdminId: null,
+        }
+      : status === "PENDING"
+        ? {
+            status: InquiryStatus.PENDING,
+            ...(admin.isSuperAdmin
+              ? { assignedAdminId: { not: null } }
+              : {}),
+          }
+        : status === "COMPLETED"
+          ? { status: InquiryStatus.COMPLETED }
+          : {}),
   };
 
   const offset = (page - 1) * limit;
+  const countsPromise = Promise.all([
+    prisma.inquiry.count({ where: baseWhere }),
+    admin.isSuperAdmin
+      ? prisma.inquiry.count({
+          where: {
+            ...baseWhere,
+            status: InquiryStatus.PENDING,
+            assignedAdminId: null,
+          },
+        })
+      : Promise.resolve(0),
+    prisma.inquiry.count({
+      where: {
+        ...baseWhere,
+        status: InquiryStatus.PENDING,
+        ...(admin.isSuperAdmin
+          ? { assignedAdminId: { not: null } }
+          : {}),
+      },
+    }),
+    prisma.inquiry.count({
+      where: {
+        ...baseWhere,
+        status: InquiryStatus.COMPLETED,
+      },
+    }),
+  ]).then(([all, unassigned, pending, completed]) => ({
+    all,
+    unassigned,
+    pending,
+    completed,
+  }));
 
   if (status === "ALL") {
-    const [pendingCount, total] = await Promise.all([
+    const [pendingCount, total, counts] = await Promise.all([
       prisma.inquiry.count({
         where: { ...baseWhere, status: InquiryStatus.PENDING },
       }),
       prisma.inquiry.count({ where: baseWhere }),
+      countsPromise,
     ]);
 
     const pendingTake = Math.max(Math.min(limit, pendingCount - offset), 0);
@@ -122,10 +173,11 @@ export async function GET(request: Request) {
       success: true,
       items: [...pendingItems, ...completedItems],
       total,
+      counts,
     });
   }
 
-  const [items, total] = await Promise.all([
+  const [items, total, counts] = await Promise.all([
     prisma.inquiry.findMany({
       where,
       orderBy: {
@@ -136,7 +188,8 @@ export async function GET(request: Request) {
       select: inquiryListSelect,
     }),
     prisma.inquiry.count({ where }),
+    countsPromise,
   ]);
 
-  return NextResponse.json({ success: true, items, total });
+  return NextResponse.json({ success: true, items, total, counts });
 }

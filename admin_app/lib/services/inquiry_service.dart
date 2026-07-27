@@ -3,12 +3,46 @@ import 'api_client.dart';
 
 class InquiryListResult {
   const InquiryListResult({
+    required this.counts,
     required this.items,
     required this.total,
   });
 
+  final InquiryListCounts counts;
   final List<Inquiry> items;
   final int total;
+}
+
+class InquiryListCounts {
+  const InquiryListCounts({
+    this.all = 0,
+    this.unassigned = 0,
+    this.pending = 0,
+    this.completed = 0,
+  });
+
+  final int all;
+  final int unassigned;
+  final int pending;
+  final int completed;
+
+  static int _readCount(Map<String, dynamic> values, String key) {
+    final value = values[key];
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  factory InquiryListCounts.fromJson(dynamic json) {
+    final values = json is Map
+        ? Map<String, dynamic>.from(json)
+        : const <String, dynamic>{};
+    return InquiryListCounts(
+      all: _readCount(values, 'all'),
+      unassigned: _readCount(values, 'unassigned'),
+      pending: _readCount(values, 'pending'),
+      completed: _readCount(values, 'completed'),
+    );
+  }
 }
 
 class InquiryService {
@@ -34,6 +68,7 @@ class InquiryService {
         .toList();
 
     return InquiryListResult(
+      counts: InquiryListCounts.fromJson(json['counts']),
       items: items,
       total: json['total'] as int? ?? items.length,
     );
