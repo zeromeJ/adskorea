@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   }
   const maxBytes = isPdf ? 30 * 1024 * 1024 : websiteContentMaxFileSize;
   if (file.size > maxBytes) {
-    return NextResponse.json({ success: false, message: isPdf ? "PDF는 30MB 이하만 등록할 수 있습니다." : "영상은 50MB 이하만 등록할 수 있습니다." }, { status: 400 });
+    return NextResponse.json({ success: false, message: isPdf ? "PDF는 30MB 이하만 등록할 수 있습니다." : "영상은 1GB 이하만 등록할 수 있습니다." }, { status: 400 });
   }
 
   const supabase = await ensureWebsiteContentBucket();
