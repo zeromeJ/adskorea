@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'api_client.dart';
@@ -9,10 +10,12 @@ import 'api_client.dart';
 class PushNotificationService {
   PushNotificationService(
     this.client, {
+    required this.onInquiryChanged,
     required this.onOpenInquiry,
   });
 
   final ApiClient client;
+  final VoidCallback onInquiryChanged;
   final void Function(String inquiryId) onOpenInquiry;
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications =
@@ -153,6 +156,7 @@ class PushNotificationService {
   }
 
   Future<void> _showForegroundMessage(RemoteMessage message) async {
+    onInquiryChanged();
     final notification = message.notification;
     if (notification == null) return;
 
@@ -180,6 +184,7 @@ class PushNotificationService {
   }
 
   void _openMessage(RemoteMessage message) {
+    onInquiryChanged();
     final inquiryId = message.data['inquiryId'];
     if (inquiryId is String && inquiryId.isNotEmpty) {
       onOpenInquiry(inquiryId);

@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { getAdminFromRequest, unauthorizedResponse } from "@/lib/admin/auth";
+import { forbiddenResponse, getAdminFromRequest, unauthorizedResponse } from "@/lib/admin/auth";
 import { ensureWebsiteContentBucket, websiteContentBucket } from "@/lib/supabaseAdmin";
 import { getWebsiteSection } from "@/lib/websiteSections";
 
 export async function POST(request: Request) {
   const admin = await getAdminFromRequest(request);
   if (!admin) return unauthorizedResponse();
+  if (!admin.isSuperAdmin) return forbiddenResponse();
 
   const body = await request.json() as {
     sectionKey?: string;

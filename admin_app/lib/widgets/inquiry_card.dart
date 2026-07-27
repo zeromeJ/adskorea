@@ -10,6 +10,7 @@ class InquiryCard extends StatelessWidget {
     required this.onOpen,
     required this.onCall,
     required this.onComplete,
+    this.onAssign,
     this.showAssignment = false,
     super.key,
   });
@@ -18,6 +19,7 @@ class InquiryCard extends StatelessWidget {
   final VoidCallback onOpen;
   final VoidCallback? onCall;
   final VoidCallback? onComplete;
+  final VoidCallback? onAssign;
   final bool showAssignment;
 
   Widget _info(String label, String value) {
@@ -145,6 +147,17 @@ class InquiryCard extends StatelessWidget {
                   ),
                 ],
               ),
+              if (onAssign != null) ...[
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: onAssign,
+                    icon: const Icon(Icons.assignment_ind_rounded, size: 22),
+                    label: const Text('문의 담당자 배정'),
+                  ),
+                ),
+              ],
               if (onComplete != null) ...[
                 const SizedBox(height: 8),
                 SizedBox(

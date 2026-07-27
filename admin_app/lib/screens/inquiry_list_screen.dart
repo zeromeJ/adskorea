@@ -22,6 +22,7 @@ class InquiryListScreen extends StatefulWidget {
     required this.adminManagementService,
     required this.currentAdmin,
     required this.inquiryService,
+    required this.refreshVersion,
     required this.websiteContentService,
     required this.onLogout,
     super.key,
@@ -31,6 +32,7 @@ class InquiryListScreen extends StatefulWidget {
   final AdminManagementService adminManagementService;
   final AdminUser currentAdmin;
   final InquiryService inquiryService;
+  final int refreshVersion;
   final WebsiteContentService websiteContentService;
   final VoidCallback onLogout;
 
@@ -38,31 +40,53 @@ class InquiryListScreen extends StatefulWidget {
   State<InquiryListScreen> createState() => _InquiryListScreenState();
 }
 
-class _InquiryListScreenState extends State<InquiryListScreen> {
+class _InquiryListScreenState extends State<InquiryListScreen>
+    with WidgetsBindingObserver {
   final _searchController = TextEditingController();
-  String _status = 'ALL';
+  late String _status;
   String _searchQuery = '';
   bool _isLoading = true;
   String? _error;
   List<Inquiry> _items = [];
+  InquiryListCounts _counts = const InquiryListCounts();
 
   @override
   void initState() {
     super.initState();
+    _status = widget.currentAdmin.isSuperAdmin ? 'UNASSIGNED' : 'PENDING';
+    WidgetsBinding.instance.addObserver(this);
     _load();
   }
 
   @override
+  void didUpdateWidget(covariant InquiryListScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.refreshVersion != oldWidget.refreshVersion) {
+      _load(showLoading: false);
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
     super.dispose();
   }
 
-  Future<void> _load() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _load(showLoading: false);
+    }
+  }
+
+  Future<void> _load({bool showLoading = true}) async {
+    if (showLoading) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    }
 
     try {
       final result = await widget.inquiryService.fetchInquiries(
@@ -78,11 +102,19 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
               ? a.createdAt.compareTo(b.createdAt)
               : b.createdAt.compareTo(a.createdAt);
         });
-      if (mounted) setState(() => _items = sortedItems);
-    } catch (error) {
-      setState(() => _error = '문의 목록을 불러오지 못했습니다.');
-    } finally {
       if (mounted) {
+        setState(() {
+          _items = sortedItems;
+          _counts = result.counts;
+          _error = null;
+        });
+      }
+    } catch (error) {
+      if (mounted && showLoading) {
+        setState(() => _error = '문의 목록을 불러오지 못했습니다.');
+      }
+    } finally {
+      if (mounted && showLoading) {
         setState(() => _isLoading = false);
       }
     }
@@ -149,9 +181,42 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
     if (_searchQuery.isNotEmpty) {
       return '회사명, 담당자명 또는 전화번호와 일치하는 문의가 없습니다.';
     }
+    if (_status == 'UNASSIGNED') return '배정을 기다리는 문의가 없습니다.';
     if (_status == 'PENDING') return '처리 전 문의가 없습니다.';
     if (_status == 'COMPLETED') return '처리 완료된 문의가 없습니다.';
     return '아직 접수된 문의가 없습니다.';
+  }
+
+  Future<void> _openInquiry(Inquiry inquiry) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => InquiryDetailScreen(
+          adminManagementService: widget.adminManagementService,
+          currentAdmin: widget.currentAdmin,
+          inquiryId: inquiry.id,
+          inquiryService: widget.inquiryService,
+        ),
+      ),
+    );
+    await _load(showLoading: false);
+  }
+
+  int _countForStatus(String status) {
+    return switch (status) {
+      'UNASSIGNED' => _counts.unassigned,
+      'PENDING' => _counts.pending,
+      'COMPLETED' => _counts.completed,
+      _ => _counts.all,
+    };
+  }
+
+  String _labelForStatus(String status) {
+    return switch (status) {
+      'UNASSIGNED' => '배정 전',
+      'PENDING' => '처리 전',
+      'COMPLETED' => '완료',
+      _ => '전체',
+    };
   }
 
   @override
@@ -201,37 +266,37 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
                     );
                   },
                 ),
-              ],
-              ListTile(
-                leading: const Icon(Icons.history),
-                title: const Text('완료 처리 로그'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => ActivityLogScreen(
-                        adminService: widget.adminManagementService,
-                        currentAdmin: widget.currentAdmin,
-                        inquiryService: widget.inquiryService,
+                ListTile(
+                  leading: const Icon(Icons.history),
+                  title: const Text('완료 처리 로그'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ActivityLogScreen(
+                          adminService: widget.adminManagementService,
+                          currentAdmin: widget.currentAdmin,
+                          inquiryService: widget.inquiryService,
+                        ),
                       ),
-                    ),
-                  );
-                },
-              ),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.web),
+                  title: const Text('홈페이지 관리'),
+                  subtitle: const Text('이미지·영상·자료 관리'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => WebsiteManagementScreen(
+                        service: widget.websiteContentService,
+                      ),
+                    ));
+                  },
+                ),
+              ],
               const Spacer(),
-              ListTile(
-                leading: const Icon(Icons.web),
-                title: const Text('홈페이지 관리'),
-                subtitle: const Text('이미지·영상·자료 관리'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => WebsiteManagementScreen(
-                      service: widget.websiteContentService,
-                    ),
-                  ));
-                },
-              ),
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.logout),
@@ -247,7 +312,9 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
         ),
       ),
       appBar: AppBar(
-        title: const Text('아델슨 문의관리'),
+        title: Text(
+          widget.currentAdmin.isSuperAdmin ? '문의 배정 관리' : '내 담당 문의',
+        ),
       ),
       body: SafeArea(
         top: false,
@@ -289,18 +356,38 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               child: SizedBox(
-                width: double.infinity,
-                child: SegmentedButton<String>(
-                  segments: const [
-                    ButtonSegment(value: 'ALL', label: Text('전체 목록')),
-                    ButtonSegment(value: 'PENDING', label: Text('처리 전')),
-                    ButtonSegment(value: 'COMPLETED', label: Text('처리 완료')),
-                  ],
-                  showSelectedIcon: false,
-                  selected: {_status},
-                  onSelectionChanged: (value) {
-                    setState(() => _status = value.first);
-                    _load();
+                height: 42,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: widget.currentAdmin.isSuperAdmin ? 4 : 3,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final statuses = widget.currentAdmin.isSuperAdmin
+                        ? const ['ALL', 'UNASSIGNED', 'PENDING', 'COMPLETED']
+                        : const ['ALL', 'PENDING', 'COMPLETED'];
+                    final status = statuses[index];
+                    return ChoiceChip(
+                      selected: _status == status,
+                      showCheckmark: false,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 0,
+                      ),
+                      label: SizedBox(
+                        height: 24,
+                        child: Center(
+                          child: Text(
+                            '${_labelForStatus(status)} ${_countForStatus(status)}',
+                            style: const TextStyle(height: 1),
+                          ),
+                        ),
+                      ),
+                      onSelected: (_) {
+                        setState(() => _status = status);
+                        _load();
+                      },
+                    );
                   },
                 ),
               ),
@@ -321,28 +408,24 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
                                   final inquiry = _items[index];
                                   return InquiryCard(
                                     inquiry: inquiry,
-                                    onOpen: () async {
-                                      await Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (_) => InquiryDetailScreen(
-                                            adminManagementService:
-                                                widget.adminManagementService,
-                                            currentAdmin: widget.currentAdmin,
-                                            inquiryId: inquiry.id,
-                                            inquiryService:
-                                                widget.inquiryService,
-                                          ),
-                                        ),
-                                      );
-                                      _load();
-                                    },
+                                    onOpen: () => _openInquiry(inquiry),
                                     onCall: inquiry.phone?.isNotEmpty == true
                                         ? () => _openPhone(inquiry.phone)
                                         : null,
-                                    onComplete:
-                                        inquiry.status == InquiryStatus.pending
-                                            ? () => _markCompleted(inquiry)
+                                    onAssign:
+                                        widget.currentAdmin.isSuperAdmin &&
+                                                inquiry.status ==
+                                                    InquiryStatus.pending &&
+                                                inquiry.assignedAdminId == null
+                                            ? () => _openInquiry(inquiry)
                                             : null,
+                                    onComplete: inquiry.status ==
+                                                InquiryStatus.pending &&
+                                            (!widget.currentAdmin
+                                                    .isSuperAdmin ||
+                                                inquiry.assignedAdminId != null)
+                                        ? () => _markCompleted(inquiry)
+                                        : null,
                                     showAssignment:
                                         widget.currentAdmin.isSuperAdmin,
                                   );

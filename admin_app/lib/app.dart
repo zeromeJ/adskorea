@@ -31,11 +31,13 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
   late final PushNotificationService _pushNotificationService =
       PushNotificationService(
     _apiClient,
+    onInquiryChanged: _refreshInquiryList,
     onOpenInquiry: _openInquiry,
   );
   bool _isLoading = true;
   bool _isLoggedIn = false;
   AdminUser? _currentAdmin;
+  int _inquiryRefreshVersion = 0;
 
   @override
   void initState() {
@@ -99,6 +101,11 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
         ),
       );
     });
+  }
+
+  void _refreshInquiryList() {
+    if (!mounted) return;
+    setState(() => _inquiryRefreshVersion++);
   }
 
   @override
@@ -184,6 +191,7 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
                   authService: _authService,
                   adminManagementService: _adminManagementService,
                   inquiryService: _inquiryService,
+                  refreshVersion: _inquiryRefreshVersion,
                   websiteContentService: _websiteContentService,
                   onLogout: () => _setLoggedIn(false),
                 )
