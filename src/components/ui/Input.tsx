@@ -11,7 +11,7 @@ export default function Input({ label, id, className = "", ...props }: InputProp
         {label}
       </span>
       <input
-        className={`min-h-12 min-w-0 max-w-full rounded-md border border-[var(--line)] bg-white px-4 text-base outline-none transition placeholder:text-[#95a29a] focus:border-[var(--primary)] focus:ring-4 focus:ring-[rgba(46,92,69,0.12)] ${className}`}
+        className={`min-h-12 min-w-0 max-w-full rounded-md border border-[var(--line)] bg-white px-4 text-base outline-none transition placeholder:text-[#95a29a] focus:border-[var(--primary)] focus:ring-4 focus:ring-[rgba(46,92,69,0.12)] aria-invalid:border-[var(--alert)] aria-invalid:focus:border-[var(--alert)] aria-invalid:focus:ring-[rgba(185,92,69,0.16)] ${className}`}
         id={id}
         {...props}
       />

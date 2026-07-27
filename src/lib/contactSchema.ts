@@ -107,15 +107,46 @@ export function inquiryTypeLabel(value: string) {
   return inquiryTypes.find((item) => item.value === value)?.label ?? value;
 }
 
-export function validateContactForm(data: ContactFormData) {
-  if (!data.inquiryType) return "문의 유형을 선택해 주세요.";
-  if (!data.phone.trim()) return "연락처를 입력해 주세요.";
-  if (!isValidPhone(data.phone)) return "올바른 전화번호 형식으로 입력해 주세요. 국가번호도 입력할 수 있습니다.";
-  if (!data.details.deliveryRegion?.trim()) return "납품 지역을 선택해 주세요.";
-  if (data.email.trim() && !isValidEmail(data.email)) return "올바른 이메일 형식을 입력해 주세요.";
-  if (!data.responseMethod) return "회신 방법을 선택해 주세요.";
-  if (data.message.length > 1500) return "문의 내용은 최대 1,500자까지 입력해 주세요.";
+export type ContactFormFieldErrors = Partial<
+  Record<
+    | "inquiryType"
+    | "phone"
+    | "deliveryRegion"
+    | "email"
+    | "responseMethod"
+    | "message"
+    | "privacyAgreed",
+    string
+  >
+>;
 
-  if (!data.privacyAgreed) return "개인정보 수집 및 이용에 동의해 주세요.";
-  return "";
+export function getContactFormFieldErrors(data: ContactFormData) {
+  const errors: ContactFormFieldErrors = {};
+
+  if (!data.inquiryType) {
+    errors.inquiryType = "문의 유형을 선택해 주세요.";
+  }
+  if (!data.phone.trim()) {
+    errors.phone = "전화번호를 입력해 주세요.";
+  } else if (!isValidPhone(data.phone)) {
+    errors.phone =
+      "전화번호 형식을 확인해 주세요. 국가번호도 입력할 수 있습니다.";
+  }
+  if (!data.details.deliveryRegion?.trim()) {
+    errors.deliveryRegion = "납품 지역을 선택해 주세요.";
+  }
+  if (data.email.trim() && !isValidEmail(data.email)) {
+    errors.email = "올바른 이메일 형식을 입력해 주세요.";
+  }
+  if (!data.responseMethod) {
+    errors.responseMethod = "연락 선호 방식을 선택해 주세요.";
+  }
+  if (data.message.length > 1500) {
+    errors.message = "문의 내용은 최대 1,500자까지 입력해 주세요.";
+  }
+  if (!data.privacyAgreed) {
+    errors.privacyAgreed = "개인정보 수집 및 이용에 동의해 주세요.";
+  }
+
+  return errors;
 }

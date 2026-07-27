@@ -10,6 +10,7 @@ import {
   ContactFormData,
   deliveryRegionOptions,
   estimatedQuantityOptions,
+  getContactFormFieldErrors,
   initialContactFormData,
   inquiryTypes,
   inquiryTypeLabel,
@@ -17,7 +18,6 @@ import {
   palletSizeOptions,
   submitLabel,
   unknownPalletSizeOption,
-  validateContactForm,
 } from "@/lib/contactSchema";
 
 const usePurposes = ["보관", "국내 운송", "수출 운송", "랙 적재", "자동화 설비", "기타"];
@@ -43,6 +43,7 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const [phoneTouched, setPhoneTouched] = useState(false);
+  const [validationAttempted, setValidationAttempted] = useState(false);
   const [phoneCopyMessage, setPhoneCopyMessage] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
   const [attachmentInputKey, setAttachmentInputKey] = useState(0);
@@ -150,10 +151,11 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isLoading) return;
-    const validationMessage = validateContactForm(formData);
-    if (validationMessage) {
-      setPhoneTouched(true);
-      setError(validationMessage);
+    const validationErrors = getContactFormFieldErrors(formData);
+    setValidationAttempted(true);
+    setPhoneTouched(true);
+    if (Object.keys(validationErrors).length > 0) {
+      setError("");
       return;
     }
     setIsLoading(true);
@@ -172,6 +174,8 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
       }
       setSuccess(`접수번호 ${result.inquiryId} · ${inquiryTypeLabel(formData.inquiryType)} 접수가 완료되었습니다.${attachmentWarning}`);
       setFormData(initialContactFormData);
+      setValidationAttempted(false);
+      setPhoneTouched(false);
       setAttachments([]);
       setAdvancedOpen(false);
       setAttachmentInputKey((current) => current + 1);
@@ -185,6 +189,28 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
 
   const isConsulting = formData.inquiryType === "consulting";
   const isCatalog = formData.inquiryType === "other";
+  const currentFieldErrors = getContactFormFieldErrors(formData);
+  const inquiryTypeError = validationAttempted
+    ? currentFieldErrors.inquiryType
+    : undefined;
+  const phoneError = validationAttempted
+    ? currentFieldErrors.phone
+    : phoneTouched && formData.phone && !isValidPhone(formData.phone)
+      ? currentFieldErrors.phone
+      : undefined;
+  const deliveryRegionError = validationAttempted
+    ? currentFieldErrors.deliveryRegion
+    : undefined;
+  const emailError = validationAttempted ? currentFieldErrors.email : undefined;
+  const responseMethodError = validationAttempted
+    ? currentFieldErrors.responseMethod
+    : undefined;
+  const messageError = validationAttempted
+    ? currentFieldErrors.message
+    : undefined;
+  const privacyError = validationAttempted
+    ? currentFieldErrors.privacyAgreed
+    : undefined;
   const phoneHref = phone ? `tel:${phone.replace(/[^+\d]/g, "")}` : "";
 
   return (
@@ -224,9 +250,13 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
         <form className="min-w-0 max-w-full rounded-lg bg-white p-5 sm:p-8" noValidate onSubmit={handleSubmit}>
           <div className="grid min-w-0 grid-cols-1 gap-x-5 gap-y-5 md:grid-cols-2 md:[&>*]:min-w-0">
             <h3 className="col-span-full text-lg font-bold text-[var(--text)]">1. 문의 유형</h3>
-            <fieldset className="col-span-full min-w-0">
+            <fieldset
+              aria-describedby={inquiryTypeError ? "inquiry-type-error" : undefined}
+              aria-invalid={Boolean(inquiryTypeError)}
+              className="col-span-full min-w-0"
+            >
               <legend className="mb-2 flex min-h-6 items-center text-sm font-bold text-[var(--text)]">문의 유형 (필수)</legend>
-              <div className="grid min-w-0 gap-2 sm:grid-cols-2">
+              <div className={`grid min-w-0 gap-2 sm:grid-cols-2 ${inquiryTypeError ? "rounded-lg border border-[var(--alert)] p-2" : ""}`}>
                 {inquiryTypes.map((item) => {
                   const selected = formData.inquiryType === item.value;
                   return (
@@ -243,26 +273,42 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
                   );
                 })}
               </div>
+              {inquiryTypeError ? (
+                <p className="mt-2 text-sm font-bold text-[var(--alert)]" id="inquiry-type-error">
+                  {inquiryTypeError}
+                </p>
+              ) : null}
             </fieldset>
 
             <h3 className="col-span-full mt-2 border-t border-[var(--line)] pt-6 text-lg font-bold text-[var(--text)]">2. 기본 정보</h3>
             <div className="flex min-w-0 flex-col">
-              <Input aria-describedby="phone-error" aria-invalid={phoneTouched && formData.phone.length > 0 ? !isValidPhone(formData.phone) : undefined} aria-required="true" id="phone" inputMode="tel" label="전화번호 (필수)" maxLength={30} onBlur={() => setPhoneTouched(true)} onChange={(event) => updateField("phone", event.target.value)} placeholder="연락 가능한 번호를 입력해 주세요" required type="tel" value={formData.phone} />
-              <p className="mt-2 min-h-5 text-sm font-bold text-[var(--alert)]" id="phone-error">{phoneTouched && formData.phone && !isValidPhone(formData.phone) ? "전화번호 형식을 확인해 주세요. 국가번호도 입력할 수 있습니다." : ""}</p>
+              <Input aria-describedby={phoneError ? "phone-error" : undefined} aria-invalid={Boolean(phoneError)} aria-required="true" id="phone" inputMode="tel" label="전화번호 (필수)" maxLength={30} onBlur={() => setPhoneTouched(true)} onChange={(event) => updateField("phone", event.target.value)} placeholder="연락 가능한 번호를 입력해 주세요" required type="tel" value={formData.phone} />
+              {phoneError ? (
+                <p className="mt-2 text-sm font-bold text-[var(--alert)]" id="phone-error">
+                  {phoneError}
+                </p>
+              ) : null}
             </div>
-            <Input autoComplete="email" id="email" label="이메일 (선택)" maxLength={254} onChange={(event) => updateField("email", event.target.value)} placeholder="name@company.com" type="email" value={formData.email} />
+            <div className="flex min-w-0 flex-col">
+              <Input aria-describedby={emailError ? "email-error" : undefined} aria-invalid={Boolean(emailError)} autoComplete="email" id="email" label="이메일 (선택)" maxLength={254} onChange={(event) => updateField("email", event.target.value)} placeholder="name@company.com" type="email" value={formData.email} />
+              {emailError ? (
+                <p className="mt-2 text-sm font-bold text-[var(--alert)]" id="email-error">
+                  {emailError}
+                </p>
+              ) : null}
+            </div>
             <Input id="companyName" label="회사명 (선택)" maxLength={100} onChange={(event) => updateField("companyName", event.target.value)} value={formData.companyName} />
             <Input id="contactPerson" label="담당자명 (선택)" maxLength={50} onChange={(event) => updateField("contactPerson", event.target.value)} value={formData.contactPerson} />
-            <fieldset className="col-span-full min-w-0"><legend className="mb-2 flex min-h-6 items-center text-sm font-bold">연락 선호 방식 (선택)</legend><div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">{[{ value: "EMAIL", label: "이메일" }, { value: "PHONE", label: "전화" }, { value: "TEXT", label: "문자" }, { value: "ANY", label: "상관없음" }].map((option) => { const selected = formData.responseMethod === option.value; return <button aria-pressed={selected} className={`inline-flex min-h-12 min-w-0 items-center justify-center rounded-lg border px-3 text-sm font-bold transition ${selected ? "border-[var(--primary)] bg-[var(--primary)] text-white" : "border-[var(--line)] bg-white text-[var(--text)] hover:border-[var(--primary)]"}`} key={option.value} onClick={() => updateField("responseMethod", option.value as ContactFormData["responseMethod"])} type="button">{option.label}</button>; })}</div></fieldset>
+            <fieldset aria-describedby={responseMethodError ? "response-method-error" : undefined} aria-invalid={Boolean(responseMethodError)} className="col-span-full min-w-0"><legend className="mb-2 flex min-h-6 items-center text-sm font-bold">연락 선호 방식 (선택)</legend><div className={`grid min-w-0 grid-cols-2 gap-2 rounded-lg sm:grid-cols-4 ${responseMethodError ? "border border-[var(--alert)] p-2" : ""}`}>{[{ value: "EMAIL", label: "이메일" }, { value: "PHONE", label: "전화" }, { value: "TEXT", label: "문자" }, { value: "ANY", label: "상관없음" }].map((option) => { const selected = formData.responseMethod === option.value; return <button aria-pressed={selected} className={`inline-flex min-h-12 min-w-0 items-center justify-center rounded-lg border px-3 text-sm font-bold transition ${selected ? "border-[var(--primary)] bg-[var(--primary)] text-white" : "border-[var(--line)] bg-white text-[var(--text)] hover:border-[var(--primary)]"}`} key={option.value} onClick={() => updateField("responseMethod", option.value as ContactFormData["responseMethod"])} type="button">{option.label}</button>; })}</div>{responseMethodError ? <p className="mt-2 text-sm font-bold text-[var(--alert)]" id="response-method-error">{responseMethodError}</p> : null}</fieldset>
 
             <h3 className="col-span-full mt-2 border-t border-[var(--line)] pt-6 text-lg font-bold text-[var(--text)]">3. 문의 상세</h3>
             <Select containerClassName="col-span-full md:col-span-1" id="productInterest" label="관심 제품 (선택)" onChange={(event) => updateField("productInterest", event.target.value)} options={productInterestOptions} value={formData.productInterest} />
             {!isCatalog ? <fieldset className="col-span-full min-w-0">
               <legend className="mb-2 flex min-h-6 items-center text-sm font-bold text-[var(--text)]">
-                희망 팔레트 규격 (선택 · 복수 선택 가능)
+                희망 팔레트 규격 (선택)
               </legend>
               <div className="grid min-w-0 gap-2 sm:grid-cols-2">
-                {[...palletSizeOptions, "모두 선택", unknownPalletSizeOption].map((option) => {
+                {["모두 선택", ...palletSizeOptions, unknownPalletSizeOption].map((option) => {
                   const selected =
                     option === "모두 선택"
                       ? palletSizeOptions.every((size) =>
@@ -298,7 +344,14 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
               </p>
             </fieldset> : null}
 
-            <Select aria-required="true" id="deliveryRegion" label="납품 지역 (필수)" onChange={(event) => updateDetail("deliveryRegion", event.target.value)} options={[...deliveryRegionOptions]} required value={formData.details.deliveryRegion || ""} />
+            <div className="flex min-w-0 flex-col">
+              <Select aria-describedby={deliveryRegionError ? "delivery-region-error" : undefined} aria-invalid={Boolean(deliveryRegionError)} aria-required="true" id="deliveryRegion" label="납품 지역 (필수)" onChange={(event) => updateDetail("deliveryRegion", event.target.value)} options={[...deliveryRegionOptions]} required value={formData.details.deliveryRegion || ""} />
+              {deliveryRegionError ? (
+                <p className="mt-2 text-sm font-bold text-[var(--alert)]" id="delivery-region-error">
+                  {deliveryRegionError}
+                </p>
+              ) : null}
+            </div>
             <Select id="estimatedQuantity" label="예상 수량 (선택)" onChange={(event) => updateField("estimatedQuantity", event.target.value)} options={[...estimatedQuantityOptions]} value={formData.estimatedQuantity} />
             <Select id="exportUse" label="수출용 여부 (선택)" onChange={(event) => updateDetail("exportUse", event.target.value)} options={yesNoUnknown} value={formData.details.exportUse || ""} />
             <Input id="desiredDeliveryDate" label="희망 납기 (선택)" onChange={(event) => updateDetail("desiredDeliveryDate", event.target.value)} value={formData.details.desiredDeliveryDate || ""} />
@@ -319,15 +372,16 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
               </div>
             </> : null}
 
-            <label className="col-span-full flex min-w-0 flex-col" htmlFor="message"><span className="mb-2 flex min-h-6 min-w-0 items-center justify-between gap-3 text-sm font-bold"><span>문의 내용 (선택)</span><span className="shrink-0 font-medium text-[var(--sub-text)]">{formData.message.length} / 1,500자</span></span><textarea className="min-h-40 min-w-0 max-w-full resize-y [overflow-wrap:anywhere] rounded-md border border-[var(--line)] px-4 py-3 text-base leading-7 outline-none focus:border-[var(--primary)] focus:ring-4 focus:ring-[rgba(46,92,69,0.12)]" id="message" maxLength={1500} onChange={(event) => updateField("message", event.target.value)} placeholder="추가로 전달할 제품, 규격, 수량, 사용환경 또는 요청자료가 있다면 입력해 주세요." value={formData.message} /></label>
+            <label className="col-span-full flex min-w-0 flex-col" htmlFor="message"><span className="mb-2 flex min-h-6 min-w-0 items-center justify-between gap-3 text-sm font-bold"><span>문의 내용 (선택)</span><span className="shrink-0 font-medium text-[var(--sub-text)]">{formData.message.length} / 1,500자</span></span><textarea aria-describedby={messageError ? "message-error" : undefined} aria-invalid={Boolean(messageError)} className="min-h-40 min-w-0 max-w-full resize-y [overflow-wrap:anywhere] rounded-md border border-[var(--line)] px-4 py-3 text-base leading-7 outline-none focus:border-[var(--primary)] focus:ring-4 focus:ring-[rgba(46,92,69,0.12)] aria-invalid:border-[var(--alert)] aria-invalid:focus:border-[var(--alert)] aria-invalid:focus:ring-[rgba(185,92,69,0.16)]" id="message" maxLength={1500} onChange={(event) => updateField("message", event.target.value)} placeholder="추가로 전달할 제품, 규격, 수량, 사용환경 또는 요청자료가 있다면 입력해 주세요." value={formData.message} />{messageError ? <p className="mt-2 text-sm font-bold text-[var(--alert)]" id="message-error">{messageError}</p> : null}</label>
 
             <h3 className="col-span-full mt-2 border-t border-[var(--line)] pt-6 text-lg font-bold text-[var(--text)]">4. 첨부파일 및 동의</h3>
             <div className="col-span-full min-w-0"><label className="flex min-h-6 items-center text-sm font-bold" htmlFor="attachments">파일 첨부 (선택)</label><input accept="application/pdf,image/jpeg,image/png,image/webp" className="mt-2 min-h-12 w-full min-w-0 max-w-full rounded-md border border-[var(--line)] px-3 py-2 text-base file:mr-3 file:rounded-md file:border-0 file:bg-[var(--muted-surface)] file:px-3 file:py-2 file:text-sm" id="attachments" key={attachmentInputKey} multiple onChange={(event) => updateAttachments(event.target.files)} type="file" /><p className="mt-2 text-xs leading-5 text-[var(--sub-text)]">PDF, JPG, PNG, WEBP · 최대 3개 · 개당 10MB</p>{attachments.length ? <ul className="mt-3 grid gap-2">{attachments.map((file, index) => <li className="flex min-w-0 items-center gap-3 rounded-md bg-[var(--muted-surface)] px-3 py-2 text-sm" key={`${file.name}-${file.size}`}><span aria-hidden="true" className="shrink-0">📎</span><span className="min-w-0 flex-1"><span className="line-clamp-2 [overflow-wrap:anywhere]">{file.name}</span><span className="mt-0.5 block text-xs text-[var(--sub-text)]">{(file.size / 1024 / 1024).toFixed(2)}MB · {uploading ? "업로드 중" : "업로드 대기"}</span></span><button className="min-h-10 shrink-0 rounded-md px-2 text-sm font-bold text-[var(--alert)]" onClick={() => setAttachments((current) => current.filter((_, itemIndex) => itemIndex !== index))} type="button">삭제</button></li>)}</ul> : null}</div>
             <input aria-hidden="true" className="hidden" onChange={(event) => updateField("website", event.target.value)} tabIndex={-1} value={formData.website} />
           </div>
 
-          <div className="mt-5 min-w-0 rounded-lg bg-[var(--muted-surface)] p-4" id="privacy-details">
-            <label className="flex min-w-0 items-start gap-3 text-sm leading-6 text-[var(--sub-text)]"><input aria-required="true" checked={formData.privacyAgreed} className="mt-1 h-4 w-4 shrink-0 accent-[var(--primary)]" onChange={(event) => updateField("privacyAgreed", event.target.checked)} type="checkbox" /><span className="min-w-0">개인정보 수집 및 이용에 동의합니다. (필수)</span></label>
+          <div className={`mt-5 min-w-0 rounded-lg border bg-[var(--muted-surface)] p-4 ${privacyError ? "border-[var(--alert)]" : "border-transparent"}`} id="privacy-details">
+            <label className="flex min-w-0 items-start gap-3 text-sm leading-6 text-[var(--sub-text)]"><input aria-describedby={privacyError ? "privacy-error" : undefined} aria-invalid={Boolean(privacyError)} aria-required="true" checked={formData.privacyAgreed} className="mt-1 h-4 w-4 shrink-0 accent-[var(--primary)]" onChange={(event) => updateField("privacyAgreed", event.target.checked)} type="checkbox" /><span className="min-w-0">개인정보 수집 및 이용에 동의합니다. (필수)</span></label>
+            {privacyError ? <p className="mt-2 text-sm font-bold text-[var(--alert)]" id="privacy-error">{privacyError}</p> : null}
             <details className="mt-3 min-w-0 text-xs leading-6 text-[var(--sub-text)]"><summary className="cursor-pointer font-bold text-[var(--primary)]">수집·이용 내용 보기</summary><div className="mt-2 [overflow-wrap:anywhere]"><p><strong>수집 항목:</strong> 전화번호, 납품 지역 및 사용자가 선택적으로 입력한 회사명·담당자명·이메일·문의 내용·첨부파일·상세정보</p><p><strong>이용 목적:</strong> 문의 확인, 제품 상담, 견적 검토, 자료 제공, 회신 및 고객 응대</p><p><strong>보유기간:</strong> 문의 처리 목적 달성 후 지체 없이 파기하며, 관계 법령에 따라 보존이 필요한 경우 해당 기간 동안 보관합니다.</p><p>동의를 거부할 수 있으나 문의 접수가 제한될 수 있습니다.</p></div></details>
             <a className="mt-2 inline-flex text-xs font-bold text-[var(--primary)] underline underline-offset-2" href="/privacy">개인정보처리방침</a>
           </div>
