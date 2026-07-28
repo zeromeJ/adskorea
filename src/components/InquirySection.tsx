@@ -6,10 +6,7 @@ import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import SectionTitle from "@/components/ui/SectionTitle";
 import { productInterestOptions } from "@/lib/constants";
-import {
-  productBrochureDownloadPath,
-  productBrochureFallbackFileSize,
-} from "@/lib/downloads";
+import { productBrochureDownloadPath } from "@/lib/downloads";
 import {
   ContactFormData,
   deliveryRegionOptions,
@@ -117,10 +114,8 @@ function DimensionInput({ id, label, value, onChange }: { id: string; label: str
 }
 
 export default function InquirySection({
-  brochureFileSize = productBrochureFallbackFileSize,
   phone = "",
 }: {
-  brochureFileSize?: string;
   phone?: string;
 }) {
   const [formData, setFormData] = useState<ContactFormData>(initialContactFormData);
@@ -354,25 +349,21 @@ export default function InquirySection({
           <aside className="mt-7 rounded-lg border border-white/12 bg-white/[0.04] p-5 text-white">
             <p className="text-sm font-bold text-[var(--accent-gold)]">상담 안내</p>
             <ul className="mt-4 grid gap-3 text-sm leading-6 text-white/78">
-              {["문의 유형별 맞춤 입력", "필요한 정보만 간편하게 작성", "맞춤 규격 및 적용 환경 상담", "도면과 현장사진 첨부 가능", "전화·문자·이메일 회신 지원"].map((item) => <li className="flex min-w-0 items-center gap-3" key={item}><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--accent-gold)] text-[11px] font-black text-[var(--primary-deep)]">✓</span><span className="min-w-0">{item}</span></li>)}
+              {["문의 유형별 맞춤 입력", "필요한 정보만 선택하여 작성", "맞춤 규격 및 적용 환경 상담", "도면과 현장사진 첨부 가능", "전화·문자·이메일 회신 지원"].map((item) => <li className="flex min-w-0 items-center gap-3" key={item}><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--accent-gold)] text-white"><svg aria-hidden="true" className="h-2.5 w-2.5" fill="none" viewBox="0 0 12 12"><path d="m2.1 6.2 2.3 2.3 5.5-5.3" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.6" /></svg></span><span className="min-w-0">{item}</span></li>)}
             </ul>
           </aside>
           <a
-            aria-label={`제품 카탈로그 PDF 다운로드, PDF ${brochureFileSize || productBrochureFallbackFileSize}`}
-            className="group mt-4 flex min-h-11 w-full min-w-0 items-center gap-3 rounded-md border border-[var(--accent-gold)] bg-[var(--accent-gold)] px-4 py-2.5 text-[var(--primary-deep)] transition duration-200 hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--primary-dark)] sm:min-h-12 sm:px-5 sm:py-3"
+            aria-label="제품 카탈로그 PDF 다운로드"
+            className="group mt-4 flex min-h-11 w-full min-w-0 items-center justify-center gap-3 rounded-md border-2 border-[#e6ce8a] bg-[var(--accent-gold-dark)] px-4 py-2.5 text-white shadow-[0_4px_14px_rgba(8,25,18,0.2)] transition duration-200 hover:bg-[#86671f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--primary-dark)] sm:min-h-12 sm:px-5 sm:py-3"
             download
             href={productBrochureDownloadPath}
           >
             <svg aria-hidden="true" className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24">
               <path d="M12 3.5v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
             </svg>
-            <span className="min-w-0 flex-1 text-left text-sm font-bold [word-break:keep-all]">
+            <span className="min-w-0 text-center text-base font-extrabold [word-break:keep-all]">
               제품 카탈로그 다운로드
             </span>
-            <span className="shrink-0 text-xs font-semibold opacity-70">
-              PDF · {brochureFileSize || productBrochureFallbackFileSize}
-            </span>
-            <span aria-hidden="true" className="shrink-0 transition-transform duration-200 group-hover:translate-x-[3px]">→</span>
           </a>
           {phoneHref ? (
             <>
@@ -382,10 +373,10 @@ export default function InquirySection({
                 onClick={(event) => void handlePhoneAction(event)}
                 variant="light"
               >
-                <svg aria-hidden="true" className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24">
-                  <path d="M7.1 3.7 9.5 7.9 7.8 9.6c1.2 2.6 3.3 4.7 5.9 5.9l1.7-1.7 4.2 2.4c.5.3.7.8.6 1.4l-.5 2.4c-.1.6-.7 1-1.3 1C9.9 21 3 14.1 3 5.6c0-.6.4-1.2 1-1.3l2.4-.5c.2-.1.5-.1.7-.1Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.6" />
+                <svg aria-hidden="true" className="h-5 w-5 shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M6.62 10.79a15.46 15.46 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.61 21 3 13.39 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2Z" stroke="currentColor" strokeLinejoin="round" strokeWidth="1.6" />
                 </svg>
-                전화하기
+                전화 상담하기
               </LinkButton>
               <p className="mt-2 text-center text-xs leading-5 text-white/60">
                 모바일은 바로 통화 · PC는 전화번호 복사
