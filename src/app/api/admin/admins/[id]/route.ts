@@ -16,12 +16,39 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (!admin.isSuperAdmin) return forbiddenResponse();
 
   const { id } = await context.params;
-  const body = (await request.json()) as { password?: string };
-  const password = body.password || "";
+  const body = (await request.json()) as {
+    password?: string;
+    displayName?: string;
+  };
+  const hasPassword = Object.prototype.hasOwnProperty.call(body, "password");
+  const hasDisplayName = Object.prototype.hasOwnProperty.call(
+    body,
+    "displayName",
+  );
 
-  if (password.length < 8 || password.length > 100) {
+  if (!hasPassword && !hasDisplayName) {
+    return NextResponse.json(
+      { success: false, message: "변경할 정보를 입력해 주세요." },
+      { status: 400 },
+    );
+  }
+
+  const password = hasPassword ? body.password || "" : null;
+  const displayName = hasDisplayName ? body.displayName?.trim() || "" : null;
+
+  if (password !== null && (password.length < 8 || password.length > 100)) {
     return NextResponse.json(
       { success: false, message: "새 비밀번호는 8자 이상 입력해 주세요." },
+      { status: 400 },
+    );
+  }
+
+  if (
+    displayName !== null &&
+    (displayName.length < 1 || displayName.length > 50)
+  ) {
+    return NextResponse.json(
+      { success: false, message: "표시 이름은 1~50자로 입력해 주세요." },
       { status: 400 },
     );
   }
@@ -34,12 +61,25 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   }
 
-  await prisma.adminUser.update({
+  const item = await prisma.adminUser.update({
     where: { id },
-    data: { passwordHash: await bcrypt.hash(password, 12) },
+    data: {
+      ...(password !== null
+        ? { passwordHash: await bcrypt.hash(password, 12) }
+        : {}),
+      ...(displayName !== null ? { displayName } : {}),
+    },
+    select: {
+      id: true,
+      username: true,
+      displayName: true,
+      isActive: true,
+      isSuperAdmin: true,
+      createdAt: true,
+    },
   });
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, item });
 }
 
 export async function DELETE(request: Request, context: RouteContext) {

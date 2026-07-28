@@ -87,13 +87,14 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
                                   true
                               ? '${log.adminDisplayName} (${log.adminUsername})'
                               : log.adminUsername;
+                          final inquiryLabel = log.companyName.trim().isNotEmpty
+                              ? '${log.companyName} · ${log.contactPersonLabel}'
+                              : log.contactPersonLabel;
                           return Card(
                             elevation: 0,
                             child: ListTile(
                               onTap: () => _openInquiry(log),
-                              title: Text(
-                                '${log.companyNameLabel} · ${log.contactPersonLabel}',
-                              ),
+                              title: Text(inquiryLabel),
                               subtitle: Text(
                                 '$adminName 님이 처리 완료\n${DateFormat("yyyy.MM.dd HH:mm").format(log.completedAt.toLocal())}',
                               ),

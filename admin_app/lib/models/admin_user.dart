@@ -27,4 +27,7 @@ class AdminUser {
           : DateTime.parse(json['createdAt'] as String),
     );
   }
+
+  String get displayLabel =>
+      displayName?.trim().isNotEmpty == true ? displayName!.trim() : '표시 이름 없음';
 }

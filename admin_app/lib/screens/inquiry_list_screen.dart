@@ -43,6 +43,7 @@ class InquiryListScreen extends StatefulWidget {
 class _InquiryListScreenState extends State<InquiryListScreen>
     with WidgetsBindingObserver {
   final _searchController = TextEditingController();
+  late String _scope;
   late String _status;
   String _searchQuery = '';
   bool _isLoading = true;
@@ -53,7 +54,8 @@ class _InquiryListScreenState extends State<InquiryListScreen>
   @override
   void initState() {
     super.initState();
-    _status = widget.currentAdmin.isSuperAdmin ? 'UNASSIGNED' : 'PENDING';
+    _scope = 'MINE';
+    _status = 'PENDING';
     WidgetsBinding.instance.addObserver(this);
     _load();
   }
@@ -90,6 +92,7 @@ class _InquiryListScreenState extends State<InquiryListScreen>
 
     try {
       final result = await widget.inquiryService.fetchInquiries(
+        scope: _scope,
         status: _status,
         search: _searchQuery,
       );
@@ -182,7 +185,7 @@ class _InquiryListScreenState extends State<InquiryListScreen>
       return '회사명, 담당자명 또는 전화번호와 일치하는 문의가 없습니다.';
     }
     if (_status == 'UNASSIGNED') return '배정을 기다리는 문의가 없습니다.';
-    if (_status == 'PENDING') return '처리 전 문의가 없습니다.';
+    if (_status == 'PENDING') return '진행 중인 문의가 없습니다.';
     if (_status == 'COMPLETED') return '처리 완료된 문의가 없습니다.';
     return '아직 접수된 문의가 없습니다.';
   }
@@ -213,10 +216,26 @@ class _InquiryListScreenState extends State<InquiryListScreen>
   String _labelForStatus(String status) {
     return switch (status) {
       'UNASSIGNED' => '배정 전',
-      'PENDING' => '처리 전',
-      'COMPLETED' => '완료',
+      'PENDING' => '진행 중',
+      'COMPLETED' => '처리 완료',
       _ => '전체',
     };
+  }
+
+  bool get _isAllInquiryView =>
+      widget.currentAdmin.isSuperAdmin && _scope == 'ALL';
+
+  List<String> get _visibleStatuses => _isAllInquiryView
+      ? const ['ALL', 'UNASSIGNED', 'PENDING', 'COMPLETED']
+      : const ['PENDING', 'COMPLETED'];
+
+  void _changeScope(String scope) {
+    if (_scope == scope) return;
+    setState(() {
+      _scope = scope;
+      _status = scope == 'ALL' ? 'ALL' : 'PENDING';
+    });
+    _load();
   }
 
   @override
@@ -282,6 +301,9 @@ class _InquiryListScreenState extends State<InquiryListScreen>
                     );
                   },
                 ),
+              ],
+              const Spacer(),
+              if (widget.currentAdmin.isSuperAdmin)
                 ListTile(
                   leading: const Icon(Icons.web),
                   title: const Text('홈페이지 관리'),
@@ -295,8 +317,6 @@ class _InquiryListScreenState extends State<InquiryListScreen>
                     ));
                   },
                 ),
-              ],
-              const Spacer(),
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.logout),
@@ -313,7 +333,7 @@ class _InquiryListScreenState extends State<InquiryListScreen>
       ),
       appBar: AppBar(
         title: Text(
-          widget.currentAdmin.isSuperAdmin ? '문의 배정 관리' : '내 담당 문의',
+          widget.currentAdmin.isSuperAdmin ? '문의 관리' : '내 문의',
         ),
       ),
       body: SafeArea(
@@ -353,19 +373,41 @@ class _InquiryListScreenState extends State<InquiryListScreen>
                 ],
               ),
             ),
+            if (widget.currentAdmin.isSuperAdmin)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<String>(
+                    segments: const [
+                      ButtonSegment(
+                        value: 'MINE',
+                        label: Text('내 문의'),
+                        icon: Icon(Icons.person_outline),
+                      ),
+                      ButtonSegment(
+                        value: 'ALL',
+                        label: Text('전체 문의'),
+                        icon: Icon(Icons.list_alt_outlined),
+                      ),
+                    ],
+                    selected: {_scope},
+                    showSelectedIcon: false,
+                    onSelectionChanged: (selected) =>
+                        _changeScope(selected.first),
+                  ),
+                ),
+              ),
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               child: SizedBox(
                 height: 42,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  itemCount: widget.currentAdmin.isSuperAdmin ? 4 : 3,
+                  itemCount: _visibleStatuses.length,
                   separatorBuilder: (_, __) => const SizedBox(width: 8),
                   itemBuilder: (context, index) {
-                    final statuses = widget.currentAdmin.isSuperAdmin
-                        ? const ['ALL', 'UNASSIGNED', 'PENDING', 'COMPLETED']
-                        : const ['ALL', 'PENDING', 'COMPLETED'];
-                    final status = statuses[index];
+                    final status = _visibleStatuses[index];
                     return ChoiceChip(
                       selected: _status == status,
                       showCheckmark: false,
@@ -412,13 +454,12 @@ class _InquiryListScreenState extends State<InquiryListScreen>
                                     onCall: inquiry.phone?.isNotEmpty == true
                                         ? () => _openPhone(inquiry.phone)
                                         : null,
-                                    onAssign:
-                                        widget.currentAdmin.isSuperAdmin &&
-                                                inquiry.status ==
-                                                    InquiryStatus.pending &&
-                                                inquiry.assignedAdminId == null
-                                            ? () => _openInquiry(inquiry)
-                                            : null,
+                                    onAssign: _isAllInquiryView &&
+                                            inquiry.status ==
+                                                InquiryStatus.pending &&
+                                            inquiry.assignedAdminId == null
+                                        ? () => _openInquiry(inquiry)
+                                        : null,
                                     onComplete: inquiry.status ==
                                                 InquiryStatus.pending &&
                                             (!widget.currentAdmin
@@ -426,8 +467,7 @@ class _InquiryListScreenState extends State<InquiryListScreen>
                                                 inquiry.assignedAdminId != null)
                                         ? () => _markCompleted(inquiry)
                                         : null,
-                                    showAssignment:
-                                        widget.currentAdmin.isSuperAdmin,
+                                    showAssignment: _isAllInquiryView,
                                   );
                                 },
                                 separatorBuilder: (_, __) =>

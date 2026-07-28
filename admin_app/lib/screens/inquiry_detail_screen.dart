@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../constants/colors.dart';
@@ -67,8 +68,7 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
           final roleOrder =
               (left.isSuperAdmin ? 1 : 0).compareTo(right.isSuperAdmin ? 1 : 0);
           if (roleOrder != 0) return roleOrder;
-          return (left.displayName ?? left.username)
-              .compareTo(right.displayName ?? right.username);
+          return left.displayLabel.compareTo(right.displayLabel);
         });
       if (!mounted) return;
       setState(() {
@@ -103,11 +103,8 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
   }
 
   String _adminLabel(AdminUser admin) {
-    final name = admin.displayName?.isNotEmpty == true
-        ? '${admin.displayName} (${admin.username})'
-        : admin.username;
     final role = admin.isSuperAdmin ? ' · 최고 관리자' : '';
-    return '$name$role';
+    return '${admin.displayLabel}$role';
   }
 
   Future<void> _confirmAssignment() async {
@@ -195,6 +192,12 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
     await launchUrl(Uri.parse('$scheme:$value'));
   }
 
+  Future<void> _copyEmail(String email) async {
+    await Clipboard.setData(ClipboardData(text: email));
+    if (!mounted) return;
+    _showSnack('이메일 주소를 복사했습니다.');
+  }
+
   Widget _section(String title, List<Widget> children) {
     return Card(
       color: AppColors.surface,
@@ -232,6 +235,31 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
                 Text(label, style: const TextStyle(color: AppColors.subText)),
           ),
           Expanded(child: Text(value?.isNotEmpty == true ? value! : '-')),
+        ],
+      ),
+    );
+  }
+
+  Widget _emailRow(String email) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const SizedBox(
+            width: 110,
+            child: Text(
+              '이메일',
+              style: TextStyle(color: AppColors.subText),
+            ),
+          ),
+          Expanded(child: SelectableText(email)),
+          IconButton(
+            tooltip: '이메일 복사',
+            visualDensity: VisualDensity.compact,
+            onPressed: () => _copyEmail(email),
+            icon: const Icon(Icons.copy_rounded, size: 20),
+          ),
         ],
       ),
     );
@@ -445,13 +473,17 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
                                 ],
                               ),
                             ),
-                            _row('회사명', inquiry.companyNameLabel),
-                            _row('담당자명', inquiry.contactPersonLabel),
+                            if (inquiry.companyName.trim().isNotEmpty)
+                              _row('회사명', inquiry.companyName),
+                            _row('담당자', inquiry.contactPersonLabel),
                             _row('부서·직책', inquiry.department),
                             _row(
                                 '문의 유형', inquiryTypeLabel(inquiry.inquiryType)),
                             _row('문의 담당 관리자', inquiry.assignedAdminLabel),
-                            _row('이메일', inquiry.email),
+                            if (inquiry.email?.isNotEmpty == true)
+                              _emailRow(inquiry.email!)
+                            else
+                              _row('이메일', inquiry.email),
                             _row('연락처', inquiry.phone),
                             _row('회신 방법',
                                 _responseMethodLabel(inquiry.responseMethod)),
@@ -554,7 +586,7 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
                                       ? '담당자 배정 후 처리 가능'
                                       : inquiry.status == InquiryStatus.pending
                                           ? '처리 완료로 변경'
-                                          : '처리 전으로 되돌리기',
+                                          : '진행 중으로 되돌리기',
                                 ),
                               ),
                             ],

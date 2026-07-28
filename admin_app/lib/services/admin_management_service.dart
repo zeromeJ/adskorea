@@ -30,6 +30,12 @@ class AdminManagementService {
     await client.patch('/api/admin/admins/$id', {'password': password});
   }
 
+  Future<void> updateDisplayName(String id, String displayName) async {
+    await client.patch('/api/admin/admins/$id', {
+      'displayName': displayName,
+    });
+  }
+
   Future<void> deleteAdmin(String id) async {
     await client.delete('/api/admin/admins/$id');
   }
