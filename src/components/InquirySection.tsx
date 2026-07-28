@@ -6,6 +6,7 @@ import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import SectionTitle from "@/components/ui/SectionTitle";
 import { productInterestOptions } from "@/lib/constants";
+import { productBrochureDownloadPath } from "@/lib/downloads";
 import {
   ContactFormData,
   deliveryRegionOptions,
@@ -35,6 +36,12 @@ const resizableImageTypes = new Set([
   "image/png",
   "image/webp",
 ]);
+const zipAttachmentTypes = new Set([
+  "",
+  "application/zip",
+  "application/x-zip-compressed",
+  "application/octet-stream",
+]);
 const validationFieldOrder = [
   "inquiryType",
   "phone",
@@ -60,6 +67,13 @@ function focusValidationField(field: ValidationField) {
   if (!target) return;
   target.scrollIntoView({ behavior: "smooth", block: "center" });
   target.focus({ preventScroll: true });
+}
+
+function isZipAttachment(file: File) {
+  return (
+    file.name.toLowerCase().endsWith(".zip") &&
+    zipAttachmentTypes.has(file.type.toLowerCase())
+  );
 }
 
 async function copyText(value: string) {
@@ -192,11 +206,12 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
     }
 
     const unsupported = nextFiles.find(
-      (file) => !allowedAttachmentTypes.has(file.type),
+      (file) =>
+        !allowedAttachmentTypes.has(file.type) && !isZipAttachment(file),
     );
     if (unsupported) {
       setAttachmentError(
-        `${unsupported.name} 파일은 지원하지 않습니다. PDF, JPG, PNG, WEBP 파일만 첨부할 수 있습니다.`,
+        `${unsupported.name} 파일은 지원하지 않습니다. PDF, JPG, PNG, WEBP, ZIP 파일만 첨부할 수 있습니다.`,
       );
       setShowUploadEmailHelp(false);
       setUploadEmailCopyMessage("");
@@ -332,11 +347,34 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
             <ul className="mt-4 grid gap-3 text-sm leading-6 text-white/78">
               {["문의 유형별 맞춤 입력", "필요한 정보만 간편하게 작성", "맞춤 규격 및 적용 환경 상담", "도면과 현장사진 첨부 가능", "전화·문자·이메일 회신 지원"].map((item) => <li className="flex min-w-0 items-center gap-3" key={item}><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--accent-gold)] text-[11px] font-black text-[var(--primary-deep)]">✓</span><span className="min-w-0">{item}</span></li>)}
             </ul>
+            <div className="mt-5 border-t border-white/12 pt-5">
+              <a
+                aria-label="제품 소개서 PDF 다운로드"
+                className="group -mx-2 flex min-w-0 items-start gap-3 rounded-md px-2 py-5 transition-colors duration-200 hover:bg-white/[0.035] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--primary-dark)]"
+                download
+                href={productBrochureDownloadPath}
+              >
+                <svg aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-white/78" fill="none" viewBox="0 0 24 24">
+                  <path d="M7 3.5h7l4 4V20.5H7z" stroke="currentColor" strokeLinejoin="round" strokeWidth="1.8" />
+                  <path d="M14 3.5v4h4M9.5 12h5M9.5 15.5h5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+                </svg>
+                <span className="min-w-0 flex-1 [word-break:keep-all]">
+                  <span className="block font-semibold text-white/92">제품 소개서</span>
+                  <span className="mt-1 block text-xs leading-5 text-white/60">
+                    제품 규격과 주요 특징을 확인해보세요.
+                  </span>
+                  <span className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-[var(--accent-gold)]">
+                    제품 자료 PDF 다운로드
+                    <span aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-[3px]">→</span>
+                  </span>
+                </span>
+              </a>
+            </div>
           </aside>
           {phoneHref ? (
             <>
               <LinkButton
-                className="mt-3 w-full gap-2"
+                className="mt-4 w-full gap-2"
                 href={phoneHref}
                 onClick={(event) => void handlePhoneAction(event)}
                 variant="light"
@@ -486,7 +524,7 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
             <label className="col-span-full flex min-w-0 flex-col" htmlFor="message"><span className="mb-2 flex min-h-6 min-w-0 items-center justify-between gap-3 text-sm font-bold"><span>문의 내용 (선택)</span><span className="shrink-0 font-medium text-[var(--sub-text)]">{formData.message.length} / 1,500자</span></span><textarea aria-describedby={messageError ? "message-error" : undefined} aria-invalid={Boolean(messageError)} className="min-h-40 min-w-0 max-w-full resize-y [overflow-wrap:anywhere] rounded-md border border-[var(--line)] px-4 py-3 text-base leading-7 outline-none focus:border-[var(--primary)] focus:ring-4 focus:ring-[rgba(46,92,69,0.12)] aria-invalid:border-[var(--alert)] aria-invalid:focus:border-[var(--alert)] aria-invalid:focus:ring-[rgba(185,92,69,0.16)]" id="message" maxLength={1500} onChange={(event) => updateField("message", event.target.value)} placeholder="추가로 전달할 제품, 규격, 수량, 사용환경 또는 요청자료가 있다면 입력해 주세요." value={formData.message} />{messageError ? <p className="mt-2 text-sm font-bold text-[var(--alert)]" id="message-error">{messageError}</p> : null}</label>
 
             <h3 className="col-span-full mt-2 border-t border-[var(--line)] pt-6 text-lg font-bold text-[var(--text)]">4. 첨부파일 및 동의</h3>
-            <div className="col-span-full min-w-0"><label className="flex min-h-6 items-center text-sm font-bold" htmlFor="attachments">파일 첨부 (선택)</label><input accept="application/pdf,image/jpeg,image/png,image/webp" aria-describedby={attachmentError ? "attachment-error" : "attachment-help"} aria-invalid={Boolean(attachmentError)} className="mt-2 min-h-12 w-full min-w-0 max-w-full rounded-md border border-[var(--line)] px-3 py-2 text-base aria-invalid:border-[var(--alert)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--muted-surface)] file:px-3 file:py-2 file:text-sm" id="attachments" key={attachmentInputKey} multiple onChange={(event) => updateAttachments(event.target.files)} type="file" /><p className="mt-2 text-xs leading-5 text-[var(--sub-text)]" id="attachment-help">PDF, JPG, PNG, WEBP · 최대 3개 · 개당 50MB</p>{attachmentError ? <div className="mt-3 rounded-lg border border-[var(--alert)] bg-[rgba(185,92,69,0.08)] p-4" id="attachment-error" role="alert"><p className="text-sm font-bold leading-6 text-[var(--alert)]">{attachmentError}</p>{showUploadEmailHelp ? <><div className="mt-3 flex min-w-0 items-center gap-2 rounded-md bg-white p-2"><a className="min-w-0 flex-1 truncate font-bold text-[var(--primary)] underline underline-offset-2" href={`mailto:${uploadSupportEmail}`}>{uploadSupportEmail}</a><button className="min-h-10 shrink-0 rounded-md border border-[var(--primary)] px-4 text-sm font-bold text-[var(--primary)]" onClick={() => void copyUploadSupportEmail()} type="button">복사</button></div><p aria-live="polite" className="mt-2 min-h-5 text-xs font-bold text-[var(--primary)]">{uploadEmailCopyMessage}</p></> : null}</div> : null}{attachments.length ? <ul className="mt-3 grid gap-2">{attachments.map((file, index) => <li className="flex min-w-0 items-center gap-3 rounded-md bg-[var(--muted-surface)] px-3 py-2 text-sm" key={`${file.name}-${file.size}`}><span aria-hidden="true" className="shrink-0">📎</span><span className="min-w-0 flex-1"><span className="line-clamp-2 [overflow-wrap:anywhere]">{file.name}</span><span className="mt-0.5 block text-xs text-[var(--sub-text)]">{(file.size / 1024 / 1024).toFixed(2)}MB · {uploading ? "업로드 중" : "업로드 대기"}</span></span><button className="min-h-10 shrink-0 rounded-md px-2 text-sm font-bold text-[var(--alert)]" onClick={() => setAttachments((current) => current.filter((_, itemIndex) => itemIndex !== index))} type="button">삭제</button></li>)}</ul> : null}</div>
+            <div className="col-span-full min-w-0"><label className="flex min-h-6 items-center text-sm font-bold" htmlFor="attachments">파일 첨부 (선택)</label><input accept="application/pdf,image/jpeg,image/png,image/webp,.zip,application/zip,application/x-zip-compressed" aria-describedby={attachmentError ? "attachment-error" : "attachment-help"} aria-invalid={Boolean(attachmentError)} className="mt-2 min-h-12 w-full min-w-0 max-w-full rounded-md border border-[var(--line)] px-3 py-2 text-base aria-invalid:border-[var(--alert)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--muted-surface)] file:px-3 file:py-2 file:text-sm" id="attachments" key={attachmentInputKey} multiple onChange={(event) => updateAttachments(event.target.files)} type="file" /><div className="mt-2 text-xs leading-5 text-[var(--sub-text)]" id="attachment-help"><p>PDF, JPG, PNG, WEBP, ZIP · 최대 3개 · 개당 50MB</p><p className="mt-1 font-bold text-[var(--primary-dark)]">첨부할 파일이 많으면 ZIP 파일 하나로 압축하여 올려 주세요.</p></div>{attachmentError ? <div className="mt-3 rounded-lg border border-[var(--alert)] bg-[rgba(185,92,69,0.08)] p-4" id="attachment-error" role="alert"><p className="text-sm font-bold leading-6 text-[var(--alert)]">{attachmentError}</p>{showUploadEmailHelp ? <><div className="mt-3 flex min-w-0 items-center gap-2 rounded-md bg-white p-2"><a className="min-w-0 flex-1 truncate font-bold text-[var(--primary)] underline underline-offset-2" href={`mailto:${uploadSupportEmail}`}>{uploadSupportEmail}</a><button className="min-h-10 shrink-0 rounded-md border border-[var(--primary)] px-4 text-sm font-bold text-[var(--primary)]" onClick={() => void copyUploadSupportEmail()} type="button">복사</button></div><p aria-live="polite" className="mt-2 min-h-5 text-xs font-bold text-[var(--primary)]">{uploadEmailCopyMessage}</p></> : null}</div> : null}{attachments.length ? <ul className="mt-3 grid gap-2">{attachments.map((file, index) => <li className="flex min-w-0 items-center gap-3 rounded-md bg-[var(--muted-surface)] px-3 py-2 text-sm" key={`${file.name}-${file.size}`}><span aria-hidden="true" className="shrink-0">📎</span><span className="min-w-0 flex-1"><span className="line-clamp-2 [overflow-wrap:anywhere]">{file.name}</span><span className="mt-0.5 block text-xs text-[var(--sub-text)]">{(file.size / 1024 / 1024).toFixed(2)}MB · {uploading ? "업로드 중" : "업로드 대기"}</span></span><button className="min-h-10 shrink-0 rounded-md px-2 text-sm font-bold text-[var(--alert)]" onClick={() => setAttachments((current) => current.filter((_, itemIndex) => itemIndex !== index))} type="button">삭제</button></li>)}</ul> : null}</div>
             <input aria-hidden="true" className="hidden" onChange={(event) => updateField("website", event.target.value)} tabIndex={-1} value={formData.website} />
           </div>
 

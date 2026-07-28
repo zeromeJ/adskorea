@@ -25,8 +25,9 @@ export async function GET(request: Request, context: RouteContext) {
       memo: true,
       customers: {
         where: canManageInquiries(admin)
-          ? {}
+          ? { isArchived: false }
           : {
+              isArchived: false,
               inquiries: {
                 some: { assignedAdminId: admin.id },
               },

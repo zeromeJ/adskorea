@@ -9,8 +9,9 @@ export function customerVisibilityWhere(
   admin: CustomerAdmin,
 ): Prisma.CustomerWhereInput {
   return canManageInquiries(admin)
-    ? {}
+    ? { isArchived: false }
     : {
+        isArchived: false,
         inquiries: {
           some: { assignedAdminId: admin.id },
         },

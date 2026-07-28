@@ -156,7 +156,7 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                       onSubmitted: (_) => _searchCustomers(),
                       decoration: const InputDecoration(
                         labelText: '고객 검색',
-                        hintText: '전화번호, 이메일, 회사명, 고객명',
+                        hintText: '접수번호, 전화번호, 이메일, 회사명, 고객명',
                         prefixIcon: Icon(Icons.search),
                       ),
                     ),

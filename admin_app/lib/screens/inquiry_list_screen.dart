@@ -187,7 +187,7 @@ class _InquiryListScreenState extends State<InquiryListScreen>
 
   String get _emptyMessage {
     if (_searchQuery.isNotEmpty) {
-      return '회사명, 담당자명 또는 전화번호와 일치하는 문의가 없습니다.';
+      return '접수번호, 회사명, 담당자명 또는 전화번호와 일치하는 문의가 없습니다.';
     }
     if (_status == 'UNASSIGNED') return '배정을 기다리는 문의가 없습니다.';
     if (_status == 'PENDING') return '진행 중인 문의가 없습니다.';
@@ -380,7 +380,7 @@ class _InquiryListScreenState extends State<InquiryListScreen>
                       onChanged: (_) => setState(() {}),
                       onSubmitted: (_) => _search(),
                       decoration: InputDecoration(
-                        hintText: '회사명, 담당자명 또는 전화번호',
+                        hintText: '접수번호, 회사명, 담당자명, 전화번호',
                         prefixIcon: const Icon(Icons.search),
                         suffixIcon: _searchController.text.isEmpty
                             ? null

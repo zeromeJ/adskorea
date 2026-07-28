@@ -85,6 +85,57 @@ class CustomerDuplicateCandidate {
   }
 }
 
+class CustomerMergeHistory {
+  const CustomerMergeHistory({
+    required this.id,
+    required this.sourceCustomer,
+    required this.movedInquiries,
+    required this.mergedByLabel,
+    required this.createdAt,
+    this.undoneAt,
+    this.undoneByDisplayName,
+  });
+
+  final String id;
+  final Customer sourceCustomer;
+  final List<CustomerInquirySummary> movedInquiries;
+  final String mergedByLabel;
+  final DateTime createdAt;
+  final DateTime? undoneAt;
+  final String? undoneByDisplayName;
+
+  bool get isUndone => undoneAt != null;
+
+  factory CustomerMergeHistory.fromJson(Map<String, dynamic> json) {
+    final rawMovedInquiries =
+        json['movedInquiries'] as List<dynamic>? ?? const [];
+    final movedInquiries = rawMovedInquiries
+        .whereType<Map<String, dynamic>>()
+        .map((record) => record['inquiry'])
+        .whereType<Map<String, dynamic>>()
+        .map(CustomerInquirySummary.fromJson)
+        .toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final displayName = (json['mergedByDisplayName'] as String? ?? '').trim();
+    final username = (json['mergedByUsername'] as String? ?? '').trim();
+    return CustomerMergeHistory(
+      id: json['id'] as String? ?? '',
+      sourceCustomer: Customer.fromJson(
+        json['sourceCustomer'] as Map<String, dynamic>? ?? {},
+      ),
+      movedInquiries: movedInquiries,
+      mergedByLabel: displayName.isNotEmpty
+          ? displayName
+          : (username.isNotEmpty ? username : '관리자'),
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      undoneAt: json['undoneAt'] == null
+          ? null
+          : DateTime.parse(json['undoneAt'] as String),
+      undoneByDisplayName: json['undoneByDisplayName'] as String?,
+    );
+  }
+}
+
 class Customer {
   const Customer({
     required this.id,
@@ -98,6 +149,7 @@ class Customer {
     this.inquiryCount = 0,
     this.inquiries = const [],
     this.duplicateCandidates = const [],
+    this.mergeHistory = const [],
     this.createdAt,
   });
 
@@ -112,6 +164,7 @@ class Customer {
   final int inquiryCount;
   final List<CustomerInquirySummary> inquiries;
   final List<CustomerDuplicateCandidate> duplicateCandidates;
+  final List<CustomerMergeHistory> mergeHistory;
   final DateTime? createdAt;
 
   factory Customer.fromJson(Map<String, dynamic> json) {
@@ -137,6 +190,10 @@ class Customer {
               .whereType<Map<String, dynamic>>()
               .map(CustomerDuplicateCandidate.fromJson)
               .toList(),
+      mergeHistory: (json['mergeLogsAsTarget'] as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(CustomerMergeHistory.fromJson)
+          .toList(),
       createdAt: json['createdAt'] == null
           ? null
           : DateTime.parse(json['createdAt'] as String),

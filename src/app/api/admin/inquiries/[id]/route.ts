@@ -75,6 +75,7 @@ export async function GET(request: Request, context: RouteContext) {
           where: {
             newCustomerId: item.customerId,
             status: "PENDING",
+            candidateCustomer: { isArchived: false },
           },
           orderBy: [
             { matchedPhone: "desc" },

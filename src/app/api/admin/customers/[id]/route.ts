@@ -48,7 +48,10 @@ export async function GET(request: Request, context: RouteContext) {
       ...(canManageInquiries(admin)
         ? {
             duplicateReviews: {
-              where: { status: "PENDING" as const },
+              where: {
+                status: "PENDING" as const,
+                candidateCustomer: { isArchived: false },
+              },
               orderBy: { createdAt: "desc" as const },
               select: {
                 id: true,
@@ -68,6 +71,45 @@ export async function GET(request: Request, context: RouteContext) {
                         id: true,
                         registrationNumber: true,
                         status: true,
+                        createdAt: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          }
+        : {}),
+      ...(admin.isSuperAdmin
+        ? {
+            mergeLogsAsTarget: {
+              orderBy: { createdAt: "desc" as const },
+              take: 50,
+              select: {
+                id: true,
+                mergedByDisplayName: true,
+                mergedByUsername: true,
+                createdAt: true,
+                undoneAt: true,
+                undoneByDisplayName: true,
+                sourceCustomer: {
+                  select: {
+                    id: true,
+                    name: true,
+                    phone: true,
+                    email: true,
+                    company: { select: { id: true, name: true } },
+                  },
+                },
+                movedInquiries: {
+                  orderBy: { inquiry: { createdAt: "desc" as const } },
+                  select: {
+                    inquiry: {
+                      select: {
+                        id: true,
+                        registrationNumber: true,
+                        status: true,
+                        inquiryType: true,
                         createdAt: true,
                       },
                     },

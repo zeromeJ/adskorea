@@ -11,6 +11,10 @@ import {
   normalizeEmail,
   normalizePhone,
 } from "@/lib/customerNormalization";
+import {
+  CustomerMergeError,
+  performCustomerMerge,
+} from "@/lib/admin/customerMerge";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -60,6 +64,7 @@ export async function POST(request: Request, context: RouteContext) {
       newCustomerId: inquiry.customerId,
       candidateCustomerId,
       status: "PENDING",
+      candidateCustomer: { isArchived: false },
     },
     select: { id: true },
   });
@@ -70,40 +75,21 @@ export async function POST(request: Request, context: RouteContext) {
     );
   }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.inquiry.update({
-      where: { id },
-      data: { customerId: candidateCustomerId },
-    });
-    await tx.customerDuplicateReview.update({
-      where: { id: review.id },
-      data: {
-        status: "LINKED",
-        resolvedByAdminId: admin.id,
-        resolvedByDisplayName: admin.displayName,
-        resolvedAt: new Date(),
-      },
-    });
-    await tx.customerDuplicateReview.updateMany({
-      where: {
-        newCustomerId: inquiry.customerId,
-        id: { not: review.id },
-        status: "PENDING",
-      },
-      data: {
-        status: "KEPT_SEPARATE",
-        resolvedByAdminId: admin.id,
-        resolvedByDisplayName: admin.displayName,
-        resolvedAt: new Date(),
-      },
-    });
-    const remaining = await tx.inquiry.count({
-      where: { customerId: inquiry.customerId },
-    });
-    if (remaining === 0) {
-      await tx.customer.delete({ where: { id: inquiry.customerId } });
+  try {
+    await performCustomerMerge(
+      candidateCustomerId,
+      inquiry.customerId,
+      admin,
+    );
+  } catch (error) {
+    if (error instanceof CustomerMergeError) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: error.status },
+      );
     }
-  });
+    throw error;
+  }
 
   return NextResponse.json({ success: true });
 }

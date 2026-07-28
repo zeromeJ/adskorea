@@ -66,6 +66,7 @@ model Inquiry {
   completionLogs       InquiryCompletionLog[]
   assignmentLogs       InquiryAssignmentLog[]
   attachments          InquiryAttachment[]
+  customerMergeRecords CustomerMergeInquiry[]
 
   @@index([assignedAdminId, status, createdAt])
   @@index([customerId, status, createdAt])
@@ -112,26 +113,66 @@ model Company {
 }
 
 model Customer {
-  id                 String                    @id @default(cuid())
-  name               String
-  phone              String?
-  normalizedPhone    String?
-  email              String?
-  normalizedEmail    String?
-  memo               String?
-  companyId          String?
-  createdAt          DateTime                  @default(now())
-  updatedAt          DateTime                  @updatedAt
-  company            Company?                  @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  inquiries          Inquiry[]
-  favorites          CustomerFavorite[]
-  duplicateReviews   CustomerDuplicateReview[] @relation("DuplicateReviewNewCustomer")
-  candidateForReview CustomerDuplicateReview[] @relation("DuplicateReviewCandidateCustomer")
+  id                   String                    @id @default(cuid())
+  name                 String
+  phone                String?
+  normalizedPhone      String?
+  email                String?
+  normalizedEmail      String?
+  memo                 String?
+  companyId            String?
+  isArchived           Boolean                   @default(false)
+  mergedIntoCustomerId String?
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+  company              Company?                  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  mergedIntoCustomer   Customer?                 @relation("CustomerMergeTree", fields: [mergedIntoCustomerId], references: [id], onDelete: SetNull)
+  mergedCustomers      Customer[]                @relation("CustomerMergeTree")
+  inquiries            Inquiry[]
+  favorites            CustomerFavorite[]
+  duplicateReviews     CustomerDuplicateReview[] @relation("DuplicateReviewNewCustomer")
+  candidateForReview   CustomerDuplicateReview[] @relation("DuplicateReviewCandidateCustomer")
+  mergeLogsAsSource    CustomerMergeLog[]        @relation("CustomerMergeSource")
+  mergeLogsAsTarget    CustomerMergeLog[]        @relation("CustomerMergeTarget")
 
   @@index([normalizedPhone])
   @@index([normalizedEmail])
   @@index([companyId])
+  @@index([isArchived, createdAt])
+  @@index([mergedIntoCustomerId])
   @@index([createdAt])
+}
+
+model CustomerMergeLog {
+  id                    String                 @id @default(cuid())
+  sourceCustomerId      String
+  targetCustomerId      String
+  mergedByAdminId       String?
+  mergedByUsername      String
+  mergedByDisplayName   String?
+  transferredReviews    Json?
+  addedFavoriteAdminIds String[]               @default([])
+  createdAt             DateTime               @default(now())
+  undoneAt              DateTime?
+  undoneByAdminId       String?
+  undoneByDisplayName   String?
+  sourceCustomer        Customer               @relation("CustomerMergeSource", fields: [sourceCustomerId], references: [id], onDelete: Restrict)
+  targetCustomer        Customer               @relation("CustomerMergeTarget", fields: [targetCustomerId], references: [id], onDelete: Restrict)
+  movedInquiries        CustomerMergeInquiry[]
+
+  @@index([targetCustomerId, createdAt])
+  @@index([sourceCustomerId])
+  @@index([undoneAt])
+}
+
+model CustomerMergeInquiry {
+  mergeLogId String
+  inquiryId  String
+  mergeLog   CustomerMergeLog @relation(fields: [mergeLogId], references: [id], onDelete: Cascade)
+  inquiry    Inquiry          @relation(fields: [inquiryId], references: [id], onDelete: Restrict)
+
+  @@id([mergeLogId, inquiryId])
+  @@index([inquiryId])
 }
 
 model CustomerFavorite {

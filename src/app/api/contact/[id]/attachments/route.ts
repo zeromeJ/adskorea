@@ -12,6 +12,12 @@ const allowedTypes = new Set([
   "image/png",
   "image/webp",
 ]);
+const zipTypes = new Set([
+  "",
+  "application/zip",
+  "application/x-zip-compressed",
+  "application/octet-stream",
+]);
 const maxUploadBytes = 50 * 1024 * 1024;
 const uploadSupportEmail = "bossjhb@naver.com";
 
@@ -19,6 +25,13 @@ type RouteContext = { params: Promise<{ id: string }> };
 
 function safeFileName(value: string) {
   return value.normalize("NFKC").replace(/[^a-zA-Z0-9가-힣._-]/g, "_");
+}
+
+function isZipFile(file: File) {
+  return (
+    file.name.toLowerCase().endsWith(".zip") &&
+    zipTypes.has(file.type.toLowerCase())
+  );
 }
 
 export async function POST(request: Request, context: RouteContext) {
@@ -70,11 +83,11 @@ export async function POST(request: Request, context: RouteContext) {
       );
     }
 
-    if (!allowedTypes.has(file.type)) {
+    if (!allowedTypes.has(file.type) && !isZipFile(file)) {
       return NextResponse.json(
         {
           success: false,
-          message: "PDF, JPG, PNG, WEBP 파일만 첨부할 수 있습니다.",
+          message: "PDF, JPG, PNG, WEBP, ZIP 파일만 첨부할 수 있습니다.",
         },
         { status: 400 },
       );
@@ -94,10 +107,11 @@ export async function POST(request: Request, context: RouteContext) {
   try {
     for (const file of files) {
       const path = `${id}/${crypto.randomUUID()}-${safeFileName(file.name)}`;
+      const contentType = isZipFile(file) ? "application/zip" : file.type;
       const { error } = await supabase.storage
         .from(inquiryAttachmentBucket)
         .upload(path, await file.arrayBuffer(), {
-          contentType: file.type,
+          contentType,
           upsert: false,
         });
 
@@ -108,7 +122,7 @@ export async function POST(request: Request, context: RouteContext) {
         data: {
           inquiryId: id,
           fileName: file.name,
-          contentType: file.type,
+          contentType,
           size: file.size,
           storagePath: path,
         },

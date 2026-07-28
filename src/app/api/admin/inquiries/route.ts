@@ -93,6 +93,12 @@ export async function GET(request: Request) {
     ...(search
       ? {
           OR: [
+            {
+              registrationNumber: {
+                contains: search,
+                mode: "insensitive",
+              },
+            },
             { companyName: { contains: search, mode: "insensitive" } },
             { contactPerson: { contains: search, mode: "insensitive" } },
             { phone: { contains: search, mode: "insensitive" } },

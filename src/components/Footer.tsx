@@ -13,7 +13,7 @@ type FooterSettings = {
   logoUrl?: string;
 };
 
-export default function Footer({ settings, hasCatalog = false }: { settings?: FooterSettings; hasCatalog?: boolean }) {
+export default function Footer({ settings }: { settings?: FooterSettings }) {
   const brandName = settings?.brandName || company.brandName;
   const brandNameEn = settings?.brandNameEn || company.brandNameEn;
   const email = settings?.email || company.email;
@@ -24,10 +24,7 @@ export default function Footer({ settings, hasCatalog = false }: { settings?: Fo
   const footerNavigation = [
     ...navItems.map((item) => ({
       ...item,
-      children:
-        item.href === "#performance" && hasCatalog
-          ? [...item.children, { label: "제품 카탈로그", href: "#catalog" }]
-          : item.children,
+      children: item.children,
     })),
     { label: "견적 문의", href: "#inquiry", children: [] },
   ];

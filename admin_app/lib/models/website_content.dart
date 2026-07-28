@@ -438,11 +438,11 @@ final websiteImageSlots = <String, List<ImageSlot>>{
         description: '영상 재생 전 표시할 대표 이미지를 직접 등록하세요.'),
     ImageSlot(
         key: 'catalogFile',
-        label: '제품 카탈로그 PDF',
+        label: '제품 소개서 PDF',
         ratio: 'A4 세로형',
         width: 900,
         height: 1273,
-        description: '홈페이지에서 내려받을 카탈로그 PDF를 등록하세요.',
+        description: '견적 및 문의 영역에서 내려받을 제품 소개서 PDF를 등록하세요.',
         type: WebsiteSlotType.pdf),
     ImageSlot(
         key: 'catalogCover',
