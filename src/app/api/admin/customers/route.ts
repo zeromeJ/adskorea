@@ -33,7 +33,10 @@ export async function GET(request: Request) {
       filter === "DUPLICATES"
         ? {
             duplicateReviews: {
-              some: { status: "PENDING" },
+              some: {
+                status: "PENDING",
+                candidateCustomer: { isArchived: false },
+              },
             },
           }
         : {},
@@ -46,6 +49,19 @@ export async function GET(request: Request) {
               {
                 company: {
                   name: { contains: search, mode: "insensitive" },
+                },
+              },
+              {
+                inquiries: {
+                  some: {
+                    registrationNumber: {
+                      contains: search,
+                      mode: "insensitive",
+                    },
+                    ...(canManageInquiries(admin)
+                      ? {}
+                      : { assignedAdminId: admin.id }),
+                  },
                 },
               },
               ...(normalizedSearchPhone
@@ -82,7 +98,10 @@ export async function GET(request: Request) {
           select: { adminUserId: true },
         },
         duplicateReviews: {
-          where: { status: "PENDING" },
+          where: {
+            status: "PENDING",
+            candidateCustomer: { isArchived: false },
+          },
           select: { id: true },
         },
         _count: {

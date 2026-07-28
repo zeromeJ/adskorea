@@ -84,4 +84,14 @@ class CustomerService {
       'targetCustomerId': targetCustomerId,
     });
   }
+
+  Future<void> undoCustomerMerge(
+    String targetCustomerId,
+    String mergeLogId,
+  ) async {
+    await client.post(
+      '/api/admin/customers/$targetCustomerId/merge-history/$mergeLogId/undo',
+      const {},
+    );
+  }
 }

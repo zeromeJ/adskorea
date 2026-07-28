@@ -230,7 +230,7 @@ export async function getWebsiteContent(): Promise<CmsSiteContent | null> {
       }),
       factoryImage: asset("company", "factory"),
       catalog: asset("company", "catalogFile") ? {
-        title: "ADS Korea 제품 카탈로그",
+        title: "아델슨 제품 소개서",
         language: "한국어",
         version: "최신본",
         pages: "PDF",

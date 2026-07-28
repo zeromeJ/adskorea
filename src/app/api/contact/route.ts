@@ -86,7 +86,7 @@ export async function POST(request: Request) {
       const candidates =
         duplicateConditions.length > 0
           ? await tx.customer.findMany({
-              where: { OR: duplicateConditions },
+              where: { isArchived: false, OR: duplicateConditions },
               select: {
                 id: true,
                 normalizedPhone: true,

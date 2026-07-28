@@ -77,4 +77,59 @@ void main() {
     expect(
         candidate.customer.inquiries.single.registrationNumber, '2607280001');
   });
+
+  test('customer merge history keeps each merge independently undoable', () {
+    final customer = Customer.fromJson({
+      'id': 'baseline',
+      'name': '기준 고객',
+      'mergeLogsAsTarget': [
+        {
+          'id': 'merge-1',
+          'mergedByDisplayName': '최고관리자',
+          'mergedByUsername': 'super',
+          'createdAt': '2026-07-29T03:00:00.000Z',
+          'undoneAt': null,
+          'undoneByDisplayName': null,
+          'sourceCustomer': {'id': 'candidate-1', 'name': '후보 고객 1'},
+          'movedInquiries': [
+            {
+              'inquiry': {
+                'id': 'inquiry-1',
+                'registrationNumber': '2607290001',
+                'status': 'PENDING',
+                'createdAt': '2026-07-29T02:00:00.000Z',
+              },
+            },
+          ],
+        },
+        {
+          'id': 'merge-2',
+          'mergedByDisplayName': '최고관리자',
+          'mergedByUsername': 'super',
+          'createdAt': '2026-07-29T04:00:00.000Z',
+          'undoneAt': '2026-07-29T05:00:00.000Z',
+          'undoneByDisplayName': '최고관리자',
+          'sourceCustomer': {'id': 'candidate-2', 'name': '후보 고객 2'},
+          'movedInquiries': [
+            {
+              'inquiry': {
+                'id': 'inquiry-2',
+                'registrationNumber': '2607290002',
+                'status': 'COMPLETED',
+                'createdAt': '2026-07-29T01:00:00.000Z',
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(customer.mergeHistory, hasLength(2));
+    expect(customer.mergeHistory.first.isUndone, isFalse);
+    expect(customer.mergeHistory.last.isUndone, isTrue);
+    expect(
+      customer.mergeHistory.first.movedInquiries.single.registrationNumber,
+      '2607290001',
+    );
+  });
 }

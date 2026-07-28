@@ -1,6 +1,5 @@
 import AboutSection from "@/components/AboutSection";
 import BenefitsSection from "@/components/BenefitsSection";
-import CatalogSection from "@/components/CatalogSection";
 import DocumentLibrarySection, {
   type DocumentItem,
 } from "@/components/DocumentLibrarySection";
@@ -70,7 +69,6 @@ export default async function Home() {
     "sustainability",
     "company",
     "companyOverviewVideo",
-    "catalog",
     "contact",
   ];
   const storedOrder = home?.sectionOrder?.length
@@ -118,13 +116,13 @@ export default async function Home() {
       key: "productOverviewVideo",
       element: (
         <OverviewVideoSection
-          description="압축성형 목재 팔레트의 원료, 제조방식, 구조, 제품군과 활용 방향을 소개하는 제조사 제공 영상입니다."
-          disclaimer="본 영상은 제조사가 제작한 제품 홍보자료입니다. 영상 내 성능 및 환경 관련 표현은 제품 모델과 조건에 따라 달라질 수 있으며, 공식 수치는 별도의 시험성적서와 제품 탄소발자국 검증자료를 참조하십시오."
-          eyebrow="Product Overview Video"
+          description="아델슨의 회사 소개와 친환경 성형 팔레트 사업 방향, 공동 연구개발, 생산설비, 제조 역량, 제품 개발 및 글로벌 사업 방향을 소개하는 제조사 제작 홍보영상입니다."
+          disclaimer="본 영상은 제조사가 제작한 홍보자료입니다. 영상 내 일부 수치와 표현은 제조사 제공자료 또는 홍보 표현을 포함하며, 제품의 공식 성능과 시험 결과는 별도의 시험성적서, 제품 사양서 및 검증자료를 기준으로 확인하십시오."
+          eyebrow="Company and Manufacturing Overview"
           fieldName="homePage.productOverviewVideo"
           id="product-overview-video"
           posterUrl={home?.productOverviewPoster}
-          title="제품 구조 및 특징 소개영상"
+          title="회사·생산 및 기술 소개영상"
           videoUrl={home?.productOverviewVideo}
         />
       ),
@@ -173,19 +171,18 @@ export default async function Home() {
       key: "companyOverviewVideo",
       element: (
         <OverviewVideoSection
-          description="ADS의 회사 소개, 생산설비, 제품 개발, 맞춤 설계와 해외사업 방향을 소개하는 제조사 제공 영상입니다."
-          disclaimer="본 영상은 제조사가 제작한 홍보자료입니다. 영상 내 일부 수치와 표현은 회사 제공자료 또는 홍보 표현을 포함하며, 제품의 공식 성능과 시험 결과는 별도의 시험성적서 및 검증자료를 기준으로 확인하십시오."
-          eyebrow="Company and Manufacturing Overview"
+          description="아델슨 친환경 압축 목재 성형 팔레트의 원료, 제조 방식, 구조적 특징, 주요 성능, 수출 편의성, 제품군 및 산업별 활용 방향을 소개하는 제조사 제작 홍보영상입니다."
+          disclaimer="본 영상은 제조사가 제작한 제품 홍보자료입니다. 영상 내 성능, 환경성, 수출 및 인증 관련 표현은 제품 모델과 적용 조건에 따라 달라질 수 있으며, 공식 성능과 시험 결과는 별도의 시험성적서, 제품 사양서 및 검증자료를 기준으로 확인하십시오."
+          eyebrow="Product Overview Video"
           fieldName="homePage.companyOverviewVideo"
           id="company-overview-video"
           muted
           posterUrl={home?.companyOverviewPoster}
-          title="회사·생산 및 기술 소개영상"
+          title="제품 구조 및 주요 특징 소개영상"
           videoUrl={home?.companyOverviewVideo}
         />
       ),
     },
-    { key: "catalog", element: <CatalogSection catalog={cms?.catalog} /> },
     {
       key: "contact",
       element: (
@@ -211,7 +208,7 @@ export default async function Home() {
         ))}
       </main>
       <FloatingContactButtons />
-      <Footer hasCatalog={Boolean(cms?.catalog?.fileUrl)} settings={settings} />
+      <Footer settings={settings} />
     </>
   );
 }

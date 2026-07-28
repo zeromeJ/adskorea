@@ -5,6 +5,7 @@ export const inquiryAttachmentBucket =
 export const websiteContentBucket =
   process.env.SUPABASE_CONTENT_BUCKET || "website-content";
 export const websiteContentMaxFileSize = 1024 * 1024 * 1024;
+export const inquiryAttachmentMaxBucketFileSize = 1024 * 1024 * 1024;
 
 export function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -59,24 +60,32 @@ export async function ensureInquiryAttachmentBucket() {
   const supabase = getSupabaseAdmin();
   if (!supabase) return null;
 
+  const bucketOptions = {
+    public: false,
+    fileSizeLimit: inquiryAttachmentMaxBucketFileSize,
+    allowedMimeTypes: [
+      "application/pdf",
+      "application/zip",
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ],
+  };
   const { data } = await supabase.storage.getBucket(inquiryAttachmentBucket);
   if (!data) {
     const { error } = await supabase.storage.createBucket(
       inquiryAttachmentBucket,
-      {
-        public: false,
-        fileSizeLimit: 10 * 1024 * 1024,
-        allowedMimeTypes: [
-          "application/pdf",
-          "image/jpeg",
-          "image/png",
-          "image/webp",
-        ],
-      },
+      bucketOptions,
     );
     if (error && !error.message.toLowerCase().includes("already exists")) {
       throw error;
     }
+  } else {
+    const { error } = await supabase.storage.updateBucket(
+      inquiryAttachmentBucket,
+      bucketOptions,
+    );
+    if (error) throw error;
   }
 
   return supabase;

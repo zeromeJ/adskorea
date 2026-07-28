@@ -162,9 +162,9 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('기존 고객으로 연결'),
+        title: const Text('후보 1명 연결'),
         content: Text(
-          '$customerName 고객의 기존 기록에 이 문의를 연결할까요?\n\n접수된 문의 내용은 그대로 유지됩니다.',
+          '$customerName 고객의 기존 문의를 현재 고객 기록에 연결할까요?\n\n현재 고객은 기준으로 유지되고, 선택하지 않은 비교 후보도 계속 남습니다.',
         ),
         actions: [
           TextButton(
@@ -186,7 +186,7 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
         customerId,
       );
       await _load();
-      _showSnack('기존 고객으로 연결했습니다.');
+      _showSnack('후보 1명을 연결했습니다. 남은 후보는 계속 비교할 수 있습니다.');
     } on ApiException catch (error) {
       _showSnack(error.message);
     } finally {
@@ -412,7 +412,7 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
                                     candidate.nameLabel,
                                   ),
                           icon: const Icon(Icons.link),
-                          label: const Text('기존 고객으로 연결'),
+                          label: const Text('이 후보 1명 연결'),
                         ),
                       ),
                     ),
