@@ -14,6 +14,13 @@ class AdminManagementService {
         .toList();
   }
 
+  Future<List<AdminUser>> fetchAssignmentCandidates() async {
+    final json = await client.get('/api/admin/assignment-candidates');
+    return (json['items'] as List<dynamic>)
+        .map((item) => AdminUser.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
   Future<void> createAdmin({
     required String username,
     required String password,
@@ -36,16 +43,27 @@ class AdminManagementService {
     });
   }
 
+  Future<void> updateAssistantRole(String id, bool isAssistantAdmin) async {
+    await client.patch('/api/admin/admins/$id', {
+      'isAssistantAdmin': isAssistantAdmin,
+    });
+  }
+
   Future<void> deleteAdmin(String id) async {
     await client.delete('/api/admin/admins/$id');
   }
 
-  Future<List<CompletionLog>> fetchCompletionLogs() async {
+  Future<List<InquiryActivityLog>> fetchActivityLogs({
+    String type = 'ALL',
+  }) async {
     final json = await client.get('/api/admin/activity-logs', {
       'limit': '100',
+      'type': type,
     });
     return (json['items'] as List<dynamic>)
-        .map((item) => CompletionLog.fromJson(item as Map<String, dynamic>))
+        .map(
+          (item) => InquiryActivityLog.fromJson(item as Map<String, dynamic>),
+        )
         .toList();
   }
 }

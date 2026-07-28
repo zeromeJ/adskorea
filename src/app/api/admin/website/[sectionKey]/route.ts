@@ -1,7 +1,7 @@
 import { Prisma, WebsiteAssetType } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { forbiddenResponse, getAdminFromRequest, unauthorizedResponse } from "@/lib/admin/auth";
+import { canManageWebsite, forbiddenResponse, getAdminFromRequest, unauthorizedResponse } from "@/lib/admin/auth";
 import { hasWebsiteContentModels, prisma } from "@/lib/prisma";
 import { getWebsiteSection } from "@/lib/websiteSections";
 
@@ -10,7 +10,7 @@ type Context = { params: Promise<{ sectionKey: string }> };
 export async function GET(request: Request, context: Context) {
   const admin = await getAdminFromRequest(request);
   if (!admin) return unauthorizedResponse();
-  if (!admin.isSuperAdmin) return forbiddenResponse();
+  if (!canManageWebsite(admin)) return forbiddenResponse("홈페이지 관리 권한이 필요합니다.");
   if (!hasWebsiteContentModels()) return NextResponse.json({ success: false, message: "서버를 다시 시작한 후 이용해 주세요." }, { status: 503 });
   const { sectionKey } = await context.params;
   const definition = getWebsiteSection(sectionKey);
@@ -34,7 +34,7 @@ type AssetInput = {
 export async function PUT(request: Request, context: Context) {
   const admin = await getAdminFromRequest(request);
   if (!admin) return unauthorizedResponse();
-  if (!admin.isSuperAdmin) return forbiddenResponse();
+  if (!canManageWebsite(admin)) return forbiddenResponse("홈페이지 관리 권한이 필요합니다.");
   if (!hasWebsiteContentModels()) return NextResponse.json({ success: false, message: "서버를 다시 시작한 후 이용해 주세요." }, { status: 503 });
   try {
     const { sectionKey } = await context.params;

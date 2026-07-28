@@ -1,0 +1,2 @@
+ALTER TABLE "AdminUser"
+ADD COLUMN "isAssistantAdmin" BOOLEAN NOT NULL DEFAULT false;

@@ -15,6 +15,7 @@ export async function GET(request: Request) {
       username: admin.username,
       displayName: admin.displayName || "관리자",
       isSuperAdmin: admin.isSuperAdmin,
+      isAssistantAdmin: admin.isAssistantAdmin,
     },
   });
 }

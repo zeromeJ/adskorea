@@ -23,6 +23,7 @@ enum ResponseMethod {
 
 model Inquiry {
   id                   String                 @id @default(cuid())
+  registrationNumber   String                 @unique
   companyName          String
   contactPerson        String
   email                String?
@@ -54,6 +55,7 @@ model Inquiry {
   updatedAt            DateTime               @updatedAt
   assignedAdmin        AdminUser?             @relation("InquiryAssignee", fields: [assignedAdminId], references: [id], onDelete: SetNull)
   completionLogs       InquiryCompletionLog[]
+  assignmentLogs       InquiryAssignmentLog[]
   attachments          InquiryAttachment[]
 
   @@index([assignedAdminId, status, createdAt])
@@ -79,11 +81,13 @@ model AdminUser {
   displayName       String?
   isActive          Boolean                @default(true)
   isSuperAdmin      Boolean                @default(false)
+  isAssistantAdmin  Boolean                @default(false)
   createdAt         DateTime               @default(now())
   updatedAt         DateTime               @updatedAt
   devices           AdminDevice[]
   assignedInquiries Inquiry[]              @relation("InquiryAssignee")
   completionLogs    InquiryCompletionLog[]
+  assignmentLogs    InquiryAssignmentLog[]
 }
 
 model InquiryCompletionLog {
@@ -97,6 +101,23 @@ model InquiryCompletionLog {
   adminUser        AdminUser? @relation(fields: [adminUserId], references: [id], onDelete: SetNull)
 
   @@index([completedAt])
+  @@index([inquiryId])
+  @@index([adminUserId])
+}
+
+model InquiryAssignmentLog {
+  id                       String     @id @default(cuid())
+  inquiryId                String
+  adminUserId              String?
+  adminUsername            String
+  adminDisplayName         String?
+  assignedAdminId          String?
+  assignedAdminDisplayName String?
+  createdAt                DateTime   @default(now())
+  inquiry                  Inquiry    @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  adminUser                AdminUser? @relation(fields: [adminUserId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
   @@index([inquiryId])
   @@index([adminUserId])
 }

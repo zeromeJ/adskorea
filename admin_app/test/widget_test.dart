@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ads_inquiry_admin/models/completion_log.dart';
 import 'package:ads_inquiry_admin/models/inquiry.dart';
 
 void main() {
@@ -11,6 +12,7 @@ void main() {
     final now = DateTime(2026);
     final inquiry = Inquiry(
       id: 'inquiry',
+      registrationNumber: '2607280001',
       companyName: '',
       contactPerson: '',
       status: InquiryStatus.pending,
@@ -23,5 +25,28 @@ void main() {
 
     expect(inquiry.assignedAdminLabel, '김관리');
     expect(inquiry.assignedAdminLabel, isNot(contains('login-id')));
+  });
+
+  test('assignment activity identifies actor, assignee, and inquiry', () {
+    final log = InquiryActivityLog.fromJson({
+      'id': 'activity',
+      'type': 'ASSIGNED',
+      'adminUsername': 'super-login',
+      'adminDisplayName': '최고관리자',
+      'assignedAdminId': 'assigned-admin',
+      'assignedAdminDisplayName': '김담당',
+      'occurredAt': '2026-07-28T03:00:00.000Z',
+      'inquiry': {
+        'id': 'inquiry',
+        'registrationNumber': '2607280012',
+        'companyName': '테스트 회사',
+        'contactPerson': '홍길동',
+      },
+    });
+
+    expect(log.type, InquiryActivityType.assigned);
+    expect(log.adminLabel, '최고관리자');
+    expect(log.assignedAdminLabel, '김담당');
+    expect(log.registrationNumber, '2607280012');
   });
 }

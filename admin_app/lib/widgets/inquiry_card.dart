@@ -94,6 +94,12 @@ class InquiryCard extends StatelessWidget {
                 '연락처',
                 inquiry.phone?.isNotEmpty == true ? inquiry.phone! : '연락처 없음',
               ),
+              _info(
+                '접수번호',
+                inquiry.registrationNumber.isNotEmpty
+                    ? inquiry.registrationNumber
+                    : '-',
+              ),
               if (inquiry.productInterest?.isNotEmpty == true)
                 _info('관심 제품', inquiry.productInterest!),
               if (inquiry.cargoType?.isNotEmpty == true)

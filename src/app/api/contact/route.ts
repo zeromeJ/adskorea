@@ -10,6 +10,7 @@ import {
 import { isRateLimited } from "@/lib/rateLimit";
 import { sendNewInquiryPush } from "@/lib/firebaseAdmin";
 import { inquiryTypeLabel } from "@/lib/contactSchema";
+import { createInquiryRegistrationNumber } from "@/lib/inquiryRegistrationNumber";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -55,26 +56,33 @@ export async function POST(request: Request) {
     }
 
     const companyLabel = data.companyName || "회사명 미입력";
-    const inquiry = await prisma.inquiry.create({
-      data: {
-        companyName: data.companyName,
-        contactPerson: data.contactPerson,
-        email: data.email || null,
-        phone: data.phone || null,
-        responseMethod: data.responseMethod as ResponseMethod,
-        inquiryType: data.inquiryType,
-        department: data.department || null,
-        inquiryDetails: data.details,
-        industry: data.industry || null,
-        productInterest: data.productInterest || null,
-        cargoType: data.details.cargoType || null,
-        loadPerPallet: data.details.totalWeight || null,
-        estimatedQuantity: data.estimatedQuantity || null,
-        requiredPalletSize: data.requestedPalletSizes.join(", ") || null,
-        requestedPalletSizes: data.requestedPalletSizes,
-        exportCountry: data.details.deliveryRegion || data.details.exportCountry || null,
-        message: data.message || null,
-      },
+    const inquiry = await prisma.$transaction(async (tx) => {
+      const registrationNumber =
+        await createInquiryRegistrationNumber(tx);
+
+      return tx.inquiry.create({
+        data: {
+          registrationNumber,
+          companyName: data.companyName,
+          contactPerson: data.contactPerson,
+          email: data.email || null,
+          phone: data.phone || null,
+          responseMethod: data.responseMethod as ResponseMethod,
+          inquiryType: data.inquiryType,
+          department: data.department || null,
+          inquiryDetails: data.details,
+          industry: data.industry || null,
+          productInterest: data.productInterest || null,
+          cargoType: data.details.cargoType || null,
+          loadPerPallet: data.details.totalWeight || null,
+          estimatedQuantity: data.estimatedQuantity || null,
+          requiredPalletSize: data.requestedPalletSizes.join(", ") || null,
+          requestedPalletSizes: data.requestedPalletSizes,
+          exportCountry:
+            data.details.deliveryRegion || data.details.exportCountry || null,
+          message: data.message || null,
+        },
+      });
     });
 
     const receiverEmail = process.env.CONTACT_RECEIVER_EMAIL;
@@ -96,6 +104,7 @@ export async function POST(request: Request) {
 새로운 홈페이지 문의가 접수되었습니다.
 
 접수 시간: ${submittedAt}
+접수번호: ${inquiry.registrationNumber}
 
 문의 유형: ${inquiryTypeLabel(data.inquiryType)}
 회사명: ${data.companyName || "-"}
@@ -137,7 +146,11 @@ ${data.message || "-"}
       console.error("Inquiry push notification failed:", pushError);
     }
 
-    return NextResponse.json({ success: true, inquiryId: inquiry.id });
+    return NextResponse.json({
+      success: true,
+      inquiryId: inquiry.id,
+      registrationNumber: inquiry.registrationNumber,
+    });
   } catch (error) {
     console.error("Contact form error:", error);
 

@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { forbiddenResponse, getAdminFromRequest, unauthorizedResponse } from "@/lib/admin/auth";
+import { canManageWebsite, forbiddenResponse, getAdminFromRequest, unauthorizedResponse } from "@/lib/admin/auth";
 import { ensureWebsiteContentBucket, websiteContentBucket } from "@/lib/supabaseAdmin";
 import { getWebsiteSection } from "@/lib/websiteSections";
 
 export async function POST(request: Request) {
   const admin = await getAdminFromRequest(request);
   if (!admin) return unauthorizedResponse();
-  if (!admin.isSuperAdmin) return forbiddenResponse();
+  if (!canManageWebsite(admin)) return forbiddenResponse("홈페이지 관리 권한이 필요합니다.");
 
   const body = await request.json() as {
     sectionKey?: string;

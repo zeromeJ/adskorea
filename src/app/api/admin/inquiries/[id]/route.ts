@@ -1,6 +1,7 @@
 import { InquiryStatus, Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import {
+  canManageInquiries,
   forbiddenResponse,
   getAdminFromRequest,
   unauthorizedResponse,
@@ -35,6 +36,7 @@ export async function GET(request: Request, context: RouteContext) {
           displayName: true,
           isActive: true,
           isSuperAdmin: true,
+          isAssistantAdmin: true,
         },
       },
       attachments: { orderBy: { createdAt: "asc" } },
@@ -100,8 +102,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     data.adminMemo = body.adminMemo.trim() || null;
   }
 
-  if (hasAssignmentUpdate && !admin.isSuperAdmin) {
-    return forbiddenResponse("문의 담당자는 최고 관리자만 배정할 수 있습니다.");
+  if (hasAssignmentUpdate && !canManageInquiries(admin)) {
+    return forbiddenResponse("문의 담당자를 배정할 권한이 없습니다.");
   }
 
   const currentItem = await prisma.inquiry.findFirst({
@@ -115,16 +117,27 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   }
 
+  const hasInquiryContentUpdate =
+    body.status !== undefined || typeof body.adminMemo === "string";
+  if (
+    hasInquiryContentUpdate &&
+    !admin.isSuperAdmin &&
+    currentItem.assignedAdminId !== admin.id
+  ) {
+    return forbiddenResponse("본인에게 배정된 문의만 처리할 수 있습니다.");
+  }
+
   const nextAssignedAdminId = hasAssignmentUpdate
     ? typeof body.assignedAdminId === "string"
       ? body.assignedAdminId.trim() || null
       : null
     : currentItem.assignedAdminId;
 
+  let nextAssignedAdminDisplayName: string | null = null;
   if (hasAssignmentUpdate && nextAssignedAdminId) {
     const assignee = await prisma.adminUser.findFirst({
       where: { id: nextAssignedAdminId, isActive: true },
-      select: { id: true },
+      select: { id: true, displayName: true },
     });
     if (!assignee) {
       return NextResponse.json(
@@ -132,6 +145,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         { status: 400 },
       );
     }
+    nextAssignedAdminDisplayName = assignee.displayName;
   }
 
   const assignmentChanged =
@@ -157,6 +171,7 @@ export async function PATCH(request: Request, context: RouteContext) {
             displayName: true,
             isActive: true,
             isSuperAdmin: true,
+            isAssistantAdmin: true,
           },
         },
       },
@@ -169,6 +184,19 @@ export async function PATCH(request: Request, context: RouteContext) {
           adminUserId: admin.id,
           adminUsername: admin.username,
           adminDisplayName: admin.displayName,
+        },
+      });
+    }
+
+    if (assignmentChanged) {
+      await tx.inquiryAssignmentLog.create({
+        data: {
+          inquiryId: id,
+          adminUserId: admin.id,
+          adminUsername: admin.username,
+          adminDisplayName: admin.displayName,
+          assignedAdminId: nextAssignedAdminId,
+          assignedAdminDisplayName: nextAssignedAdminDisplayName,
         },
       });
     }

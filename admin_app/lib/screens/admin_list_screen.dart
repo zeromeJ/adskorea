@@ -180,6 +180,50 @@ class _AdminListScreenState extends State<AdminListScreen> {
     }
   }
 
+  Future<void> _changeAssistantRole(AdminUser admin) async {
+    final appoint = !admin.isAssistantAdmin;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(appoint ? '보조 관리자 임명' : '보조 관리자 해제'),
+        content: Text(
+          appoint
+              ? '${admin.displayLabel}님을 보조 관리자로 임명할까요?\n\n전체 문의 조회·담당자 배정과 홈페이지 관리 권한이 부여됩니다. 관리자 계정 관리는 할 수 없습니다.'
+              : '${admin.displayLabel}님의 보조 관리자 권한을 해제할까요?\n\n이후에는 본인에게 배정된 문의만 확인할 수 있습니다.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(appoint ? '임명 확인' : '해제 확인'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      await widget.service.updateAssistantRole(admin.id, appoint);
+      await _load();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            appoint ? '보조 관리자로 임명했습니다.' : '보조 관리자 권한을 해제했습니다.',
+          ),
+        ),
+      );
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    }
+  }
+
   Future<void> _delete(AdminUser admin) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -249,6 +293,8 @@ class _AdminListScreenState extends State<AdminListScreen> {
                                     Expanded(child: Text(admin.displayLabel)),
                                     if (admin.isSuperAdmin)
                                       const Chip(label: Text('최고 관리자')),
+                                    if (admin.isAssistantAdmin)
+                                      const Chip(label: Text('보조 관리자')),
                                   ],
                                 ),
                                 subtitle: Text(
@@ -257,6 +303,9 @@ class _AdminListScreenState extends State<AdminListScreen> {
                                 isThreeLine: true,
                                 trailing: PopupMenuButton<String>(
                                   onSelected: (value) {
+                                    if (value == 'assistantRole') {
+                                      _changeAssistantRole(admin);
+                                    }
                                     if (value == 'displayName') {
                                       _editDisplayName(admin);
                                     }
@@ -264,6 +313,15 @@ class _AdminListScreenState extends State<AdminListScreen> {
                                     if (value == 'delete') _delete(admin);
                                   },
                                   itemBuilder: (_) => [
+                                    if (!admin.isSuperAdmin)
+                                      PopupMenuItem(
+                                        value: 'assistantRole',
+                                        child: Text(
+                                          admin.isAssistantAdmin
+                                              ? '보조 관리자 해제'
+                                              : '보조 관리자 임명',
+                                        ),
+                                      ),
                                     const PopupMenuItem(
                                       value: 'displayName',
                                       child: Text('표시 이름 수정'),

@@ -60,8 +60,8 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
     try {
       final inquiry =
           await widget.inquiryService.fetchInquiry(widget.inquiryId);
-      final admins = widget.currentAdmin.isSuperAdmin
-          ? await widget.adminManagementService.fetchAdmins()
+      final admins = widget.currentAdmin.canManageInquiries
+          ? await widget.adminManagementService.fetchAssignmentCandidates()
           : const <AdminUser>[];
       final activeAdmins = admins.where((admin) => admin.isActive).toList()
         ..sort((left, right) {
@@ -103,7 +103,11 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
   }
 
   String _adminLabel(AdminUser admin) {
-    final role = admin.isSuperAdmin ? ' · 최고 관리자' : '';
+    final role = admin.isSuperAdmin
+        ? ' · 최고 관리자'
+        : admin.isAssistantAdmin
+            ? ' · 보조 관리자'
+            : '';
     return '${admin.displayLabel}$role';
   }
 
@@ -358,9 +362,12 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
   Widget build(BuildContext context) {
     final inquiry = _inquiry;
     final requiresAssignment = inquiry != null &&
-        widget.currentAdmin.isSuperAdmin &&
+        widget.currentAdmin.canManageInquiries &&
         inquiry.status == InquiryStatus.pending &&
         inquiry.assignedAdminId == null;
+    final canProcessInquiry = inquiry != null &&
+        (widget.currentAdmin.isSuperAdmin ||
+            inquiry.assignedAdminId == widget.currentAdmin.id);
 
     return Scaffold(
       appBar: AppBar(title: const Text('문의 상세')),
@@ -378,7 +385,7 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
                     : ListView(
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                         children: [
-                          if (widget.currentAdmin.isSuperAdmin)
+                          if (widget.currentAdmin.canManageInquiries)
                             _section('문의 담당자 배정', [
                               Container(
                                 width: double.infinity,
@@ -485,6 +492,7 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
                             else
                               _row('이메일', inquiry.email),
                             _row('연락처', inquiry.phone),
+                            _row('접수번호', inquiry.registrationNumber),
                             _row('회신 방법',
                                 _responseMethodLabel(inquiry.responseMethod)),
                           ]),
@@ -546,16 +554,22 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
                           _section('관리자 메모', [
                             TextField(
                               controller: _memoController,
+                              readOnly: !canProcessInquiry,
                               minLines: 3,
                               maxLines: 6,
-                              decoration: const InputDecoration(
-                                  hintText: '관리자 메모를 입력하세요.'),
+                              decoration: InputDecoration(
+                                hintText: canProcessInquiry
+                                    ? '관리자 메모를 입력하세요.'
+                                    : '본인에게 배정된 문의만 메모를 수정할 수 있습니다.',
+                              ),
                             ),
                             const SizedBox(height: 12),
                             Align(
                               alignment: Alignment.centerRight,
                               child: FilledButton(
-                                onPressed: _isSaving ? null : _saveMemo,
+                                onPressed: _isSaving || !canProcessInquiry
+                                    ? null
+                                    : _saveMemo,
                                 child: Text(_isSaving ? '저장 중...' : '메모 저장'),
                               ),
                             ),
@@ -580,13 +594,18 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
                               ),
                               FilledButton(
                                 onPressed:
-                                    requiresAssignment ? null : _updateStatus,
+                                    requiresAssignment || !canProcessInquiry
+                                        ? null
+                                        : _updateStatus,
                                 child: Text(
                                   requiresAssignment
                                       ? '담당자 배정 후 처리 가능'
-                                      : inquiry.status == InquiryStatus.pending
-                                          ? '처리 완료로 변경'
-                                          : '진행 중으로 되돌리기',
+                                      : !canProcessInquiry
+                                          ? '담당 문의만 처리 가능'
+                                          : inquiry.status ==
+                                                  InquiryStatus.pending
+                                              ? '처리 완료로 변경'
+                                              : '진행 중으로 되돌리기',
                                 ),
                               ),
                             ],

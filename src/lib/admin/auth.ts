@@ -7,6 +7,19 @@ export type AdminTokenPayload = {
   username: string;
 };
 
+export type AdminPermissions = {
+  isSuperAdmin: boolean;
+  isAssistantAdmin: boolean;
+};
+
+export function canManageInquiries(admin: AdminPermissions) {
+  return admin.isSuperAdmin || admin.isAssistantAdmin;
+}
+
+export function canManageWebsite(admin: AdminPermissions) {
+  return admin.isSuperAdmin || admin.isAssistantAdmin;
+}
+
 function getJwtSecret() {
   const secret = process.env.JWT_SECRET;
 
@@ -47,6 +60,7 @@ export async function getAdminFromRequest(request: Request) {
         username: true,
         displayName: true,
         isSuperAdmin: true,
+        isAssistantAdmin: true,
       },
     });
 
