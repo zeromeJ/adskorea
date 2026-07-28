@@ -38,8 +38,8 @@ function AutoPlayVideo({
   useEffect(() => {
     const player = videoRef.current;
     if (!player) return;
+    player.muted = true;
     void player.play().catch(() => {
-      player.muted = true;
       void player.play();
     });
   }, [src]);
@@ -50,6 +50,7 @@ function AutoPlayVideo({
       autoPlay
       className="block h-full w-full object-contain"
       controls
+      muted
       playsInline
       poster={poster}
       preload="auto"
@@ -151,7 +152,7 @@ export default function TestVideosSection({
                   allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
                   allowFullScreen
                   className="h-full w-full border-0"
-                  src={`https://iframe.videodelivery.net/${selectedVideo.streamId}?autoplay=true`}
+                  src={`https://iframe.videodelivery.net/${selectedVideo.streamId}?autoplay=true&muted=true`}
                   title={selectedVideo.title}
                 />
               ) : selectedVideo.videoUrl ? (

@@ -53,9 +53,12 @@ class AdminManagementService {
     await client.delete('/api/admin/admins/$id');
   }
 
-  Future<List<InquiryActivityLog>> fetchActivityLogs() async {
+  Future<List<InquiryActivityLog>> fetchActivityLogs({
+    String type = 'ALL',
+  }) async {
     final json = await client.get('/api/admin/activity-logs', {
       'limit': '100',
+      'type': type,
     });
     return (json['items'] as List<dynamic>)
         .map(
