@@ -1,3 +1,5 @@
+import 'customer.dart';
+
 enum InquiryStatus { pending, completed }
 
 class InquiryAttachment {
@@ -84,6 +86,9 @@ class Inquiry {
     this.handPalletTruckUse,
     this.message,
     this.adminMemo,
+    this.customerId,
+    this.customer,
+    this.customerMatchCandidates = const [],
     this.assignedAdminId,
     this.assignedAdminUsername,
     this.assignedAdminDisplayName,
@@ -118,6 +123,9 @@ class Inquiry {
   final String? message;
   final InquiryStatus status;
   final String? adminMemo;
+  final String? customerId;
+  final Customer? customer;
+  final List<CustomerDuplicateCandidate> customerMatchCandidates;
   final String? assignedAdminId;
   final String? assignedAdminUsername;
   final String? assignedAdminDisplayName;
@@ -163,6 +171,17 @@ class Inquiry {
       message: json['message'] as String?,
       status: inquiryStatusFromJson(json['status'] as String?),
       adminMemo: json['adminMemo'] as String?,
+      customerId: json['customerId'] as String?,
+      customer: json['customer'] is Map
+          ? Customer.fromJson(
+              Map<String, dynamic>.from(json['customer'] as Map),
+            )
+          : null,
+      customerMatchCandidates:
+          (json['customerMatchCandidates'] as List<dynamic>? ?? const [])
+              .whereType<Map<String, dynamic>>()
+              .map(CustomerDuplicateCandidate.fromJson)
+              .toList(),
       assignedAdminId: json['assignedAdminId'] as String?,
       assignedAdminUsername: assignedAdmin['username'] as String?,
       assignedAdminDisplayName: assignedAdmin['displayName'] as String?,

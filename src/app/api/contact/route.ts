@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
-import { ResponseMethod } from "@prisma/client";
+import { Prisma, ResponseMethod } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
   ContactRequestBody,
@@ -11,6 +11,11 @@ import { isRateLimited } from "@/lib/rateLimit";
 import { sendNewInquiryPush } from "@/lib/firebaseAdmin";
 import { inquiryTypeLabel } from "@/lib/contactSchema";
 import { createInquiryRegistrationNumber } from "@/lib/inquiryRegistrationNumber";
+import {
+  normalizeCompanyName,
+  normalizeEmail,
+  normalizePhone,
+} from "@/lib/customerNormalization";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -59,10 +64,52 @@ export async function POST(request: Request) {
     const inquiry = await prisma.$transaction(async (tx) => {
       const registrationNumber =
         await createInquiryRegistrationNumber(tx);
+      const normalizedCompanyName = normalizeCompanyName(data.companyName);
+      const normalizedPhone = normalizePhone(data.phone);
+      const normalizedEmail = normalizeEmail(data.email);
+      const company = normalizedCompanyName
+        ? await tx.company.upsert({
+            where: { normalizedName: normalizedCompanyName },
+            create: {
+              name: data.companyName,
+              normalizedName: normalizedCompanyName,
+            },
+            update: {},
+            select: { id: true },
+          })
+        : null;
+      const duplicateConditions: Prisma.CustomerWhereInput[] = [
+        ...(normalizedPhone ? [{ normalizedPhone }] : []),
+        ...(normalizedEmail ? [{ normalizedEmail }] : []),
+        ...(company ? [{ companyId: company.id }] : []),
+      ];
+      const candidates =
+        duplicateConditions.length > 0
+          ? await tx.customer.findMany({
+              where: { OR: duplicateConditions },
+              select: {
+                id: true,
+                normalizedPhone: true,
+                normalizedEmail: true,
+                companyId: true,
+              },
+            })
+          : [];
+      const customer = await tx.customer.create({
+        data: {
+          name: data.contactPerson,
+          phone: data.phone || null,
+          normalizedPhone,
+          email: data.email || null,
+          normalizedEmail,
+          companyId: company?.id,
+        },
+      });
 
-      return tx.inquiry.create({
+      const createdInquiry = await tx.inquiry.create({
         data: {
           registrationNumber,
+          customerId: customer.id,
           companyName: data.companyName,
           contactPerson: data.contactPerson,
           email: data.email || null,
@@ -83,6 +130,25 @@ export async function POST(request: Request) {
           message: data.message || null,
         },
       });
+
+      if (candidates.length > 0) {
+        await tx.customerDuplicateReview.createMany({
+          data: candidates.map((candidate) => ({
+            newCustomerId: customer.id,
+            candidateCustomerId: candidate.id,
+            matchedPhone:
+              normalizedPhone !== null &&
+              normalizedPhone === candidate.normalizedPhone,
+            matchedEmail:
+              normalizedEmail !== null &&
+              normalizedEmail === candidate.normalizedEmail,
+            matchedCompany:
+              company !== null && company.id === candidate.companyId,
+          })),
+        });
+      }
+
+      return createdInquiry;
     });
 
     const receiverEmail = process.env.CONTACT_RECEIVER_EMAIL;

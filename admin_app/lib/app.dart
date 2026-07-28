@@ -4,11 +4,13 @@ import 'constants/colors.dart';
 import 'models/admin_user.dart';
 import 'screens/inquiry_list_screen.dart';
 import 'screens/inquiry_detail_screen.dart';
+import 'screens/customer_list_screen.dart';
 import 'screens/login_screen.dart';
 import 'services/api_client.dart';
 import 'services/admin_management_service.dart';
 import 'services/auth_service.dart';
 import 'services/inquiry_service.dart';
+import 'services/customer_service.dart';
 import 'services/push_notification_service.dart';
 import 'services/website_content_service.dart';
 
@@ -23,6 +25,7 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
   final ApiClient _apiClient = ApiClient();
   late final AuthService _authService = AuthService(_apiClient);
   late final InquiryService _inquiryService = InquiryService(_apiClient);
+  late final CustomerService _customerService = CustomerService(_apiClient);
   late final WebsiteContentService _websiteContentService =
       WebsiteContentService(_apiClient);
   late final AdminManagementService _adminManagementService =
@@ -38,6 +41,8 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
   bool _isLoggedIn = false;
   AdminUser? _currentAdmin;
   int _inquiryRefreshVersion = 0;
+  int _customerRefreshVersion = 0;
+  int _homeIndex = 0;
 
   @override
   void initState() {
@@ -78,6 +83,7 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
     setState(() {
       _isLoggedIn = value && admin != null;
       _currentAdmin = admin;
+      _homeIndex = 0;
     });
     final token = _apiClient.token;
     if (value && token != null) {
@@ -97,6 +103,7 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
             currentAdmin: _currentAdmin!,
             inquiryId: inquiryId,
             inquiryService: _inquiryService,
+            customerService: _customerService,
           ),
         ),
       );
@@ -105,7 +112,10 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
 
   void _refreshInquiryList() {
     if (!mounted) return;
-    setState(() => _inquiryRefreshVersion++);
+    setState(() {
+      _inquiryRefreshVersion++;
+      _customerRefreshVersion++;
+    });
   }
 
   @override
@@ -186,14 +196,32 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
       home: _isLoading
           ? const Scaffold(body: Center(child: CircularProgressIndicator()))
           : _isLoggedIn
-              ? InquiryListScreen(
-                  currentAdmin: _currentAdmin!,
-                  authService: _authService,
-                  adminManagementService: _adminManagementService,
-                  inquiryService: _inquiryService,
-                  refreshVersion: _inquiryRefreshVersion,
-                  websiteContentService: _websiteContentService,
-                  onLogout: () => _setLoggedIn(false),
+              ? IndexedStack(
+                  index: _homeIndex,
+                  children: [
+                    InquiryListScreen(
+                      currentAdmin: _currentAdmin!,
+                      authService: _authService,
+                      adminManagementService: _adminManagementService,
+                      inquiryService: _inquiryService,
+                      customerService: _customerService,
+                      refreshVersion: _inquiryRefreshVersion,
+                      websiteContentService: _websiteContentService,
+                      onOpenCustomers: () => setState(() {
+                        _homeIndex = 1;
+                        _customerRefreshVersion++;
+                      }),
+                      onLogout: () => _setLoggedIn(false),
+                    ),
+                    CustomerListScreen(
+                      currentAdmin: _currentAdmin!,
+                      customerService: _customerService,
+                      inquiryService: _inquiryService,
+                      adminManagementService: _adminManagementService,
+                      refreshVersion: _customerRefreshVersion,
+                      onOpenInquiries: () => setState(() => _homeIndex = 0),
+                    ),
+                  ],
                 )
               : LoginScreen(
                   authService: _authService,

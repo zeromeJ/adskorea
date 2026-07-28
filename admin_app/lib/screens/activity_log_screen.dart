@@ -5,6 +5,7 @@ import '../models/admin_user.dart';
 import '../services/admin_management_service.dart';
 import '../services/api_client.dart';
 import '../services/inquiry_service.dart';
+import '../services/customer_service.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_view.dart';
 import '../widgets/loading_view.dart';
@@ -15,12 +16,14 @@ class ActivityLogScreen extends StatefulWidget {
     required this.adminService,
     required this.currentAdmin,
     required this.inquiryService,
+    required this.customerService,
     super.key,
   });
 
   final AdminManagementService adminService;
   final AdminUser currentAdmin;
   final InquiryService inquiryService;
+  final CustomerService customerService;
 
   @override
   State<ActivityLogScreen> createState() => _ActivityLogScreenState();
@@ -67,6 +70,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
           currentAdmin: widget.currentAdmin,
           inquiryId: log.inquiryId,
           inquiryService: widget.inquiryService,
+          customerService: widget.customerService,
         ),
       ),
     );
@@ -88,7 +92,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
                   segments: const [
                     ButtonSegment(value: 'ALL', label: Text('전체')),
                     ButtonSegment(value: 'COMPLETED', label: Text('문의')),
-                    ButtonSegment(value: 'ASSIGNMENT', label: Text('배정자')),
+                    ButtonSegment(value: 'ASSIGNMENT', label: Text('배정')),
                   ],
                   selected: {_type},
                   showSelectedIcon: false,

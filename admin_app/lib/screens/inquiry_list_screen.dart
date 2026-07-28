@@ -9,6 +9,7 @@ import '../screens/inquiry_detail_screen.dart';
 import '../services/auth_service.dart';
 import '../services/admin_management_service.dart';
 import '../services/inquiry_service.dart';
+import '../services/customer_service.dart';
 import '../services/website_content_service.dart';
 import '../screens/website_management_screen.dart';
 import '../widgets/empty_state.dart';
@@ -22,9 +23,11 @@ class InquiryListScreen extends StatefulWidget {
     required this.adminManagementService,
     required this.currentAdmin,
     required this.inquiryService,
+    required this.customerService,
     required this.refreshVersion,
     required this.websiteContentService,
     required this.onLogout,
+    required this.onOpenCustomers,
     super.key,
   });
 
@@ -32,9 +35,11 @@ class InquiryListScreen extends StatefulWidget {
   final AdminManagementService adminManagementService;
   final AdminUser currentAdmin;
   final InquiryService inquiryService;
+  final CustomerService customerService;
   final int refreshVersion;
   final WebsiteContentService websiteContentService;
   final VoidCallback onLogout;
+  final VoidCallback onOpenCustomers;
 
   @override
   State<InquiryListScreen> createState() => _InquiryListScreenState();
@@ -198,6 +203,7 @@ class _InquiryListScreenState extends State<InquiryListScreen>
           currentAdmin: widget.currentAdmin,
           inquiryId: inquiry.id,
           inquiryService: widget.inquiryService,
+          customerService: widget.customerService,
         ),
       ),
     );
@@ -298,6 +304,7 @@ class _InquiryListScreenState extends State<InquiryListScreen>
                           adminService: widget.adminManagementService,
                           currentAdmin: widget.currentAdmin,
                           inquiryService: widget.inquiryService,
+                          customerService: widget.customerService,
                         ),
                       ),
                     );
@@ -337,6 +344,25 @@ class _InquiryListScreenState extends State<InquiryListScreen>
         title: Text(
           widget.currentAdmin.canManageInquiries ? '문의 관리' : '내 문의',
         ),
+      ),
+      bottomNavigationBar: NavigationBar(
+        height: 72,
+        selectedIndex: 0,
+        onDestinationSelected: (index) {
+          if (index == 1) widget.onOpenCustomers();
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.assignment_outlined),
+            selectedIcon: Icon(Icons.assignment),
+            label: '문의 관리',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.people_outline),
+            selectedIcon: Icon(Icons.people),
+            label: '고객 관리',
+          ),
+        ],
       ),
       body: SafeArea(
         top: false,

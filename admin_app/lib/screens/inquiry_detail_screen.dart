@@ -8,6 +8,7 @@ import '../models/inquiry.dart';
 import '../services/admin_management_service.dart';
 import '../services/api_client.dart';
 import '../services/inquiry_service.dart';
+import '../services/customer_service.dart';
 import '../widgets/error_view.dart';
 import '../widgets/loading_view.dart';
 import '../widgets/status_chip.dart';
@@ -18,6 +19,7 @@ class InquiryDetailScreen extends StatefulWidget {
     required this.currentAdmin,
     required this.inquiryId,
     required this.inquiryService,
+    required this.customerService,
     super.key,
   });
 
@@ -25,6 +27,7 @@ class InquiryDetailScreen extends StatefulWidget {
   final AdminUser currentAdmin;
   final String inquiryId;
   final InquiryService inquiryService;
+  final CustomerService customerService;
 
   @override
   State<InquiryDetailScreen> createState() => _InquiryDetailScreenState();
@@ -35,6 +38,7 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
   bool _isLoading = true;
   bool _isSaving = false;
   bool _isAssigning = false;
+  bool _isCustomerAction = false;
   String? _error;
   String? _selectedAdminId;
   List<AdminUser> _admins = [];
@@ -151,6 +155,287 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
     if (confirmed == true) {
       await _assignAdmin(_selectedAdminId);
     }
+  }
+
+  Future<void> _linkCustomer(String customerId, String customerName) async {
+    if (_isCustomerAction) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('기존 고객으로 연결'),
+        content: Text(
+          '$customerName 고객의 기존 기록에 이 문의를 연결할까요?\n\n접수된 문의 내용은 그대로 유지됩니다.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('연결 확인'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    setState(() => _isCustomerAction = true);
+    try {
+      await widget.customerService.linkInquiryToCustomer(
+        widget.inquiryId,
+        customerId,
+      );
+      await _load();
+      _showSnack('기존 고객으로 연결했습니다.');
+    } on ApiException catch (error) {
+      _showSnack(error.message);
+    } finally {
+      if (mounted) setState(() => _isCustomerAction = false);
+    }
+  }
+
+  Future<void> _keepNewCustomer() async {
+    if (_isCustomerAction) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('새 고객으로 유지'),
+        content: const Text(
+          '기존 고객과 연결하지 않고 별도의 새 고객으로 유지할까요?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('새 고객 유지'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    setState(() => _isCustomerAction = true);
+    try {
+      await widget.customerService.keepInquiryAsNewCustomer(widget.inquiryId);
+      await _load();
+      _showSnack('새 고객으로 유지했습니다.');
+    } on ApiException catch (error) {
+      _showSnack(error.message);
+    } finally {
+      if (mounted) setState(() => _isCustomerAction = false);
+    }
+  }
+
+  Future<void> _unlinkCustomer() async {
+    if (_isCustomerAction) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('고객 연결 해제'),
+        content: const Text(
+          '이 문의를 현재 고객 기록에서 분리할까요?\n\n문의 내용은 삭제되지 않고 별도의 고객으로 분리됩니다.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('연결 해제 확인'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    setState(() => _isCustomerAction = true);
+    try {
+      await widget.customerService.unlinkInquiryCustomer(widget.inquiryId);
+      await _load();
+      _showSnack('고객 연결을 해제하고 별도 고객으로 분리했습니다.');
+    } on ApiException catch (error) {
+      _showSnack(error.message);
+    } finally {
+      if (mounted) setState(() => _isCustomerAction = false);
+    }
+  }
+
+  void _openPreviousInquiry(String inquiryId) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => InquiryDetailScreen(
+          adminManagementService: widget.adminManagementService,
+          currentAdmin: widget.currentAdmin,
+          inquiryId: inquiryId,
+          inquiryService: widget.inquiryService,
+          customerService: widget.customerService,
+        ),
+      ),
+    );
+  }
+
+  Widget _customerConnectionPanel(Inquiry inquiry) {
+    final candidates = inquiry.customerMatchCandidates;
+    if (candidates.isEmpty) {
+      if (!widget.currentAdmin.isSuperAdmin || inquiry.customer == null) {
+        return const SizedBox.shrink();
+      }
+      return Card(
+        elevation: 0,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              const Icon(Icons.person_outline),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '연결 고객: ${inquiry.customer!.nameLabel}',
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+              TextButton(
+                onPressed: _isCustomerAction ? null : _unlinkCustomer,
+                child: const Text('연결 해제'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final matchMessage = candidates.any((match) => match.matchedPhone)
+        ? '동일한 전화번호로 접수된 고객이 있습니다.'
+        : candidates.any((match) => match.matchedEmail)
+            ? '동일한 이메일로 접수된 고객이 있습니다.'
+            : '동일한 회사명의 고객이 있습니다. 같은 회사의 다른 담당자일 수 있습니다.';
+
+    return Card(
+      elevation: 0,
+      color: const Color(0xFFFFF7E8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: Color(0xFFE0A94F), width: 1.5),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.info_outline, color: Color(0xFF8B5A00)),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '기존 고객 가능성',
+                    style: TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '$matchMessage\n내용을 확인한 뒤 연결 여부를 선택해 주세요.',
+              style: const TextStyle(fontSize: 16, height: 1.5),
+            ),
+            const SizedBox(height: 12),
+            ...candidates.map((match) {
+              final candidate = match.customer;
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.line),
+                ),
+                child: Column(
+                  children: [
+                    ListTile(
+                      title: Text(
+                        candidate.nameLabel,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      subtitle: Text(
+                        '${candidate.companyNameLabel}\n${match.reasonLabel}',
+                      ),
+                      isThreeLine: true,
+                    ),
+                    ExpansionTile(
+                      title: Text(
+                        '이전 문의 ${candidate.inquiries.length}건 펼쳐보기',
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                      children: candidate.inquiries.isEmpty
+                          ? const [
+                              ListTile(title: Text('이전 문의가 없습니다.')),
+                            ]
+                          : candidate.inquiries
+                              .map(
+                                (previous) => ListTile(
+                                  title: Text(
+                                    '접수번호 ${previous.registrationNumber}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  trailing: const Text(
+                                    '이동',
+                                    style: TextStyle(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  onTap: () =>
+                                      _openPreviousInquiry(previous.id),
+                                ),
+                              )
+                              .toList(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: _isCustomerAction
+                              ? null
+                              : () => _linkCustomer(
+                                    candidate.id,
+                                    candidate.nameLabel,
+                                  ),
+                          icon: const Icon(Icons.link),
+                          label: const Text('기존 고객으로 연결'),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _isCustomerAction ? null : _keepNewCustomer,
+                icon: const Icon(Icons.person_add_alt_1),
+                label: const Text('새 고객으로 유지'),
+              ),
+            ),
+            if (_isCustomerAction) ...[
+              const SizedBox(height: 10),
+              const LinearProgressIndicator(),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _updateStatus() async {
@@ -385,6 +670,7 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
                     : ListView(
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                         children: [
+                          _customerConnectionPanel(inquiry),
                           if (widget.currentAdmin.canManageInquiries)
                             _section('문의 담당자 배정', [
                               Container(
