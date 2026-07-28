@@ -6,7 +6,10 @@ import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import SectionTitle from "@/components/ui/SectionTitle";
 import { productInterestOptions } from "@/lib/constants";
-import { productBrochureDownloadPath } from "@/lib/downloads";
+import {
+  productBrochureDownloadPath,
+  productBrochureFallbackFileSize,
+} from "@/lib/downloads";
 import {
   ContactFormData,
   deliveryRegionOptions,
@@ -113,7 +116,13 @@ function DimensionInput({ id, label, value, onChange }: { id: string; label: str
   );
 }
 
-export default function InquirySection({ phone = "" }: { phone?: string }) {
+export default function InquirySection({
+  brochureFileSize = productBrochureFallbackFileSize,
+  phone = "",
+}: {
+  brochureFileSize?: string;
+  phone?: string;
+}) {
   const [formData, setFormData] = useState<ContactFormData>(initialContactFormData);
   const [isLoading, setIsLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -347,30 +356,24 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
             <ul className="mt-4 grid gap-3 text-sm leading-6 text-white/78">
               {["문의 유형별 맞춤 입력", "필요한 정보만 간편하게 작성", "맞춤 규격 및 적용 환경 상담", "도면과 현장사진 첨부 가능", "전화·문자·이메일 회신 지원"].map((item) => <li className="flex min-w-0 items-center gap-3" key={item}><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--accent-gold)] text-[11px] font-black text-[var(--primary-deep)]">✓</span><span className="min-w-0">{item}</span></li>)}
             </ul>
-            <div className="mt-5 border-t border-white/12 pt-5">
-              <a
-                aria-label="제품 소개서 PDF 다운로드"
-                className="group -mx-2 flex min-w-0 items-start gap-3 rounded-md px-2 py-5 transition-colors duration-200 hover:bg-white/[0.035] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--primary-dark)]"
-                download
-                href={productBrochureDownloadPath}
-              >
-                <svg aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-white/78" fill="none" viewBox="0 0 24 24">
-                  <path d="M7 3.5h7l4 4V20.5H7z" stroke="currentColor" strokeLinejoin="round" strokeWidth="1.8" />
-                  <path d="M14 3.5v4h4M9.5 12h5M9.5 15.5h5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
-                </svg>
-                <span className="min-w-0 flex-1 [word-break:keep-all]">
-                  <span className="block font-semibold text-white/92">제품 소개서</span>
-                  <span className="mt-1 block text-xs leading-5 text-white/60">
-                    제품 규격과 주요 특징을 확인해보세요.
-                  </span>
-                  <span className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-[var(--accent-gold)]">
-                    제품 자료 PDF 다운로드
-                    <span aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-[3px]">→</span>
-                  </span>
-                </span>
-              </a>
-            </div>
           </aside>
+          <a
+            aria-label={`제품 카탈로그 PDF 다운로드, PDF ${brochureFileSize || productBrochureFallbackFileSize}`}
+            className="group mt-4 flex min-h-11 w-full min-w-0 items-center gap-3 rounded-md border border-[var(--accent-gold)] bg-[var(--accent-gold)] px-4 py-2.5 text-[var(--primary-deep)] transition duration-200 hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--primary-dark)] sm:min-h-12 sm:px-5 sm:py-3"
+            download
+            href={productBrochureDownloadPath}
+          >
+            <svg aria-hidden="true" className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24">
+              <path d="M12 3.5v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+            </svg>
+            <span className="min-w-0 flex-1 text-left text-sm font-bold [word-break:keep-all]">
+              제품 카탈로그 다운로드
+            </span>
+            <span className="shrink-0 text-xs font-semibold opacity-70">
+              PDF · {brochureFileSize || productBrochureFallbackFileSize}
+            </span>
+            <span aria-hidden="true" className="shrink-0 transition-transform duration-200 group-hover:translate-x-[3px]">→</span>
+          </a>
           {phoneHref ? (
             <>
               <LinkButton

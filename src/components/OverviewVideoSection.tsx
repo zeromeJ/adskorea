@@ -38,8 +38,8 @@ export default function OverviewVideoSection({
         />
         <div className="order-1 min-w-0 [word-break:keep-all] lg:order-2">
           <span className="inline-flex rounded-full bg-[var(--sub-mint)] px-3 py-1.5 text-xs font-bold text-[var(--primary-dark)]">제조사 제공 홍보영상</span>
-          <h2 className="en mt-3 text-[clamp(1.55rem,3vw,2.5rem)] leading-tight font-bold text-[var(--text)] text-balance">{eyebrow}</h2>
-          <p className="mt-2 text-lg leading-7 font-bold text-[var(--accent-gold-dark)]">{title}</p>
+          <p className="en mt-3 text-sm font-bold text-[var(--accent-gold-dark)]">{eyebrow}</p>
+          <h2 className="mt-2 text-[clamp(1.75rem,3vw,2.5rem)] leading-tight font-bold text-[var(--text)] text-balance">{title}</h2>
           <p className="mt-4 text-base leading-7 text-[var(--sub-text)]">{description}</p>
           <p className="mt-5 border-t border-[var(--line)] pt-4 text-[0.82rem] leading-5 text-[var(--sub-text)]">{disclaimer}</p>
         </div>
