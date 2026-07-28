@@ -4,8 +4,13 @@ import { getAdminFromRequest, unauthorizedResponse } from "@/lib/admin/auth";
 import { inquiryVisibilityWhere } from "@/lib/admin/inquiryAccess";
 import { prisma } from "@/lib/prisma";
 
-function parseStatus(status: string | null, isSuperAdmin: boolean) {
-  if (status === "UNASSIGNED" && isSuperAdmin) {
+function parseScope(scope: string | null, isSuperAdmin: boolean) {
+  if (!isSuperAdmin) return "MINE";
+  return scope === "MINE" ? "MINE" : "ALL";
+}
+
+function parseStatus(status: string | null, canViewUnassigned: boolean) {
+  if (status === "UNASSIGNED" && canViewUnassigned) {
     return status;
   }
 
@@ -63,13 +68,17 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const status = parseStatus(searchParams.get("status"), admin.isSuperAdmin);
+  const scope = parseScope(searchParams.get("scope"), admin.isSuperAdmin);
+  const canViewUnassigned = admin.isSuperAdmin && scope === "ALL";
+  const status = parseStatus(searchParams.get("status"), canViewUnassigned);
   const page = Math.max(Number(searchParams.get("page") || 1), 1);
   const limit = Math.min(Math.max(Number(searchParams.get("limit") || 30), 1), 100);
   const search = searchParams.get("search")?.trim();
 
   const baseWhere: Prisma.InquiryWhereInput = {
-    ...inquiryVisibilityWhere(admin),
+    ...(scope === "MINE"
+      ? { assignedAdminId: admin.id }
+      : inquiryVisibilityWhere(admin)),
     ...(search
       ? {
           OR: [
@@ -92,7 +101,7 @@ export async function GET(request: Request) {
       : status === "PENDING"
         ? {
             status: InquiryStatus.PENDING,
-            ...(admin.isSuperAdmin
+            ...(canViewUnassigned
               ? { assignedAdminId: { not: null } }
               : {}),
           }
@@ -104,7 +113,7 @@ export async function GET(request: Request) {
   const offset = (page - 1) * limit;
   const countsPromise = Promise.all([
     prisma.inquiry.count({ where: baseWhere }),
-    admin.isSuperAdmin
+    canViewUnassigned
       ? prisma.inquiry.count({
           where: {
             ...baseWhere,
@@ -117,7 +126,7 @@ export async function GET(request: Request) {
       where: {
         ...baseWhere,
         status: InquiryStatus.PENDING,
-        ...(admin.isSuperAdmin
+        ...(canViewUnassigned
           ? { assignedAdminId: { not: null } }
           : {}),
       },

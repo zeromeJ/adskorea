@@ -35,7 +35,7 @@ String inquiryStatusToApi(InquiryStatus status) {
 }
 
 String inquiryStatusLabel(InquiryStatus status) {
-  return status == InquiryStatus.completed ? '처리 완료' : '처리 전';
+  return status == InquiryStatus.completed ? '처리 완료' : '진행 중';
 }
 
 String inquiryTypeLabel(String? value) {
@@ -178,9 +178,9 @@ class Inquiry {
   String get assignedAdminLabel {
     if (assignedAdminId == null) return '미배정';
     if (assignedAdminDisplayName?.isNotEmpty == true) {
-      return '$assignedAdminDisplayName ($assignedAdminUsername)';
+      return assignedAdminDisplayName!;
     }
-    return assignedAdminUsername ?? '배정된 관리자';
+    return '표시 이름 없음';
   }
 
   String get companyNameLabel =>

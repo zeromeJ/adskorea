@@ -51,12 +51,14 @@ class InquiryService {
   final ApiClient client;
 
   Future<InquiryListResult> fetchInquiries({
+    String scope = 'MINE',
     String status = 'PENDING',
     String search = '',
     int page = 1,
     int limit = 30,
   }) async {
     final json = await client.get('/api/admin/inquiries', {
+      'scope': scope,
       'status': status,
       'page': '$page',
       'limit': '$limit',

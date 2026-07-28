@@ -57,6 +57,71 @@ class _AdminListScreenState extends State<AdminListScreen> {
     if (created == true) _load();
   }
 
+  Future<void> _editDisplayName(AdminUser admin) async {
+    final controller = TextEditingController(text: admin.displayName ?? '');
+    String? validationError;
+    final displayName = await showDialog<String>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('표시 이름 수정'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            maxLength: 50,
+            textInputAction: TextInputAction.done,
+            decoration: InputDecoration(
+              labelText: '표시 이름',
+              helperText: '문의 담당 관리자 이름으로 표시됩니다.',
+              errorText: validationError,
+            ),
+            onSubmitted: (value) {
+              final trimmed = value.trim();
+              if (trimmed.isEmpty) {
+                setDialogState(() => validationError = '표시 이름을 입력해 주세요.');
+                return;
+              }
+              Navigator.pop(context, trimmed);
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('취소'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final trimmed = controller.text.trim();
+                if (trimmed.isEmpty) {
+                  setDialogState(() => validationError = '표시 이름을 입력해 주세요.');
+                  return;
+                }
+                Navigator.pop(context, trimmed);
+              },
+              child: const Text('저장'),
+            ),
+          ],
+        ),
+      ),
+    );
+    controller.dispose();
+    if (displayName == null || displayName == admin.displayName?.trim()) return;
+
+    try {
+      await widget.service.updateDisplayName(admin.id, displayName);
+      await _load();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('표시 이름을 수정했습니다.')),
+      );
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    }
+  }
+
   Future<void> _resetPassword(AdminUser admin) async {
     final controller = TextEditingController();
     var obscurePassword = true;
@@ -181,21 +246,28 @@ class _AdminListScreenState extends State<AdminListScreen> {
                               child: ListTile(
                                 title: Row(
                                   children: [
-                                    Expanded(child: Text(admin.username)),
+                                    Expanded(child: Text(admin.displayLabel)),
                                     if (admin.isSuperAdmin)
                                       const Chip(label: Text('최고 관리자')),
                                   ],
                                 ),
                                 subtitle: Text(
-                                  '${admin.displayName ?? "이름 없음"}\n등록 ${admin.createdAt == null ? "-" : DateFormat("yyyy.MM.dd").format(admin.createdAt!.toLocal())}',
+                                  '아이디 ${admin.username}\n등록 ${admin.createdAt == null ? "-" : DateFormat("yyyy.MM.dd").format(admin.createdAt!.toLocal())}',
                                 ),
                                 isThreeLine: true,
                                 trailing: PopupMenuButton<String>(
                                   onSelected: (value) {
+                                    if (value == 'displayName') {
+                                      _editDisplayName(admin);
+                                    }
                                     if (value == 'reset') _resetPassword(admin);
                                     if (value == 'delete') _delete(admin);
                                   },
                                   itemBuilder: (_) => [
+                                    const PopupMenuItem(
+                                      value: 'displayName',
+                                      child: Text('표시 이름 수정'),
+                                    ),
                                     const PopupMenuItem(
                                       value: 'reset',
                                       child: Text('비밀번호 재설정'),

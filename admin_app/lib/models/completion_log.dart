@@ -30,9 +30,6 @@ class CompletionLog {
     );
   }
 
-  String get companyNameLabel =>
-      companyName.trim().isEmpty ? '회사명 미입력' : companyName;
-
   String get contactPersonLabel =>
       contactPerson.trim().isEmpty ? '담당자명 미입력' : contactPerson;
 }
