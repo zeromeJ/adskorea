@@ -54,8 +54,8 @@ class _InquiryListScreenState extends State<InquiryListScreen>
   @override
   void initState() {
     super.initState();
-    _scope = widget.currentAdmin.isSuperAdmin ? 'ALL' : 'MINE';
-    _status = widget.currentAdmin.isSuperAdmin ? 'ALL' : 'PENDING';
+    _scope = widget.currentAdmin.canManageInquiries ? 'ALL' : 'MINE';
+    _status = widget.currentAdmin.canManageInquiries ? 'ALL' : 'PENDING';
     WidgetsBinding.instance.addObserver(this);
     _load();
   }
@@ -223,7 +223,7 @@ class _InquiryListScreenState extends State<InquiryListScreen>
   }
 
   bool get _isAllInquiryView =>
-      widget.currentAdmin.isSuperAdmin && _scope == 'ALL';
+      widget.currentAdmin.canManageInquiries && _scope == 'ALL';
 
   List<String> get _visibleStatuses => _isAllInquiryView
       ? const ['ALL', 'UNASSIGNED', 'PENDING', 'COMPLETED']
@@ -251,7 +251,9 @@ class _InquiryListScreenState extends State<InquiryListScreen>
                 subtitle: Text(
                   widget.currentAdmin.isSuperAdmin
                       ? '${widget.currentAdmin.username} · 최고 관리자'
-                      : widget.currentAdmin.username,
+                      : widget.currentAdmin.isAssistantAdmin
+                          ? '${widget.currentAdmin.username} · 보조 관리자'
+                          : widget.currentAdmin.username,
                 ),
               ),
               const Divider(),
@@ -287,7 +289,7 @@ class _InquiryListScreenState extends State<InquiryListScreen>
                 ),
                 ListTile(
                   leading: const Icon(Icons.history),
-                  title: const Text('완료 처리 로그'),
+                  title: const Text('문의 처리 로그'),
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.of(context).push(
@@ -303,7 +305,7 @@ class _InquiryListScreenState extends State<InquiryListScreen>
                 ),
               ],
               const Spacer(),
-              if (widget.currentAdmin.isSuperAdmin)
+              if (widget.currentAdmin.canManageWebsite)
                 ListTile(
                   leading: const Icon(Icons.web),
                   title: const Text('홈페이지 관리'),
@@ -333,7 +335,7 @@ class _InquiryListScreenState extends State<InquiryListScreen>
       ),
       appBar: AppBar(
         title: Text(
-          widget.currentAdmin.isSuperAdmin ? '문의 관리' : '내 문의',
+          widget.currentAdmin.canManageInquiries ? '문의 관리' : '내 문의',
         ),
       ),
       body: SafeArea(
@@ -373,7 +375,7 @@ class _InquiryListScreenState extends State<InquiryListScreen>
                 ],
               ),
             ),
-            if (widget.currentAdmin.isSuperAdmin)
+            if (widget.currentAdmin.canManageInquiries)
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
                 child: SizedBox(
@@ -381,14 +383,14 @@ class _InquiryListScreenState extends State<InquiryListScreen>
                   child: SegmentedButton<String>(
                     segments: const [
                       ButtonSegment(
-                        value: 'MINE',
-                        label: Text('내 문의'),
-                        icon: Icon(Icons.person_outline),
-                      ),
-                      ButtonSegment(
                         value: 'ALL',
                         label: Text('전체 문의'),
                         icon: Icon(Icons.list_alt_outlined),
+                      ),
+                      ButtonSegment(
+                        value: 'MINE',
+                        label: Text('내 문의'),
+                        icon: Icon(Icons.person_outline),
                       ),
                     ],
                     selected: {_scope},
@@ -462,9 +464,11 @@ class _InquiryListScreenState extends State<InquiryListScreen>
                                         : null,
                                     onComplete: inquiry.status ==
                                                 InquiryStatus.pending &&
-                                            (!widget.currentAdmin
-                                                    .isSuperAdmin ||
-                                                inquiry.assignedAdminId != null)
+                                            (widget.currentAdmin.isSuperAdmin
+                                                ? inquiry.assignedAdminId !=
+                                                    null
+                                                : inquiry.assignedAdminId ==
+                                                    widget.currentAdmin.id)
                                         ? () => _markCompleted(inquiry)
                                         : null,
                                     showAssignment: _isAllInquiryView,

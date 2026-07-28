@@ -56,6 +56,7 @@ String inquiryTypeLabel(String? value) {
 class Inquiry {
   const Inquiry({
     required this.id,
+    required this.registrationNumber,
     required this.companyName,
     required this.contactPerson,
     required this.status,
@@ -91,6 +92,7 @@ class Inquiry {
   });
 
   final String id;
+  final String registrationNumber;
   final String companyName;
   final String contactPerson;
   final String? email;
@@ -130,6 +132,7 @@ class Inquiry {
         : const <String, dynamic>{};
     return Inquiry(
       id: json['id'] as String? ?? '',
+      registrationNumber: json['registrationNumber'] as String? ?? '',
       companyName: json['companyName'] as String? ?? '',
       contactPerson: json['contactPerson'] as String? ?? '',
       email: json['email'] as String?,

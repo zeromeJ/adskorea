@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import sharp from "sharp";
-import { forbiddenResponse, getAdminFromRequest, unauthorizedResponse } from "@/lib/admin/auth";
+import { canManageWebsite, forbiddenResponse, getAdminFromRequest, unauthorizedResponse } from "@/lib/admin/auth";
 import { ensureWebsiteContentBucket, websiteContentBucket } from "@/lib/supabaseAdmin";
 import { getWebsiteSection } from "@/lib/websiteSections";
 
@@ -14,7 +14,7 @@ function safeName(name: string) {
 export async function POST(request: Request) {
   const admin = await getAdminFromRequest(request);
   if (!admin) return unauthorizedResponse();
-  if (!admin.isSuperAdmin) return forbiddenResponse();
+  if (!canManageWebsite(admin)) return forbiddenResponse("홈페이지 관리 권한이 필요합니다.");
   const form = await request.formData();
   const original = form.get("original");
   const edited = form.get("edited");

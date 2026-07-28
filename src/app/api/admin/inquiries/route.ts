@@ -1,11 +1,15 @@
 import { InquiryStatus, Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
-import { getAdminFromRequest, unauthorizedResponse } from "@/lib/admin/auth";
+import {
+  canManageInquiries,
+  getAdminFromRequest,
+  unauthorizedResponse,
+} from "@/lib/admin/auth";
 import { inquiryVisibilityWhere } from "@/lib/admin/inquiryAccess";
 import { prisma } from "@/lib/prisma";
 
-function parseScope(scope: string | null, isSuperAdmin: boolean) {
-  if (!isSuperAdmin) return "MINE";
+function parseScope(scope: string | null, canManageAll: boolean) {
+  if (!canManageAll) return "MINE";
   return scope === "MINE" ? "MINE" : "ALL";
 }
 
@@ -23,6 +27,7 @@ function parseStatus(status: string | null, canViewUnassigned: boolean) {
 
 const inquiryListSelect = {
   id: true,
+  registrationNumber: true,
   companyName: true,
   contactPerson: true,
   email: true,
@@ -54,6 +59,7 @@ const inquiryListSelect = {
       displayName: true,
       isActive: true,
       isSuperAdmin: true,
+      isAssistantAdmin: true,
     },
   },
   createdAt: true,
@@ -68,8 +74,13 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const scope = parseScope(searchParams.get("scope"), admin.isSuperAdmin);
-  const canViewUnassigned = admin.isSuperAdmin && scope === "ALL";
+  const hasInquiryManagementPermission = canManageInquiries(admin);
+  const scope = parseScope(
+    searchParams.get("scope"),
+    hasInquiryManagementPermission,
+  );
+  const canViewUnassigned =
+    hasInquiryManagementPermission && scope === "ALL";
   const status = parseStatus(searchParams.get("status"), canViewUnassigned);
   const page = Math.max(Number(searchParams.get("page") || 1), 1);
   const limit = Math.min(Math.max(Number(searchParams.get("limit") || 30), 1), 100);

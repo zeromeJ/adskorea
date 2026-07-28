@@ -19,14 +19,19 @@ export async function PATCH(request: Request, context: RouteContext) {
   const body = (await request.json()) as {
     password?: string;
     displayName?: string;
+    isAssistantAdmin?: boolean;
   };
   const hasPassword = Object.prototype.hasOwnProperty.call(body, "password");
   const hasDisplayName = Object.prototype.hasOwnProperty.call(
     body,
     "displayName",
   );
+  const hasAssistantRole = Object.prototype.hasOwnProperty.call(
+    body,
+    "isAssistantAdmin",
+  );
 
-  if (!hasPassword && !hasDisplayName) {
+  if (!hasPassword && !hasDisplayName && !hasAssistantRole) {
     return NextResponse.json(
       { success: false, message: "변경할 정보를 입력해 주세요." },
       { status: 400 },
@@ -35,6 +40,9 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   const password = hasPassword ? body.password || "" : null;
   const displayName = hasDisplayName ? body.displayName?.trim() || "" : null;
+  const isAssistantAdmin = hasAssistantRole
+    ? body.isAssistantAdmin === true
+    : null;
 
   if (password !== null && (password.length < 8 || password.length > 100)) {
     return NextResponse.json(
@@ -61,6 +69,10 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   }
 
+  if (target.isSuperAdmin && isAssistantAdmin !== null) {
+    return forbiddenResponse("최고 관리자 계정의 보조 관리자 권한은 변경할 수 없습니다.");
+  }
+
   const item = await prisma.adminUser.update({
     where: { id },
     data: {
@@ -68,6 +80,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         ? { passwordHash: await bcrypt.hash(password, 12) }
         : {}),
       ...(displayName !== null ? { displayName } : {}),
+      ...(isAssistantAdmin !== null ? { isAssistantAdmin } : {}),
     },
     select: {
       id: true,
@@ -75,6 +88,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       displayName: true,
       isActive: true,
       isSuperAdmin: true,
+      isAssistantAdmin: true,
       createdAt: true,
     },
   });

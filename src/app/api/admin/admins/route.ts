@@ -21,6 +21,7 @@ export async function GET(request: Request) {
       displayName: true,
       isActive: true,
       isSuperAdmin: true,
+      isAssistantAdmin: true,
       createdAt: true,
     },
   });
@@ -77,6 +78,7 @@ export async function POST(request: Request) {
       displayName: true,
       isActive: true,
       isSuperAdmin: true,
+      isAssistantAdmin: true,
       createdAt: true,
     },
   });

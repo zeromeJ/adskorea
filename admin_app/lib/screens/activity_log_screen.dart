@@ -29,7 +29,7 @@ class ActivityLogScreen extends StatefulWidget {
 class _ActivityLogScreenState extends State<ActivityLogScreen> {
   bool _isLoading = true;
   String? _error;
-  List<CompletionLog> _items = [];
+  List<InquiryActivityLog> _items = [];
 
   @override
   void initState() {
@@ -43,7 +43,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
       _error = null;
     });
     try {
-      final items = await widget.adminService.fetchCompletionLogs();
+      final items = await widget.adminService.fetchActivityLogs();
       if (mounted) setState(() => _items = items);
     } on ApiException catch (error) {
       if (mounted) setState(() => _error = error.message);
@@ -52,7 +52,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
     }
   }
 
-  void _openInquiry(CompletionLog log) {
+  void _openInquiry(InquiryActivityLog log) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => InquiryDetailScreen(
@@ -68,13 +68,13 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('완료 처리 로그')),
+      appBar: AppBar(title: const Text('문의 처리 로그')),
       body: _isLoading
           ? const LoadingView()
           : _error != null
               ? ErrorView(message: _error!, onRetry: _load)
               : _items.isEmpty
-                  ? const EmptyState(message: '아직 완료 처리 로그가 없습니다.')
+                  ? const EmptyState(message: '아직 문의 처리 로그가 없습니다.')
                   : RefreshIndicator(
                       onRefresh: _load,
                       child: ListView.separated(
@@ -83,20 +83,28 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
                         separatorBuilder: (_, __) => const SizedBox(height: 10),
                         itemBuilder: (context, index) {
                           final log = _items[index];
-                          final adminName = log.adminDisplayName?.isNotEmpty ==
-                                  true
-                              ? '${log.adminDisplayName} (${log.adminUsername})'
-                              : log.adminUsername;
                           final inquiryLabel = log.companyName.trim().isNotEmpty
                               ? '${log.companyName} · ${log.contactPersonLabel}'
                               : log.contactPersonLabel;
+                          final actionLabel = switch (log.type) {
+                            InquiryActivityType.completed =>
+                              '${log.adminLabel} 님이 처리 완료',
+                            InquiryActivityType.assigned =>
+                              '${log.adminLabel} 님이 ${log.assignedAdminLabel} 님에게 문의 배정',
+                            InquiryActivityType.unassigned =>
+                              '${log.adminLabel} 님이 담당자 배정 해제',
+                          };
                           return Card(
                             elevation: 0,
                             child: ListTile(
                               onTap: () => _openInquiry(log),
-                              title: Text(inquiryLabel),
+                              title: Text(
+                                log.registrationNumber.isEmpty
+                                    ? inquiryLabel
+                                    : '${log.registrationNumber} · $inquiryLabel',
+                              ),
                               subtitle: Text(
-                                '$adminName 님이 처리 완료\n${DateFormat("yyyy.MM.dd HH:mm").format(log.completedAt.toLocal())}',
+                                '$actionLabel\n${DateFormat("yyyy.MM.dd HH:mm").format(log.occurredAt.toLocal())}',
                               ),
                               isThreeLine: true,
                               trailing: const Icon(Icons.chevron_right),

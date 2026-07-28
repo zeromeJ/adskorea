@@ -4,6 +4,7 @@ class AdminUser {
     required this.username,
     this.displayName,
     this.isSuperAdmin = false,
+    this.isAssistantAdmin = false,
     this.isActive = true,
     this.createdAt,
   });
@@ -12,6 +13,7 @@ class AdminUser {
   final String username;
   final String? displayName;
   final bool isSuperAdmin;
+  final bool isAssistantAdmin;
   final bool isActive;
   final DateTime? createdAt;
 
@@ -21,6 +23,7 @@ class AdminUser {
       username: json['username'] as String? ?? '',
       displayName: json['displayName'] as String?,
       isSuperAdmin: json['isSuperAdmin'] as bool? ?? false,
+      isAssistantAdmin: json['isAssistantAdmin'] as bool? ?? false,
       isActive: json['isActive'] as bool? ?? true,
       createdAt: json['createdAt'] == null
           ? null
@@ -30,4 +33,8 @@ class AdminUser {
 
   String get displayLabel =>
       displayName?.trim().isNotEmpty == true ? displayName!.trim() : '표시 이름 없음';
+
+  bool get canManageInquiries => isSuperAdmin || isAssistantAdmin;
+
+  bool get canManageWebsite => isSuperAdmin || isAssistantAdmin;
 }

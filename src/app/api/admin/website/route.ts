@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { forbiddenResponse, getAdminFromRequest, unauthorizedResponse } from "@/lib/admin/auth";
+import { canManageWebsite, forbiddenResponse, getAdminFromRequest, unauthorizedResponse } from "@/lib/admin/auth";
 import { hasWebsiteContentModels, prisma } from "@/lib/prisma";
 import { websiteSections } from "@/lib/websiteSections";
 
 export async function GET(request: Request) {
   const admin = await getAdminFromRequest(request);
   if (!admin) return unauthorizedResponse();
-  if (!admin.isSuperAdmin) return forbiddenResponse();
+  if (!canManageWebsite(admin)) return forbiddenResponse("홈페이지 관리 권한이 필요합니다.");
   if (!hasWebsiteContentModels()) {
     return NextResponse.json(
       { success: false, message: "서버의 홈페이지 관리 모듈을 준비 중입니다. 서버를 다시 시작해 주세요." },
