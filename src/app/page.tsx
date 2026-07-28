@@ -187,6 +187,7 @@ export default async function Home() {
       key: "contact",
       element: (
         <InquirySection
+          brochureFileSize={cms?.catalog?.fileSize}
           phone={settings?.phone}
         />
       ),

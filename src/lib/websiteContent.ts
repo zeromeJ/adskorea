@@ -100,6 +100,12 @@ export type CmsSiteContent = {
   };
 };
 
+function formatFileSize(size?: number | null) {
+  if (!size || size <= 0) return "";
+  const megabytes = size / 1024 / 1024;
+  return `${megabytes >= 10 ? megabytes.toFixed(0) : megabytes.toFixed(1)}MB`;
+}
+
 export async function getWebsiteContent(): Promise<CmsSiteContent | null> {
   // Prisma 스키마 변경 직후 개발 서버가 구형 Client를 메모리에 들고
   // 있어도 공개 홈페이지는 코드 기본값으로 정상 렌더링한다.
@@ -235,7 +241,9 @@ export async function getWebsiteContent(): Promise<CmsSiteContent | null> {
         version: "최신본",
         pages: "PDF",
         updatedAt: "최신 등록본",
-        fileSize: "",
+        fileSize: formatFileSize(
+          assetRecord("company", "catalogFile")?.size,
+        ),
         thumbnailUrl: asset("company", "catalogCover") ?? assetThumbnail("company", "catalogFile"),
         fileUrl: asset("company", "catalogFile"),
       } : undefined,

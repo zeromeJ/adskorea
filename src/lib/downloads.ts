@@ -3,3 +3,5 @@ export const productBrochureDownloadPath =
 
 export const productBrochureFileName =
   "ADSON_Molded_Pallet_Catalog_KR.pdf";
+
+export const productBrochureFallbackFileSize = "약 2.6MB";
