@@ -39,6 +39,15 @@ export async function GET(request: Request, context: RouteContext) {
           isAssistantAdmin: true,
         },
       },
+      customer: {
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          email: true,
+          company: { select: { id: true, name: true } },
+        },
+      },
       attachments: { orderBy: { createdAt: "asc" } },
     },
   });
@@ -51,19 +60,58 @@ export async function GET(request: Request, context: RouteContext) {
   }
 
   const supabase = getSupabaseAdmin();
-  const attachments = await Promise.all(
-    item.attachments.map(async (attachment) => {
-      if (!supabase) return { ...attachment, downloadUrl: null };
-      const { data } = await supabase.storage
-        .from(inquiryAttachmentBucket)
-        .createSignedUrl(attachment.storagePath, 60 * 60);
-      return { ...attachment, downloadUrl: data?.signedUrl ?? null };
-    }),
-  );
+  const [attachments, customerMatchCandidates] = await Promise.all([
+    Promise.all(
+      item.attachments.map(async (attachment) => {
+        if (!supabase) return { ...attachment, downloadUrl: null };
+        const { data } = await supabase.storage
+          .from(inquiryAttachmentBucket)
+          .createSignedUrl(attachment.storagePath, 60 * 60);
+        return { ...attachment, downloadUrl: data?.signedUrl ?? null };
+      }),
+    ),
+    canManageInquiries(admin)
+      ? prisma.customerDuplicateReview.findMany({
+          where: {
+            newCustomerId: item.customerId,
+            status: "PENDING",
+          },
+          orderBy: [
+            { matchedPhone: "desc" },
+            { matchedEmail: "desc" },
+            { createdAt: "asc" },
+          ],
+          select: {
+            id: true,
+            matchedPhone: true,
+            matchedEmail: true,
+            matchedCompany: true,
+            candidateCustomer: {
+              select: {
+                id: true,
+                name: true,
+                phone: true,
+                email: true,
+                company: { select: { id: true, name: true } },
+                inquiries: {
+                  orderBy: { createdAt: "desc" },
+                  select: {
+                    id: true,
+                    registrationNumber: true,
+                    status: true,
+                    createdAt: true,
+                  },
+                },
+              },
+            },
+          },
+        })
+      : Promise.resolve([]),
+  ]);
 
   return NextResponse.json({
     success: true,
-    item: { ...item, attachments },
+    item: { ...item, attachments, customerMatchCandidates },
   });
 }
 
@@ -172,6 +220,15 @@ export async function PATCH(request: Request, context: RouteContext) {
             isActive: true,
             isSuperAdmin: true,
             isAssistantAdmin: true,
+          },
+        },
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+            company: { select: { id: true, name: true } },
           },
         },
       },

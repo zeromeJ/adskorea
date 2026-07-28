@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ads_inquiry_admin/models/completion_log.dart';
+import 'package:ads_inquiry_admin/models/customer.dart';
 import 'package:ads_inquiry_admin/models/inquiry.dart';
 
 void main() {
@@ -48,5 +49,32 @@ void main() {
     expect(log.adminLabel, '최고관리자');
     expect(log.assignedAdminLabel, '김담당');
     expect(log.registrationNumber, '2607280012');
+  });
+
+  test('customer duplicate candidate explains matching fields', () {
+    final candidate = CustomerDuplicateCandidate.fromJson({
+      'id': 'review',
+      'matchedPhone': true,
+      'matchedEmail': false,
+      'matchedCompany': true,
+      'candidateCustomer': {
+        'id': 'customer',
+        'name': '김담당',
+        'phone': '010-1234-5678',
+        'company': {'id': 'company', 'name': '테스트 회사'},
+        'inquiries': [
+          {
+            'id': 'inquiry',
+            'registrationNumber': '2607280001',
+            'status': 'COMPLETED',
+            'createdAt': '2026-07-28T03:00:00.000Z',
+          },
+        ],
+      },
+    });
+
+    expect(candidate.reasonLabel, '전화번호 일치 · 회사명 일치');
+    expect(
+        candidate.customer.inquiries.single.registrationNumber, '2607280001');
   });
 }

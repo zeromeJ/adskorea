@@ -21,6 +21,13 @@ enum ResponseMethod {
   ANY
 }
 
+enum CustomerDuplicateReviewStatus {
+  PENDING
+  LINKED
+  KEPT_SEPARATE
+  MERGED
+}
+
 model Inquiry {
   id                   String                 @id @default(cuid())
   registrationNumber   String                 @unique
@@ -50,15 +57,18 @@ model Inquiry {
   status               InquiryStatus          @default(PENDING)
   adminMemo            String?
   assignedAdminId      String?
+  customerId           String
   assignedAt           DateTime?
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
   assignedAdmin        AdminUser?             @relation("InquiryAssignee", fields: [assignedAdminId], references: [id], onDelete: SetNull)
+  customer             Customer               @relation(fields: [customerId], references: [id], onDelete: Restrict)
   completionLogs       InquiryCompletionLog[]
   assignmentLogs       InquiryAssignmentLog[]
   attachments          InquiryAttachment[]
 
   @@index([assignedAdminId, status, createdAt])
+  @@index([customerId, status, createdAt])
 }
 
 model InquiryAttachment {
@@ -88,6 +98,72 @@ model AdminUser {
   assignedInquiries Inquiry[]              @relation("InquiryAssignee")
   completionLogs    InquiryCompletionLog[]
   assignmentLogs    InquiryAssignmentLog[]
+  customerFavorites CustomerFavorite[]
+}
+
+model Company {
+  id             String     @id @default(cuid())
+  name           String
+  normalizedName String     @unique
+  memo           String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  customers      Customer[]
+}
+
+model Customer {
+  id                 String                    @id @default(cuid())
+  name               String
+  phone              String?
+  normalizedPhone    String?
+  email              String?
+  normalizedEmail    String?
+  memo               String?
+  companyId          String?
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+  company            Company?                  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  inquiries          Inquiry[]
+  favorites          CustomerFavorite[]
+  duplicateReviews   CustomerDuplicateReview[] @relation("DuplicateReviewNewCustomer")
+  candidateForReview CustomerDuplicateReview[] @relation("DuplicateReviewCandidateCustomer")
+
+  @@index([normalizedPhone])
+  @@index([normalizedEmail])
+  @@index([companyId])
+  @@index([createdAt])
+}
+
+model CustomerFavorite {
+  adminUserId String
+  customerId  String
+  createdAt   DateTime  @default(now())
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@id([adminUserId, customerId])
+  @@index([customerId])
+}
+
+model CustomerDuplicateReview {
+  id                    String                        @id @default(cuid())
+  newCustomerId         String
+  candidateCustomerId   String
+  matchedPhone          Boolean                       @default(false)
+  matchedEmail          Boolean                       @default(false)
+  matchedCompany        Boolean                       @default(false)
+  status                CustomerDuplicateReviewStatus @default(PENDING)
+  resolvedByAdminId     String?
+  resolvedByDisplayName String?
+  resolvedAt            DateTime?
+  createdAt             DateTime                      @default(now())
+  updatedAt             DateTime                      @updatedAt
+  newCustomer           Customer                      @relation("DuplicateReviewNewCustomer", fields: [newCustomerId], references: [id], onDelete: Cascade)
+  candidateCustomer     Customer                      @relation("DuplicateReviewCandidateCustomer", fields: [candidateCustomerId], references: [id], onDelete: Cascade)
+
+  @@unique([newCustomerId, candidateCustomerId])
+  @@index([status, createdAt])
+  @@index([candidateCustomerId])
 }
 
 model InquiryCompletionLog {
