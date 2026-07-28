@@ -54,8 +54,8 @@ class _InquiryListScreenState extends State<InquiryListScreen>
   @override
   void initState() {
     super.initState();
-    _scope = 'MINE';
-    _status = 'PENDING';
+    _scope = widget.currentAdmin.isSuperAdmin ? 'ALL' : 'MINE';
+    _status = widget.currentAdmin.isSuperAdmin ? 'ALL' : 'PENDING';
     WidgetsBinding.instance.addObserver(this);
     _load();
   }

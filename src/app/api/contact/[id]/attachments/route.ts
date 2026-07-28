@@ -12,6 +12,8 @@ const allowedTypes = new Set([
   "image/png",
   "image/webp",
 ]);
+const maxUploadBytes = 50 * 1024 * 1024;
+const uploadSupportEmail = "bossjhb@naver.com";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -56,9 +58,24 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   for (const file of files) {
-    if (!allowedTypes.has(file.type) || file.size > 10 * 1024 * 1024) {
+    if (file.size > maxUploadBytes) {
       return NextResponse.json(
-        { success: false, message: "PDF, JPG, PNG, WEBP 파일만 개당 10MB까지 첨부할 수 있습니다." },
+        {
+          success: false,
+          code: "FILE_TOO_LARGE",
+          message: `파일 용량이 커서 웹에서 업로드할 수 없습니다. 50MB 이하로 줄이거나 파일을 나누어 첨부해 주세요. 어려우시면 ${uploadSupportEmail}으로 보내 주세요.`,
+          supportEmail: uploadSupportEmail,
+        },
+        { status: 413 },
+      );
+    }
+
+    if (!allowedTypes.has(file.type)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "PDF, JPG, PNG, WEBP 파일만 첨부할 수 있습니다.",
+        },
         { status: 400 },
       );
     }
