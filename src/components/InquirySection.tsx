@@ -22,6 +22,19 @@ import {
 
 const usePurposes = ["보관", "국내 운송", "수출 운송", "랙 적재", "자동화 설비", "기타"];
 const yesNoUnknown = ["예", "아니오", "미정"];
+const maxAttachmentBytes = 50 * 1024 * 1024;
+const uploadSupportEmail = "bossjhb@naver.com";
+const allowedAttachmentTypes = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
+const resizableImageTypes = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
 const validationFieldOrder = [
   "inquiryType",
   "phone",
@@ -49,6 +62,31 @@ function focusValidationField(field: ValidationField) {
   target.focus({ preventScroll: true });
 }
 
+async function copyText(value: string) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(value);
+      return true;
+    } catch {
+      // 보안 정책으로 Clipboard API를 사용할 수 없으면 아래 방식으로 재시도한다.
+    }
+  }
+
+  const temporaryInput = document.createElement("textarea");
+  try {
+    temporaryInput.value = value;
+    temporaryInput.style.position = "fixed";
+    temporaryInput.style.opacity = "0";
+    document.body.appendChild(temporaryInput);
+    temporaryInput.select();
+    return document.execCommand("copy");
+  } catch {
+    return false;
+  } finally {
+    temporaryInput.remove();
+  }
+}
+
 function DimensionInput({ id, label, value, onChange }: { id: string; label: string; value: string; onChange: (value: string) => void }) {
   return (
     <label className="flex min-w-0 flex-col" htmlFor={id}>
@@ -71,6 +109,9 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [validationAttempted, setValidationAttempted] = useState(false);
   const [phoneCopyMessage, setPhoneCopyMessage] = useState("");
+  const [attachmentError, setAttachmentError] = useState("");
+  const [showUploadEmailHelp, setShowUploadEmailHelp] = useState(false);
+  const [uploadEmailCopyMessage, setUploadEmailCopyMessage] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
   const [attachmentInputKey, setAttachmentInputKey] = useState(0);
 
@@ -126,13 +167,47 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
 
   function updateAttachments(files: FileList | null) {
     const nextFiles = Array.from(files ?? []);
-    const invalid = nextFiles.find((file) => !["application/pdf", "image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 10 * 1024 * 1024);
-    if (attachments.length + nextFiles.length > 3 || invalid) {
-      setError("PDF, JPG, PNG, WEBP 파일만 최대 3개, 개당 10MB까지 첨부할 수 있습니다.");
+    if (attachments.length + nextFiles.length > 3) {
+      setAttachmentError("첨부파일은 최대 3개까지 선택해 주세요.");
+      setShowUploadEmailHelp(false);
+      setUploadEmailCopyMessage("");
       setAttachmentInputKey((current) => current + 1);
       return;
     }
+
+    const tooLarge = nextFiles.find(
+      (file) => file.size > maxAttachmentBytes,
+    );
+    if (tooLarge) {
+      const cannotResize = !resizableImageTypes.has(tooLarge.type);
+      setAttachmentError(
+        cannotResize
+          ? `${tooLarge.name} 파일은 자동으로 용량을 줄일 수 없는 형식이며 50MB를 초과해 업로드할 수 없습니다. 50MB 이하로 줄이거나 파일을 나누어 첨부해 주세요. 어려우시면 아래 이메일로 보내 주세요.`
+          : `${tooLarge.name} 파일은 용량이 너무 커서 웹에서 업로드할 수 없습니다. 50MB 이하로 줄인 뒤 다시 첨부해 주세요. 어려우시면 아래 이메일로 보내 주세요.`,
+      );
+      setShowUploadEmailHelp(true);
+      setUploadEmailCopyMessage("");
+      setAttachmentInputKey((current) => current + 1);
+      return;
+    }
+
+    const unsupported = nextFiles.find(
+      (file) => !allowedAttachmentTypes.has(file.type),
+    );
+    if (unsupported) {
+      setAttachmentError(
+        `${unsupported.name} 파일은 지원하지 않습니다. PDF, JPG, PNG, WEBP 파일만 첨부할 수 있습니다.`,
+      );
+      setShowUploadEmailHelp(false);
+      setUploadEmailCopyMessage("");
+      setAttachmentInputKey((current) => current + 1);
+      return;
+    }
+
     setAttachments((current) => [...current, ...nextFiles]);
+    setAttachmentError("");
+    setShowUploadEmailHelp(false);
+    setUploadEmailCopyMessage("");
     setAttachmentInputKey((current) => current + 1);
   }
 
@@ -143,35 +218,21 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
     if (isMobileDevice) return;
 
     event.preventDefault();
-    let copied = false;
-    if (navigator.clipboard?.writeText) {
-      try {
-        await navigator.clipboard.writeText(phone);
-        copied = true;
-      } catch {
-        copied = false;
-      }
-    }
-    if (!copied) {
-      const temporaryInput = document.createElement("textarea");
-      try {
-        temporaryInput.value = phone;
-        temporaryInput.style.position = "fixed";
-        temporaryInput.style.opacity = "0";
-        document.body.appendChild(temporaryInput);
-        temporaryInput.select();
-        copied = document.execCommand("copy");
-      } catch {
-        copied = false;
-      } finally {
-        temporaryInput.remove();
-      }
-    }
+    const copied = await copyText(phone);
     if (copied) {
       setPhoneCopyMessage("전화번호가 복사되었습니다.");
     } else {
       setPhoneCopyMessage(`복사하지 못했습니다. 전화번호: ${phone}`);
     }
+  }
+
+  async function copyUploadSupportEmail() {
+    const copied = await copyText(uploadSupportEmail);
+    setUploadEmailCopyMessage(
+      copied
+        ? "이메일 주소가 복사되었습니다."
+        : `복사하지 못했습니다. 이메일: ${uploadSupportEmail}`,
+    );
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -202,7 +263,23 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
         const body = new FormData();
         attachments.forEach((file) => body.append("files", file));
         const uploadResponse = await fetch(`/api/contact/${result.inquiryId}/attachments`, { method: "POST", body });
-        if (!uploadResponse.ok) attachmentWarning = " 첨부파일은 저장되지 않았으니 회신 시 전달해 주세요.";
+        const uploadResult = (await uploadResponse.json().catch(() => null)) as {
+          code?: string;
+          message?: string;
+          supportEmail?: string;
+        } | null;
+        if (!uploadResponse.ok) {
+          const uploadMessage =
+            uploadResult?.message ||
+            "첨부파일은 저장되지 않았으니 회신 시 전달해 주세요.";
+          attachmentWarning = ` ${uploadMessage}`;
+          setAttachmentError(uploadMessage);
+          setShowUploadEmailHelp(
+            uploadResult?.code === "FILE_TOO_LARGE" ||
+              uploadResult?.supportEmail === uploadSupportEmail,
+          );
+          setUploadEmailCopyMessage("");
+        }
       }
       setSuccess(`접수번호 ${result.inquiryId} · ${inquiryTypeLabel(formData.inquiryType)} 접수가 완료되었습니다.${attachmentWarning}`);
       setFormData(initialContactFormData);
@@ -409,7 +486,7 @@ export default function InquirySection({ phone = "" }: { phone?: string }) {
             <label className="col-span-full flex min-w-0 flex-col" htmlFor="message"><span className="mb-2 flex min-h-6 min-w-0 items-center justify-between gap-3 text-sm font-bold"><span>문의 내용 (선택)</span><span className="shrink-0 font-medium text-[var(--sub-text)]">{formData.message.length} / 1,500자</span></span><textarea aria-describedby={messageError ? "message-error" : undefined} aria-invalid={Boolean(messageError)} className="min-h-40 min-w-0 max-w-full resize-y [overflow-wrap:anywhere] rounded-md border border-[var(--line)] px-4 py-3 text-base leading-7 outline-none focus:border-[var(--primary)] focus:ring-4 focus:ring-[rgba(46,92,69,0.12)] aria-invalid:border-[var(--alert)] aria-invalid:focus:border-[var(--alert)] aria-invalid:focus:ring-[rgba(185,92,69,0.16)]" id="message" maxLength={1500} onChange={(event) => updateField("message", event.target.value)} placeholder="추가로 전달할 제품, 규격, 수량, 사용환경 또는 요청자료가 있다면 입력해 주세요." value={formData.message} />{messageError ? <p className="mt-2 text-sm font-bold text-[var(--alert)]" id="message-error">{messageError}</p> : null}</label>
 
             <h3 className="col-span-full mt-2 border-t border-[var(--line)] pt-6 text-lg font-bold text-[var(--text)]">4. 첨부파일 및 동의</h3>
-            <div className="col-span-full min-w-0"><label className="flex min-h-6 items-center text-sm font-bold" htmlFor="attachments">파일 첨부 (선택)</label><input accept="application/pdf,image/jpeg,image/png,image/webp" className="mt-2 min-h-12 w-full min-w-0 max-w-full rounded-md border border-[var(--line)] px-3 py-2 text-base file:mr-3 file:rounded-md file:border-0 file:bg-[var(--muted-surface)] file:px-3 file:py-2 file:text-sm" id="attachments" key={attachmentInputKey} multiple onChange={(event) => updateAttachments(event.target.files)} type="file" /><p className="mt-2 text-xs leading-5 text-[var(--sub-text)]">PDF, JPG, PNG, WEBP · 최대 3개 · 개당 10MB</p>{attachments.length ? <ul className="mt-3 grid gap-2">{attachments.map((file, index) => <li className="flex min-w-0 items-center gap-3 rounded-md bg-[var(--muted-surface)] px-3 py-2 text-sm" key={`${file.name}-${file.size}`}><span aria-hidden="true" className="shrink-0">📎</span><span className="min-w-0 flex-1"><span className="line-clamp-2 [overflow-wrap:anywhere]">{file.name}</span><span className="mt-0.5 block text-xs text-[var(--sub-text)]">{(file.size / 1024 / 1024).toFixed(2)}MB · {uploading ? "업로드 중" : "업로드 대기"}</span></span><button className="min-h-10 shrink-0 rounded-md px-2 text-sm font-bold text-[var(--alert)]" onClick={() => setAttachments((current) => current.filter((_, itemIndex) => itemIndex !== index))} type="button">삭제</button></li>)}</ul> : null}</div>
+            <div className="col-span-full min-w-0"><label className="flex min-h-6 items-center text-sm font-bold" htmlFor="attachments">파일 첨부 (선택)</label><input accept="application/pdf,image/jpeg,image/png,image/webp" aria-describedby={attachmentError ? "attachment-error" : "attachment-help"} aria-invalid={Boolean(attachmentError)} className="mt-2 min-h-12 w-full min-w-0 max-w-full rounded-md border border-[var(--line)] px-3 py-2 text-base aria-invalid:border-[var(--alert)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--muted-surface)] file:px-3 file:py-2 file:text-sm" id="attachments" key={attachmentInputKey} multiple onChange={(event) => updateAttachments(event.target.files)} type="file" /><p className="mt-2 text-xs leading-5 text-[var(--sub-text)]" id="attachment-help">PDF, JPG, PNG, WEBP · 최대 3개 · 개당 50MB</p>{attachmentError ? <div className="mt-3 rounded-lg border border-[var(--alert)] bg-[rgba(185,92,69,0.08)] p-4" id="attachment-error" role="alert"><p className="text-sm font-bold leading-6 text-[var(--alert)]">{attachmentError}</p>{showUploadEmailHelp ? <><div className="mt-3 flex min-w-0 items-center gap-2 rounded-md bg-white p-2"><a className="min-w-0 flex-1 truncate font-bold text-[var(--primary)] underline underline-offset-2" href={`mailto:${uploadSupportEmail}`}>{uploadSupportEmail}</a><button className="min-h-10 shrink-0 rounded-md border border-[var(--primary)] px-4 text-sm font-bold text-[var(--primary)]" onClick={() => void copyUploadSupportEmail()} type="button">복사</button></div><p aria-live="polite" className="mt-2 min-h-5 text-xs font-bold text-[var(--primary)]">{uploadEmailCopyMessage}</p></> : null}</div> : null}{attachments.length ? <ul className="mt-3 grid gap-2">{attachments.map((file, index) => <li className="flex min-w-0 items-center gap-3 rounded-md bg-[var(--muted-surface)] px-3 py-2 text-sm" key={`${file.name}-${file.size}`}><span aria-hidden="true" className="shrink-0">📎</span><span className="min-w-0 flex-1"><span className="line-clamp-2 [overflow-wrap:anywhere]">{file.name}</span><span className="mt-0.5 block text-xs text-[var(--sub-text)]">{(file.size / 1024 / 1024).toFixed(2)}MB · {uploading ? "업로드 중" : "업로드 대기"}</span></span><button className="min-h-10 shrink-0 rounded-md px-2 text-sm font-bold text-[var(--alert)]" onClick={() => setAttachments((current) => current.filter((_, itemIndex) => itemIndex !== index))} type="button">삭제</button></li>)}</ul> : null}</div>
             <input aria-hidden="true" className="hidden" onChange={(event) => updateField("website", event.target.value)} tabIndex={-1} value={formData.website} />
           </div>
 
