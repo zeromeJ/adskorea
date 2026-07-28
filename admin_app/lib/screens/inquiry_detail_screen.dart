@@ -670,7 +670,6 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
                     : ListView(
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                         children: [
-                          _customerConnectionPanel(inquiry),
                           if (widget.currentAdmin.canManageInquiries)
                             _section('문의 담당자 배정', [
                               Container(
@@ -860,6 +859,7 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
                               ),
                             ),
                           ]),
+                          _customerConnectionPanel(inquiry),
                           const SizedBox(height: 8),
                           Wrap(
                             spacing: 8,
