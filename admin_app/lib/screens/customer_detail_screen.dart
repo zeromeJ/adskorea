@@ -139,10 +139,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   Future<void> _openCompanyPicker() async {
     final customer = _customer;
     if (customer == null) return;
-    if (!widget.currentAdmin.canManageInquiries) {
-      await _requestReview('COMPANY_REVIEW');
-      return;
-    }
     final changed = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) => CompanyPickerScreen(
@@ -153,6 +149,81 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
       ),
     );
     if (changed == true) await _load();
+  }
+
+  Future<void> _editCustomerName() async {
+    final customer = _customer;
+    if (customer == null || _isSaving) return;
+    final controller = TextEditingController(text: customer.name);
+    String? validationMessage;
+    final name = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(
+            customer.name.trim().isNotEmpty ? '고객명 수정' : '고객명 추가',
+          ),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            maxLength: 80,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (value) {
+              final trimmed = value.trim();
+              if (trimmed.isEmpty) {
+                setDialogState(() => validationMessage = '고객명을 입력해 주세요.');
+                return;
+              }
+              Navigator.pop(dialogContext, trimmed);
+            },
+            decoration: InputDecoration(
+              labelText: '고객명',
+              hintText: '고객명을 입력하세요.',
+              errorText: validationMessage,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('취소'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final trimmed = controller.text.trim();
+                if (trimmed.isEmpty) {
+                  setDialogState(
+                    () => validationMessage = '고객명을 입력해 주세요.',
+                  );
+                  return;
+                }
+                Navigator.pop(dialogContext, trimmed);
+              },
+              child: const Text('저장'),
+            ),
+          ],
+        ),
+      ),
+    );
+    controller.dispose();
+    if (name == null || name == customer.name.trim()) return;
+
+    setState(() => _isSaving = true);
+    try {
+      await widget.customerService.updateCustomerName(customer.id, name);
+      await _load();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('고객명을 저장했습니다.')),
+        );
+      }
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   Future<void> _unlinkCompany() async {
@@ -531,15 +602,12 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                 children: [
                   OutlinedButton(
                     onPressed: _openCompanyPicker,
-                    child: Text(widget.currentAdmin.canManageInquiries
-                        ? '회사 연결'
-                        : '검토 요청'),
+                    child: const Text('회사 연결'),
                   ),
-                  if (widget.currentAdmin.canManageInquiries)
-                    FilledButton(
-                      onPressed: _openCompanyPicker,
-                      child: const Text('회사 추가'),
-                    ),
+                  FilledButton(
+                    onPressed: _openCompanyPicker,
+                    child: const Text('회사 추가'),
+                  ),
                 ],
               )
             else
@@ -551,27 +619,21 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                     child: const Text('회사 보기'),
                   ),
                   const SizedBox(height: 8),
-                  if (widget.currentAdmin.canManageInquiries)
-                    AdaptiveActionButtons(
-                      children: [
-                        OutlinedButton(
-                          onPressed: _openCompanyPicker,
-                          child: const Text('회사 변경'),
+                  AdaptiveActionButtons(
+                    children: [
+                      OutlinedButton(
+                        onPressed: _openCompanyPicker,
+                        child: const Text('회사 변경'),
+                      ),
+                      TextButton(
+                        onPressed: _unlinkCompany,
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.red.shade700,
                         ),
-                        TextButton(
-                          onPressed: _unlinkCompany,
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.red.shade700,
-                          ),
-                          child: const Text('연결 해제'),
-                        ),
-                      ],
-                    )
-                  else
-                    OutlinedButton(
-                      onPressed: () => _requestReview('COMPANY_REVIEW'),
-                      child: const Text('검토 요청'),
-                    ),
+                        child: const Text('연결 해제'),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             if (customer.companyChangeLogs.isNotEmpty) ...[
@@ -747,12 +809,31 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    customer.nameLabel,
-                                    style: const TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.w900,
-                                    ),
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          customer.nameLabel,
+                                          style: const TextStyle(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                        ),
+                                      ),
+                                      TextButton.icon(
+                                        onPressed: _isSaving
+                                            ? null
+                                            : _editCustomerName,
+                                        icon: const Icon(Icons.edit, size: 20),
+                                        label: Text(
+                                          customer.name.trim().isNotEmpty
+                                              ? '고객명 수정'
+                                              : '고객명 추가',
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                   const SizedBox(height: 14),
                                   AdaptiveActionButtons(

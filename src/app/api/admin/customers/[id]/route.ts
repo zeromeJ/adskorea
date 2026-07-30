@@ -173,6 +173,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (!admin) return unauthorizedResponse();
   const { id } = await context.params;
   const body = (await request.json()) as {
+    name?: unknown;
     memo?: string;
     memoVisibility?: "SHARED" | "PRIVATE";
   };
@@ -188,29 +189,66 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   }
 
-  const memo = body.memo?.trim() || "";
-  if (body.memoVisibility === "PRIVATE") {
-    if (memo) {
-      await prisma.customerPrivateMemo.upsert({
-        where: {
-          customerId_adminUserId: {
-            customerId: id,
-            adminUserId: admin.id,
-          },
-        },
-        create: { customerId: id, adminUserId: admin.id, memo },
-        update: { memo },
-      });
-    } else {
-      await prisma.customerPrivateMemo.deleteMany({
-        where: { customerId: id, adminUserId: admin.id },
-      });
+  const hasName = Object.prototype.hasOwnProperty.call(body, "name");
+  const hasMemo = typeof body.memo === "string";
+  if (!hasName && !hasMemo) {
+    return NextResponse.json(
+      { success: false, message: "변경할 고객 정보를 입력해 주세요." },
+      { status: 400 },
+    );
+  }
+
+  if (hasName) {
+    if (typeof body.name !== "string") {
+      return NextResponse.json(
+        { success: false, message: "고객명을 다시 입력해 주세요." },
+        { status: 400 },
+      );
     }
-  } else {
+    const name = body.name.trim();
+    if (!name) {
+      return NextResponse.json(
+        { success: false, message: "고객명을 입력해 주세요." },
+        { status: 400 },
+      );
+    }
+    if (name.length > 80) {
+      return NextResponse.json(
+        { success: false, message: "고객명은 80자 이내로 입력해 주세요." },
+        { status: 400 },
+      );
+    }
     await prisma.customer.update({
       where: { id },
-      data: { memo: memo || null },
+      data: { name },
     });
+  }
+
+  if (hasMemo) {
+    const memo = body.memo!.trim();
+    if (body.memoVisibility === "PRIVATE") {
+      if (memo) {
+        await prisma.customerPrivateMemo.upsert({
+          where: {
+            customerId_adminUserId: {
+              customerId: id,
+              adminUserId: admin.id,
+            },
+          },
+          create: { customerId: id, adminUserId: admin.id, memo },
+          update: { memo },
+        });
+      } else {
+        await prisma.customerPrivateMemo.deleteMany({
+          where: { customerId: id, adminUserId: admin.id },
+        });
+      }
+    } else {
+      await prisma.customer.update({
+        where: { id },
+        data: { memo: memo || null },
+      });
+    }
   }
   return NextResponse.json({ success: true });
 }

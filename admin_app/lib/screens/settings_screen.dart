@@ -9,7 +9,7 @@ class SettingsScreen extends StatefulWidget {
     super.key,
   });
 
-  static const appVersion = '1.0.20 (46)';
+  static const appVersion = '1.0.21 (52)';
   static const contactEmail = 'bossjhb@naver.com';
 
   final PushNotificationService pushNotificationService;
