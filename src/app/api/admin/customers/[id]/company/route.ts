@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
 import {
-  canManageInquiries,
-  forbiddenResponse,
   getAdminFromRequest,
   unauthorizedResponse,
 } from "@/lib/admin/auth";
@@ -14,11 +12,6 @@ type RouteContext = { params: Promise<{ id: string }> };
 export async function PATCH(request: Request, context: RouteContext) {
   const admin = await getAdminFromRequest(request);
   if (!admin) return unauthorizedResponse();
-  if (!canManageInquiries(admin)) {
-    return forbiddenResponse(
-      "회사 연결 변경은 최고 또는 보조 관리자만 가능합니다.",
-    );
-  }
   const { id } = await context.params;
   const body = (await request.json()) as {
     action?: "LINK" | "CREATE" | "UNLINK";
@@ -62,23 +55,16 @@ export async function PATCH(request: Request, context: RouteContext) {
         { status: 400 },
       );
     }
-    const duplicate = await prisma.company.findUnique({
+    const existingCompany = await prisma.company.findUnique({
       where: { normalizedName },
       select: { id: true, name: true },
     });
-    if (duplicate) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: `같은 이름의 회사가 있습니다: ${duplicate.name}`,
-        },
-        { status: 409 },
-      );
-    }
-    nextCompany = await prisma.company.create({
-      data: { name, normalizedName },
-      select: { id: true, name: true },
-    });
+    nextCompany =
+      existingCompany ??
+      (await prisma.company.create({
+        data: { name, normalizedName },
+        select: { id: true, name: true },
+      }));
   } else if (body.action !== "UNLINK") {
     return NextResponse.json(
       { success: false, message: "회사 변경 방법을 다시 선택해 주세요." },

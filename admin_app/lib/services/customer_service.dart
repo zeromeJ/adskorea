@@ -94,6 +94,10 @@ class CustomerService {
     });
   }
 
+  Future<void> updateCustomerName(String id, String name) async {
+    await client.patch('/api/admin/customers/$id', {'name': name});
+  }
+
   Future<void> setFavorite(String id, bool favorite) async {
     await client.patch('/api/admin/customers/$id/favorite', {
       'favorite': favorite,
