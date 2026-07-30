@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import {
-  canManageInquiries,
   forbiddenResponse,
   getAdminFromRequest,
   unauthorizedResponse,
@@ -22,8 +21,8 @@ type RouteContext = { params: Promise<{ id: string }> };
 export async function POST(request: Request, context: RouteContext) {
   const admin = await getAdminFromRequest(request);
   if (!admin) return unauthorizedResponse();
-  if (!canManageInquiries(admin)) {
-    return forbiddenResponse("고객 연결을 확인할 권한이 없습니다.");
+  if (!admin.isSuperAdmin) {
+    return forbiddenResponse("고객 기록 연결은 최고 관리자만 가능합니다.");
   }
 
   const { id } = await context.params;

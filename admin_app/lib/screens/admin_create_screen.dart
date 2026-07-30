@@ -63,7 +63,7 @@ class _AdminCreateScreenState extends State<AdminCreateScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('신규 관리자 추가')),
+      appBar: AppBar(title: const Text('관리자 추가')),
       body: SafeArea(
         top: false,
         child: ListView(

@@ -46,9 +46,34 @@ export async function GET(request: Request, context: RouteContext) {
           phone: true,
           email: true,
           company: { select: { id: true, name: true } },
+          inquiries: {
+            orderBy: { createdAt: "desc" },
+            select: {
+              id: true,
+              registrationNumber: true,
+              status: true,
+              inquiryType: true,
+              createdAt: true,
+              assignedAdmin: {
+                select: { displayName: true },
+              },
+            },
+          },
         },
       },
       attachments: { orderBy: { createdAt: "asc" } },
+      consultationRecords: {
+        orderBy: { createdAt: "desc" },
+        take: 50,
+        select: {
+          id: true,
+          result: true,
+          memo: true,
+          adminDisplayName: true,
+          adminUsername: true,
+          createdAt: true,
+        },
+      },
     },
   });
 
@@ -60,7 +85,8 @@ export async function GET(request: Request, context: RouteContext) {
   }
 
   const supabase = getSupabaseAdmin();
-  const [attachments, customerMatchCandidates] = await Promise.all([
+  const [attachments, customerMatchCandidates, pendingDuplicateCount] =
+    await Promise.all([
     Promise.all(
       item.attachments.map(async (attachment) => {
         if (!supabase) return { ...attachment, downloadUrl: null };
@@ -70,7 +96,7 @@ export async function GET(request: Request, context: RouteContext) {
         return { ...attachment, downloadUrl: data?.signedUrl ?? null };
       }),
     ),
-    canManageInquiries(admin)
+    admin.isSuperAdmin
       ? prisma.customerDuplicateReview.findMany({
           where: {
             newCustomerId: item.customerId,
@@ -108,11 +134,29 @@ export async function GET(request: Request, context: RouteContext) {
           },
         })
       : Promise.resolve([]),
+    prisma.customerDuplicateReview.count({
+      where: {
+        newCustomerId: item.customerId,
+        status: "PENDING",
+        candidateCustomer: { isArchived: false },
+      },
+    }),
   ]);
 
   return NextResponse.json({
     success: true,
-    item: { ...item, attachments, customerMatchCandidates },
+    item: {
+      ...item,
+      customer: item.customer
+        ? {
+            ...item.customer,
+            inquiries: admin.isSuperAdmin ? item.customer.inquiries : [],
+          }
+        : null,
+      attachments,
+      customerMatchCandidates,
+      hasPendingDuplicate: pendingDuplicateCount > 0,
+    },
   });
 }
 
@@ -203,6 +247,13 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (assignmentChanged) {
     data.assignedAdminId = nextAssignedAdminId;
     data.assignedAt = nextAssignedAdminId ? new Date() : null;
+  }
+
+  const statusChanged =
+    body.status !== undefined && body.status !== currentItem.status;
+  const memoSaved = typeof body.adminMemo === "string";
+  if (assignmentChanged || statusChanged || memoSaved) {
+    data.lastActionAt = new Date();
   }
 
   const shouldLogCompletion =

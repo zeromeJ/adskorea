@@ -9,6 +9,7 @@ class InquiryAttachment {
     required this.contentType,
     required this.size,
     this.downloadUrl,
+    this.createdAt,
   });
 
   final String id;
@@ -16,6 +17,7 @@ class InquiryAttachment {
   final String contentType;
   final int size;
   final String? downloadUrl;
+  final DateTime? createdAt;
 
   factory InquiryAttachment.fromJson(Map<String, dynamic> json) {
     return InquiryAttachment(
@@ -24,6 +26,9 @@ class InquiryAttachment {
       contentType: json['contentType'] as String? ?? '',
       size: json['size'] as int? ?? 0,
       downloadUrl: json['downloadUrl'] as String?,
+      createdAt: json['createdAt'] == null
+          ? null
+          : DateTime.parse(json['createdAt'] as String),
     );
   }
 }
@@ -37,7 +42,79 @@ String inquiryStatusToApi(InquiryStatus status) {
 }
 
 String inquiryStatusLabel(InquiryStatus status) {
-  return status == InquiryStatus.completed ? '처리 완료' : '진행 중';
+  return status == InquiryStatus.completed ? '완료' : '진행 중';
+}
+
+enum InquiryConsultationResult {
+  phoneCompleted,
+  materialSent,
+  quoteReview,
+  waitingResponse,
+  unreachable,
+  other,
+}
+
+InquiryConsultationResult inquiryConsultationResultFromJson(String? value) {
+  return switch (value) {
+    'PHONE_COMPLETED' => InquiryConsultationResult.phoneCompleted,
+    'MATERIAL_SENT' => InquiryConsultationResult.materialSent,
+    'QUOTE_REVIEW' => InquiryConsultationResult.quoteReview,
+    'WAITING_RESPONSE' => InquiryConsultationResult.waitingResponse,
+    'UNREACHABLE' => InquiryConsultationResult.unreachable,
+    _ => InquiryConsultationResult.other,
+  };
+}
+
+String inquiryConsultationResultToApi(InquiryConsultationResult result) {
+  return switch (result) {
+    InquiryConsultationResult.phoneCompleted => 'PHONE_COMPLETED',
+    InquiryConsultationResult.materialSent => 'MATERIAL_SENT',
+    InquiryConsultationResult.quoteReview => 'QUOTE_REVIEW',
+    InquiryConsultationResult.waitingResponse => 'WAITING_RESPONSE',
+    InquiryConsultationResult.unreachable => 'UNREACHABLE',
+    InquiryConsultationResult.other => 'OTHER',
+  };
+}
+
+String inquiryConsultationResultLabel(InquiryConsultationResult result) {
+  return switch (result) {
+    InquiryConsultationResult.phoneCompleted => '전화 완료',
+    InquiryConsultationResult.materialSent => '자료 전달',
+    InquiryConsultationResult.quoteReview => '견적 검토',
+    InquiryConsultationResult.waitingResponse => '답변 대기',
+    InquiryConsultationResult.unreachable => '연락 불가',
+    InquiryConsultationResult.other => '기타',
+  };
+}
+
+class InquiryConsultationRecord {
+  const InquiryConsultationRecord({
+    required this.id,
+    required this.result,
+    required this.adminLabel,
+    required this.createdAt,
+    this.memo,
+  });
+
+  final String id;
+  final InquiryConsultationResult result;
+  final String adminLabel;
+  final String? memo;
+  final DateTime createdAt;
+
+  factory InquiryConsultationRecord.fromJson(Map<String, dynamic> json) {
+    final displayName = (json['adminDisplayName'] as String? ?? '').trim();
+    final username = (json['adminUsername'] as String? ?? '').trim();
+    return InquiryConsultationRecord(
+      id: json['id'] as String? ?? '',
+      result: inquiryConsultationResultFromJson(json['result'] as String?),
+      adminLabel: displayName.isNotEmpty
+          ? displayName
+          : (username.isNotEmpty ? username : '관리자'),
+      memo: json['memo'] as String?,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+    );
+  }
 }
 
 String inquiryTypeLabel(String? value) {
@@ -64,6 +141,7 @@ class Inquiry {
     required this.status,
     required this.createdAt,
     required this.updatedAt,
+    required this.lastActionAt,
     this.email,
     this.phone,
     this.responseMethod,
@@ -89,11 +167,13 @@ class Inquiry {
     this.customerId,
     this.customer,
     this.customerMatchCandidates = const [],
+    this.hasPendingDuplicate = false,
     this.assignedAdminId,
     this.assignedAdminUsername,
     this.assignedAdminDisplayName,
     this.assignedAt,
     this.attachments = const [],
+    this.consultationRecords = const [],
   });
 
   final String id;
@@ -126,13 +206,16 @@ class Inquiry {
   final String? customerId;
   final Customer? customer;
   final List<CustomerDuplicateCandidate> customerMatchCandidates;
+  final bool hasPendingDuplicate;
   final String? assignedAdminId;
   final String? assignedAdminUsername;
   final String? assignedAdminDisplayName;
   final DateTime? assignedAt;
   final List<InquiryAttachment> attachments;
+  final List<InquiryConsultationRecord> consultationRecords;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final DateTime lastActionAt;
 
   factory Inquiry.fromJson(Map<String, dynamic> json) {
     final assignedAdmin = json['assignedAdmin'] is Map
@@ -182,6 +265,7 @@ class Inquiry {
               .whereType<Map<String, dynamic>>()
               .map(CustomerDuplicateCandidate.fromJson)
               .toList(),
+      hasPendingDuplicate: json['hasPendingDuplicate'] as bool? ?? false,
       assignedAdminId: json['assignedAdminId'] as String?,
       assignedAdminUsername: assignedAdmin['username'] as String?,
       assignedAdminDisplayName: assignedAdmin['displayName'] as String?,
@@ -192,8 +276,16 @@ class Inquiry {
           .whereType<Map<String, dynamic>>()
           .map(InquiryAttachment.fromJson)
           .toList(),
+      consultationRecords:
+          (json['consultationRecords'] as List<dynamic>? ?? const [])
+              .whereType<Map<String, dynamic>>()
+              .map(InquiryConsultationRecord.fromJson)
+              .toList(),
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
+      lastActionAt: DateTime.parse(
+        (json['lastActionAt'] ?? json['createdAt']) as String,
+      ),
     );
   }
 
@@ -210,4 +302,22 @@ class Inquiry {
 
   String get contactPersonLabel =>
       contactPerson.trim().isEmpty ? '담당자명 미입력' : contactPerson;
+
+  Duration get idleDuration => DateTime.now().difference(lastActionAt);
+
+  String get attentionLabel {
+    if (status == InquiryStatus.completed) return '완료';
+    if (idleDuration.inHours >= 72) return '3일 미처리';
+    if (idleDuration.inHours >= 24) return '1일 미처리';
+    if (assignedAdminId == null) return '배정 전';
+    return '진행 중';
+  }
+
+  int get attentionPriority {
+    if (status == InquiryStatus.completed) return 4;
+    if (idleDuration.inHours >= 72) return 0;
+    if (idleDuration.inHours >= 24) return 1;
+    if (assignedAdminId == null) return 2;
+    return 3;
+  }
 }

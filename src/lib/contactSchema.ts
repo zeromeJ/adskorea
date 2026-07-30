@@ -70,7 +70,7 @@ export type ContactFormData = {
 };
 
 export const initialContactFormData: ContactFormData = {
-  inquiryType: "product",
+  inquiryType: "",
   companyName: "",
   contactPerson: "",
   department: "",
@@ -132,7 +132,10 @@ export function getContactFormFieldErrors(data: ContactFormData) {
     errors.phone =
       "전화번호 형식을 확인해 주세요. 국가번호도 입력할 수 있습니다.";
   }
-  if (!data.details.deliveryRegion?.trim()) {
+  if (
+    (data.inquiryType === "quote" || data.inquiryType === "consulting") &&
+    !data.details.deliveryRegion?.trim()
+  ) {
     errors.deliveryRegion = "납품 지역을 선택해 주세요.";
   }
   if (data.email.trim() && !isValidEmail(data.email)) {

@@ -76,7 +76,25 @@ export function validateContactBody(data: ReturnType<typeof normalizeContactBody
   if (data.contactPerson.length > 50) return "입력값을 확인해 주세요.";
   if (data.department.length > 100) return "입력값을 확인해 주세요.";
   if (!data.phone || data.phone.length > 30 || !isValidPhone(data.phone)) return "올바른 전화번호 형식으로 입력해 주세요.";
-  if (!deliveryRegionOptions.includes(data.details.deliveryRegion as (typeof deliveryRegionOptions)[number])) return "납품 지역을 확인해 주세요.";
+  const requiresDeliveryRegion =
+    data.inquiryType === "quote" || data.inquiryType === "consulting";
+  if (
+    requiresDeliveryRegion &&
+    !deliveryRegionOptions.includes(
+      data.details.deliveryRegion as (typeof deliveryRegionOptions)[number],
+    )
+  ) {
+    return "납품 지역을 확인해 주세요.";
+  }
+  if (
+    !requiresDeliveryRegion &&
+    data.details.deliveryRegion &&
+    !deliveryRegionOptions.includes(
+      data.details.deliveryRegion as (typeof deliveryRegionOptions)[number],
+    )
+  ) {
+    return "납품 지역을 확인해 주세요.";
+  }
   if (data.email.length > 254 || (data.email && !isValidEmail(data.email))) return "올바른 이메일 형식을 입력해 주세요.";
   if (!data.responseMethod) return "회신 방법을 확인해 주세요.";
   if (data.message.length > 1500) return "문의 내용은 최대 1,500자입니다.";

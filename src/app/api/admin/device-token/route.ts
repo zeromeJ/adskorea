@@ -10,6 +10,7 @@ export async function POST(request: Request) {
   const body = (await request.json()) as {
     token?: string;
     platform?: string;
+    enabled?: boolean;
   };
   const token = body.token?.trim();
 
@@ -18,6 +19,16 @@ export async function POST(request: Request) {
       { success: false, message: "유효한 기기 토큰이 필요합니다." },
       { status: 400 },
     );
+  }
+
+  if (body.enabled === false) {
+    await prisma.adminDevice.deleteMany({
+      where: {
+        adminUserId: admin.id,
+        token,
+      },
+    });
+    return NextResponse.json({ success: true });
   }
 
   await prisma.$transaction([

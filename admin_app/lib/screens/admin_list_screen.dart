@@ -260,10 +260,13 @@ class _AdminListScreenState extends State<AdminListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('관리자 목록'),
+        title: const Text('관리자'),
         actions: [
           IconButton(
-              onPressed: _openCreate, icon: const Icon(Icons.person_add)),
+            tooltip: '관리자 추가',
+            onPressed: _openCreate,
+            icon: const Icon(Icons.person_add),
+          ),
         ],
       ),
       body: SafeArea(
@@ -302,6 +305,19 @@ class _AdminListScreenState extends State<AdminListScreen> {
                                 ),
                                 isThreeLine: true,
                                 trailing: PopupMenuButton<String>(
+                                  tooltip: '관리자 작업',
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 14,
+                                    ),
+                                    child: Text(
+                                      '관리',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ),
                                   onSelected: (value) {
                                     if (value == 'assistantRole') {
                                       _changeAssistantRole(admin);

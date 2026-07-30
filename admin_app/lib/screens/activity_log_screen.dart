@@ -79,7 +79,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('문의 처리 로그')),
+      appBar: AppBar(title: const Text('처리 기록')),
       body: SafeArea(
         top: false,
         child: Column(

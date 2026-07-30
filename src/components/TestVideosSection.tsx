@@ -91,7 +91,7 @@ export default function TestVideosSection({
         <SectionTitle
           eyebrow="Product Performance Demonstrations"
           title="제품 성능 시연 영상"
-          description="실제 화물 또는 특정 환경을 가정해 촬영한 제조사 제공 시연 영상입니다. 영상은 제품의 구조와 상태를 직관적으로 확인하기 위한 참고자료이며, 공식 성능 판단은 별도의 제3자 시험성적서를 기준으로 검토하십시오."
+          description="실제 화물 또는 특정 환경을 가정해 촬영한 제조사 제공 시연 영상으로, 제품의 구조와 상태를 직관적으로 확인하기 위한 참고자료입니다."
         />
         <div className="touch-horizontal-scroller no-scrollbar mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-2 md:overflow-visible lg:grid-cols-3">
           {items.map((video, index) => {
@@ -110,6 +110,7 @@ export default function TestVideosSection({
                   ) : (
                     <MediaPlaceholder
                       alt={`${video.title} 영상 썸네일`}
+                      className="[&>div]:rounded-b-none [&>div]:rounded-t-lg"
                       desktopRatio="16:9"
                       fieldName={`performanceVideo.${index}.poster`}
                       guide="영상을 등록하면 첫 장면을 미리보기로 사용합니다."
@@ -122,14 +123,10 @@ export default function TestVideosSection({
                   <span className="absolute right-2 bottom-2 rounded bg-[rgba(16,37,29,0.82)] px-2 py-1 text-xs font-bold text-white">{durationLabel(video.durationSeconds)}</span>
                 </button>
                 <div className="flex min-w-0 flex-1 flex-col p-4">
-                  <div className="flex flex-wrap gap-2">
-                    <span className="rounded-full bg-[var(--sub-mint)] px-2.5 py-1 text-xs font-bold text-[var(--primary-dark)]">제조사 제공 시연영상</span>
-                    {video.hasRelatedReports ? <span className="rounded-full border border-[var(--line)] px-2.5 py-1 text-xs font-bold text-[var(--primary)]">관련 시험자료 있음</span> : null}
-                  </div>
-                  <p className="en mt-4 text-xs font-bold text-[var(--accent-gold-dark)]">{video.titleEn}</p>
+                  {video.hasRelatedReports ? <span className="self-start rounded-full border border-[var(--line)] px-2.5 py-1 text-xs font-bold text-[var(--primary)]">관련 시험자료 있음</span> : null}
+                  <p className={`en text-xs font-bold text-[var(--accent-gold-dark)] ${video.hasRelatedReports ? "mt-4" : "mt-1"}`}>{video.titleEn}</p>
                   <h3 className="mt-1 [overflow-wrap:anywhere] text-lg leading-7 font-bold text-[var(--text)]">{video.title}</h3>
                   <p className="mt-3 line-clamp-2 text-sm leading-6 text-[var(--sub-text)]">{video.description}</p>
-                  <p className="mt-auto pt-4 text-[0.8rem] font-bold leading-5 text-[var(--sub-text)]">공식 시험성적서를 대체하지 않습니다.</p>
                 </div>
               </article>
             );

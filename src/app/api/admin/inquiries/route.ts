@@ -18,7 +18,13 @@ function parseStatus(status: string | null, canViewUnassigned: boolean) {
     return status;
   }
 
-  if (status === "PENDING" || status === "COMPLETED") {
+  if (
+    status === "PENDING" ||
+    status === "COMPLETED" ||
+    status === "STALE_ALL" ||
+    status === "STALE_1D" ||
+    status === "STALE_3D"
+  ) {
     return status;
   }
 
@@ -52,6 +58,7 @@ const inquiryListSelect = {
   status: true,
   assignedAdminId: true,
   assignedAt: true,
+  lastActionAt: true,
   assignedAdmin: {
     select: {
       id: true,
@@ -62,9 +69,37 @@ const inquiryListSelect = {
       isAssistantAdmin: true,
     },
   },
+  customer: {
+    select: {
+      duplicateReviews: {
+        where: {
+          status: "PENDING",
+          candidateCustomer: { isArchived: false },
+        },
+        take: 1,
+        select: { id: true },
+      },
+    },
+  },
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.InquirySelect;
+
+type InquiryListItem = Prisma.InquiryGetPayload<{
+  select: typeof inquiryListSelect;
+}>;
+
+function serializeInquiryListItem(
+  item: InquiryListItem,
+  showDuplicateDetection: boolean,
+) {
+  const { customer, ...inquiry } = item;
+  return {
+    ...inquiry,
+    hasPendingDuplicate:
+      showDuplicateDetection && customer.duplicateReviews.length > 0,
+  };
+}
 
 export async function GET(request: Request) {
   const admin = await getAdminFromRequest(request);
@@ -107,6 +142,9 @@ export async function GET(request: Request) {
         }
       : {}),
   };
+  const now = Date.now();
+  const oneDayAgo = new Date(now - 24 * 60 * 60 * 1000);
+  const threeDaysAgo = new Date(now - 72 * 60 * 60 * 1000);
 
   const where: Prisma.InquiryWhereInput = {
     ...baseWhere,
@@ -124,10 +162,25 @@ export async function GET(request: Request) {
           }
         : status === "COMPLETED"
           ? { status: InquiryStatus.COMPLETED }
+          : status === "STALE_ALL"
+            ? {
+                status: InquiryStatus.PENDING,
+                lastActionAt: { lte: oneDayAgo },
+              }
+          : status === "STALE_1D"
+            ? {
+                status: InquiryStatus.PENDING,
+                lastActionAt: { gt: threeDaysAgo, lte: oneDayAgo },
+              }
+            : status === "STALE_3D"
+              ? {
+                  status: InquiryStatus.PENDING,
+                  lastActionAt: { lte: threeDaysAgo },
+                }
           : {}),
   };
 
-  const offset = (page - 1) * limit;
+  const visibilityWhere = inquiryVisibilityWhere(admin);
   const countsPromise = Promise.all([
     prisma.inquiry.count({ where: baseWhere }),
     canViewUnassigned
@@ -160,62 +213,105 @@ export async function GET(request: Request) {
     pending,
     completed,
   }));
+  const summaryPromise = Promise.all([
+    hasInquiryManagementPermission
+      ? prisma.inquiry.count({
+          where: {
+            ...visibilityWhere,
+            status: InquiryStatus.PENDING,
+            assignedAdminId: null,
+          },
+        })
+      : Promise.resolve(0),
+    prisma.inquiry.count({
+      where: {
+        ...visibilityWhere,
+        status: InquiryStatus.PENDING,
+        lastActionAt: { gt: threeDaysAgo, lte: oneDayAgo },
+      },
+    }),
+    prisma.inquiry.count({
+      where: {
+        ...visibilityWhere,
+        status: InquiryStatus.PENDING,
+        lastActionAt: { lte: threeDaysAgo },
+      },
+    }),
+    prisma.inquiry.count({
+      where: {
+        assignedAdminId: admin.id,
+        status: InquiryStatus.PENDING,
+      },
+    }),
+    prisma.inquiry.count({
+      where: {
+        assignedAdminId: admin.id,
+      },
+    }),
+  ]).then(([unassigned, stale1d, stale3d, minePending, mineAll]) => ({
+    unassigned,
+    stale1d,
+    stale3d,
+    staleTotal: stale1d + stale3d,
+    minePending,
+    mineAll,
+  }));
 
-  if (status === "ALL") {
-    const [pendingCount, total, counts] = await Promise.all([
-      prisma.inquiry.count({
-        where: { ...baseWhere, status: InquiryStatus.PENDING },
-      }),
-      prisma.inquiry.count({ where: baseWhere }),
-      countsPromise,
-    ]);
-
-    const pendingTake = Math.max(Math.min(limit, pendingCount - offset), 0);
-    const completedSkip = Math.max(offset - pendingCount, 0);
-    const completedTake = limit - pendingTake;
-
-    const [pendingItems, completedItems] = await Promise.all([
-      pendingTake > 0
-        ? prisma.inquiry.findMany({
-            where: { ...baseWhere, status: InquiryStatus.PENDING },
-            orderBy: { createdAt: "asc" },
-            skip: offset,
-            take: pendingTake,
-            select: inquiryListSelect,
-          })
-        : Promise.resolve([]),
-      completedTake > 0
-        ? prisma.inquiry.findMany({
-            where: { ...baseWhere, status: InquiryStatus.COMPLETED },
-            orderBy: { createdAt: "desc" },
-            skip: completedSkip,
-            take: completedTake,
-            select: inquiryListSelect,
-          })
-        : Promise.resolve([]),
-    ]);
-
-    return NextResponse.json({
-      success: true,
-      items: [...pendingItems, ...completedItems],
-      total,
-      counts,
-    });
-  }
-
-  const [items, total, counts] = await Promise.all([
+  const [rankedRows, total, counts, summary] = await Promise.all([
     prisma.inquiry.findMany({
       where,
-      orderBy: {
-        createdAt: status === "COMPLETED" ? "desc" : "asc",
+      select: {
+        id: true,
+        status: true,
+        assignedAdminId: true,
+        lastActionAt: true,
+        createdAt: true,
       },
-      skip: offset,
-      take: limit,
-      select: inquiryListSelect,
     }),
     prisma.inquiry.count({ where }),
     countsPromise,
+    summaryPromise,
   ]);
 
-  return NextResponse.json({ success: true, items, total, counts });
+  rankedRows.sort((left, right) => {
+    const priority = (item: (typeof rankedRows)[number]) => {
+      if (item.status === InquiryStatus.COMPLETED) return 4;
+      if (item.lastActionAt <= threeDaysAgo) return 0;
+      if (item.lastActionAt <= oneDayAgo) return 1;
+      if (item.assignedAdminId === null) return 2;
+      return 3;
+    };
+    const priorityOrder = priority(left) - priority(right);
+    if (priorityOrder !== 0) return priorityOrder;
+    return left.status === InquiryStatus.COMPLETED
+      ? right.createdAt.getTime() - left.createdAt.getTime()
+      : left.lastActionAt.getTime() - right.lastActionAt.getTime();
+  });
+
+  const offset = (page - 1) * limit;
+  const orderedIds = rankedRows
+    .slice(offset, offset + limit)
+    .map((item) => item.id);
+  const unorderedItems =
+    orderedIds.length === 0
+      ? []
+      : await prisma.inquiry.findMany({
+          where: { id: { in: orderedIds } },
+          select: inquiryListSelect,
+        });
+  const itemById = new Map(unorderedItems.map((item) => [item.id, item]));
+  const items = orderedIds.flatMap((id) => {
+    const item = itemById.get(id);
+    return item ? [item] : [];
+  });
+
+  return NextResponse.json({
+    success: true,
+    items: items.map((item) =>
+      serializeInquiryListItem(item, admin.isSuperAdmin),
+    ),
+    total,
+    counts,
+    summary,
+  });
 }

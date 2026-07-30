@@ -86,7 +86,7 @@ class _WebsiteManagementScreenState extends State<WebsiteManagementScreen> {
           : const Color(0xFF667085);
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('홈페이지 관리')),
+        appBar: AppBar(title: const Text('홈페이지')),
         body: loading
             ? const Center(child: CircularProgressIndicator())
             : error != null
@@ -116,7 +116,7 @@ class _WebsiteManagementScreenState extends State<WebsiteManagementScreen> {
                     onRefresh: _load,
                     child:
                         ListView(padding: const EdgeInsets.all(16), children: [
-                      const Text('수정할 홈페이지 영역을 선택하세요.',
+                      const Text('수정할 영역을 선택하세요.',
                           style: TextStyle(
                               fontSize: 20, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 6),

@@ -58,7 +58,7 @@ export async function sendNewInquiryPush(
     devices.map(({ token }) => token),
     {
       inquiryId,
-      title: "ADS 신규 문의",
+      title: "아델슨 코리아 신규 문의",
       body: `${companyName || "회사명 미입력"} · ${contactPerson ? `${contactPerson}님` : "담당자 미입력"}의 문의가 접수되었습니다.`,
       type: "NEW_INQUIRY",
     },
@@ -82,7 +82,7 @@ export async function sendInquiryAssignmentPush(
     devices.map(({ token }) => token),
     {
       inquiryId,
-      title: "ADS 문의 담당 배정",
+      title: "아델슨 코리아 문의 담당 배정",
       body: `${companyName} 문의의 담당자로 배정되었습니다.`,
       type: "ASSIGNED_INQUIRY",
     },

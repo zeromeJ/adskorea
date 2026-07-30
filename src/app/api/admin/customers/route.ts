@@ -22,6 +22,7 @@ export async function GET(request: Request) {
 
   const search = searchParams.get("search")?.trim() || "";
   const normalizedSearchPhone = normalizePhone(search);
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const page = Math.max(Number(searchParams.get("page") || 1), 1);
   const limit = Math.min(Math.max(Number(searchParams.get("limit") || 50), 1), 100);
   const where: Prisma.CustomerWhereInput = {
@@ -115,15 +116,48 @@ export async function GET(request: Request) {
     }),
     prisma.customer.count({ where }),
   ]);
+  const visibleInquiries = await prisma.inquiry.findMany({
+    where: {
+      customerId: { in: items.map((item) => item.id) },
+      ...(canManageInquiries(admin) ? {} : { assignedAdminId: admin.id }),
+    },
+    orderBy: { createdAt: "desc" },
+    select: {
+      customerId: true,
+      status: true,
+      lastActionAt: true,
+      createdAt: true,
+    },
+  });
+  const inquiriesByCustomer = new Map<
+    string,
+    typeof visibleInquiries
+  >();
+  for (const inquiry of visibleInquiries) {
+    const current = inquiriesByCustomer.get(inquiry.customerId) ?? [];
+    current.push(inquiry);
+    inquiriesByCustomer.set(inquiry.customerId, current);
+  }
 
   return NextResponse.json({
     success: true,
-    items: items.map(({ favorites, duplicateReviews, _count, ...item }) => ({
-      ...item,
-      isFavorite: favorites.length > 0,
-      hasPendingDuplicate: duplicateReviews.length > 0,
-      inquiryCount: _count.inquiries,
-    })),
+    items: items.map(({ favorites, duplicateReviews, _count, ...item }) => {
+        const inquiries = inquiriesByCustomer.get(item.id) ?? [];
+        const pending = inquiries.filter(
+          (inquiry) => inquiry.status === "PENDING",
+        );
+        return {
+          ...item,
+          isFavorite: favorites.length > 0,
+          hasPendingDuplicate: duplicateReviews.length > 0,
+          inquiryCount: _count.inquiries,
+          pendingInquiryCount: pending.length,
+          hasStaleInquiry: pending.some(
+            (inquiry) => inquiry.lastActionAt <= oneDayAgo,
+          ),
+          recentInquiryAt: inquiries[0]?.createdAt ?? null,
+        };
+      }),
     total,
   });
 }

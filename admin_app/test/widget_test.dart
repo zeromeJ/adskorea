@@ -2,11 +2,184 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ads_inquiry_admin/models/completion_log.dart';
 import 'package:ads_inquiry_admin/models/customer.dart';
 import 'package:ads_inquiry_admin/models/inquiry.dart';
+import 'package:ads_inquiry_admin/widgets/inquiry_card.dart';
+import 'package:ads_inquiry_admin/widgets/status_chip.dart';
+import 'package:ads_inquiry_admin/models/admin_user.dart';
+import 'package:ads_inquiry_admin/screens/assignment_picker_screen.dart';
+import 'package:ads_inquiry_admin/screens/consultation_record_screen.dart';
+import 'package:ads_inquiry_admin/services/api_client.dart';
+import 'package:ads_inquiry_admin/services/inquiry_service.dart';
+import 'package:flutter/material.dart';
 
 void main() {
   test('inquiry status labels are Korean', () {
     expect(inquiryStatusLabel(InquiryStatus.pending), '진행 중');
-    expect(inquiryStatusLabel(InquiryStatus.completed), '처리 완료');
+    expect(inquiryStatusLabel(InquiryStatus.completed), '완료');
+  });
+
+  test('inquiry attention uses last action time', () {
+    final now = DateTime.now();
+    final inquiry = Inquiry(
+      id: 'stale-inquiry',
+      registrationNumber: '2607300001',
+      companyName: '테스트 회사',
+      contactPerson: '김담당',
+      status: InquiryStatus.pending,
+      createdAt: now.subtract(const Duration(days: 5)),
+      updatedAt: now,
+      lastActionAt: now.subtract(const Duration(hours: 73)),
+    );
+
+    expect(inquiry.attentionLabel, '3일 미처리');
+    expect(inquiry.attentionPriority, 0);
+  });
+
+  test('work summary combines stale counts and includes all assigned inquiries',
+      () {
+    final summary = InquiryWorkSummary.fromJson({
+      'unassigned': 3,
+      'stale1d': 2,
+      'stale3d': 1,
+      'minePending': 4,
+      'mineAll': 9,
+    });
+
+    expect(summary.unassigned, 3);
+    expect(summary.staleTotal, 3);
+    expect(summary.minePending, 4);
+    expect(summary.mineAll, 9);
+  });
+
+  for (final label in const ['1일 미처리', '3일 미처리']) {
+    testWidgets('$label uses its warning color', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: StatusChip(
+              status: InquiryStatus.pending,
+              label: label,
+            ),
+          ),
+        ),
+      );
+
+      final container = tester.widget<Container>(
+        find
+            .ancestor(
+              of: find.text(label),
+              matching: find.byType(Container),
+            )
+            .first,
+      );
+      final color = (container.decoration! as BoxDecoration).color;
+      expect(
+        color,
+        label == '1일 미처리' ? const Color(0xFFE87817) : const Color(0xFFC62828),
+      );
+    });
+  }
+
+  for (final scale in const [1.0, 1.3, 1.5]) {
+    testWidgets('inquiry card supports ${scale * 100}% text', (tester) async {
+      final now = DateTime.now();
+      final inquiry = Inquiry(
+        id: 'inquiry-$scale',
+        registrationNumber: '2607300002',
+        companyName: '아델슨 테스트 주식회사',
+        contactPerson: '김민수',
+        inquiryType: 'quote',
+        status: InquiryStatus.pending,
+        assignedAdminId: 'admin',
+        assignedAdminDisplayName: '박담당',
+        createdAt: now,
+        updatedAt: now,
+        lastActionAt: now.subtract(const Duration(hours: 26)),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MediaQuery(
+            data: MediaQueryData(textScaler: TextScaler.linear(scale)),
+            child: Scaffold(
+              body: SingleChildScrollView(
+                child: SizedBox(
+                  width: 390,
+                  child: InquiryCard(
+                    inquiry: inquiry,
+                    onOpen: () {},
+                    onCall: () {},
+                    onComplete: () {},
+                    showAssignment: true,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('1일 미처리'), findsOneWidget);
+      expect(find.text('전화'), findsOneWidget);
+      expect(find.text('처리 완료'), findsOneWidget);
+    });
+  }
+
+  testWidgets('assignment picker supports 150% text', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: MediaQuery(
+          data: MediaQueryData(textScaler: TextScaler.linear(1.5)),
+          child: AssignmentPickerScreen(
+            currentAdminId: null,
+            admins: [
+              AdminUser(
+                id: 'admin',
+                username: 'admin',
+                displayName: '박담당 관리자',
+                pendingInquiryCount: 4,
+                staleThreeDayCount: 1,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('담당자'), findsOneWidget);
+    expect(find.textContaining('진행 중 4건'), findsOneWidget);
+  });
+
+  testWidgets('consultation record supports 150% text', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(textScaler: TextScaler.linear(1.5)),
+          child: ConsultationRecordScreen(
+            inquiryId: 'inquiry',
+            service: InquiryService(ApiClient()),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('처리 결과'), findsOneWidget);
+    expect(find.text('전화 완료'), findsOneWidget);
   });
 
   test('assigned admin label shows only display name', () {
@@ -22,10 +195,32 @@ void main() {
       assignedAdminDisplayName: '김관리',
       createdAt: now,
       updatedAt: now,
+      lastActionAt: now,
     );
 
     expect(inquiry.assignedAdminLabel, '김관리');
     expect(inquiry.assignedAdminLabel, isNot(contains('login-id')));
+  });
+
+  test('admin role permissions stay separated', () {
+    const superAdmin = AdminUser(
+      id: 'super',
+      username: 'super',
+      isSuperAdmin: true,
+    );
+    const assistantAdmin = AdminUser(
+      id: 'assistant',
+      username: 'assistant',
+      isAssistantAdmin: true,
+    );
+    const normalAdmin = AdminUser(id: 'normal', username: 'normal');
+
+    expect(superAdmin.canManageInquiries, isTrue);
+    expect(superAdmin.canManageWebsite, isTrue);
+    expect(assistantAdmin.canManageInquiries, isTrue);
+    expect(assistantAdmin.canManageWebsite, isTrue);
+    expect(normalAdmin.canManageInquiries, isFalse);
+    expect(normalAdmin.canManageWebsite, isFalse);
   });
 
   test('assignment activity identifies actor, assignee, and inquiry', () {
@@ -76,6 +271,19 @@ void main() {
     expect(candidate.reasonLabel, '전화번호 일치 · 회사명 일치');
     expect(
         candidate.customer.inquiries.single.registrationNumber, '2607280001');
+  });
+
+  test('customer list metrics parse pending count and recent inquiry date', () {
+    final customer = Customer.fromJson({
+      'id': 'customer',
+      'name': '김담당',
+      'pendingInquiryCount': 3,
+      'recentInquiryAt': '2026-07-28T12:02:22.375Z',
+    });
+
+    expect(customer.pendingInquiryCount, 3);
+    expect(
+        customer.recentInquiryAt, DateTime.parse('2026-07-28T12:02:22.375Z'));
   });
 
   test('customer merge history keeps each merge independently undoable', () {

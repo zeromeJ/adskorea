@@ -28,15 +28,34 @@ enum CustomerDuplicateReviewStatus {
   MERGED
 }
 
+enum InquiryConsultationResult {
+  PHONE_COMPLETED
+  MATERIAL_SENT
+  QUOTE_REVIEW
+  WAITING_RESPONSE
+  UNREACHABLE
+  OTHER
+}
+
+enum CustomerReviewRequestType {
+  DUPLICATE_REVIEW
+  COMPANY_REVIEW
+}
+
+enum CustomerReviewRequestStatus {
+  PENDING
+  RESOLVED
+}
+
 model Inquiry {
-  id                   String                 @id @default(cuid())
-  registrationNumber   String                 @unique
+  id                   String                      @id @default(cuid())
+  registrationNumber   String                      @unique
   companyName          String
   contactPerson        String
   email                String?
   phone                String?
-  responseMethod       ResponseMethod         @default(ANY)
-  inquiryType          String                 @default("일반 제품 문의")
+  responseMethod       ResponseMethod              @default(ANY)
+  inquiryType          String                      @default("일반 제품 문의")
   department           String?
   inquiryDetails       Json?
   country              String?
@@ -47,29 +66,32 @@ model Inquiry {
   loadPerPallet        String?
   estimatedQuantity    String?
   requiredPalletSize   String?
-  requestedPalletSizes String[]               @default([])
+  requestedPalletSizes String[]                    @default([])
   exportCountry        String?
   rackStorage          Boolean?
   automationUse        Boolean?
   forkliftUse          Boolean?
   handPalletTruckUse   Boolean?
-  message              String?                @db.VarChar(1500)
-  status               InquiryStatus          @default(PENDING)
+  message              String?                     @db.VarChar(1500)
+  status               InquiryStatus               @default(PENDING)
   adminMemo            String?
   assignedAdminId      String?
   customerId           String
   assignedAt           DateTime?
-  createdAt            DateTime               @default(now())
-  updatedAt            DateTime               @updatedAt
-  assignedAdmin        AdminUser?             @relation("InquiryAssignee", fields: [assignedAdminId], references: [id], onDelete: SetNull)
-  customer             Customer               @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  lastActionAt         DateTime                    @default(now())
+  createdAt            DateTime                    @default(now())
+  updatedAt            DateTime                    @updatedAt
+  assignedAdmin        AdminUser?                  @relation("InquiryAssignee", fields: [assignedAdminId], references: [id], onDelete: SetNull)
+  customer             Customer                    @relation(fields: [customerId], references: [id], onDelete: Restrict)
   completionLogs       InquiryCompletionLog[]
   assignmentLogs       InquiryAssignmentLog[]
   attachments          InquiryAttachment[]
   customerMergeRecords CustomerMergeInquiry[]
+  consultationRecords  InquiryConsultationRecord[]
 
   @@index([assignedAdminId, status, createdAt])
   @@index([customerId, status, createdAt])
+  @@index([status, lastActionAt])
 }
 
 model InquiryAttachment {
@@ -86,30 +108,36 @@ model InquiryAttachment {
 }
 
 model AdminUser {
-  id                String                 @id @default(cuid())
-  username          String                 @unique
-  passwordHash      String
-  displayName       String?
-  isActive          Boolean                @default(true)
-  isSuperAdmin      Boolean                @default(false)
-  isAssistantAdmin  Boolean                @default(false)
-  createdAt         DateTime               @default(now())
-  updatedAt         DateTime               @updatedAt
-  devices           AdminDevice[]
-  assignedInquiries Inquiry[]              @relation("InquiryAssignee")
-  completionLogs    InquiryCompletionLog[]
-  assignmentLogs    InquiryAssignmentLog[]
-  customerFavorites CustomerFavorite[]
+  id                     String                      @id @default(cuid())
+  username               String                      @unique
+  passwordHash           String
+  displayName            String?
+  isActive               Boolean                     @default(true)
+  isSuperAdmin           Boolean                     @default(false)
+  isAssistantAdmin       Boolean                     @default(false)
+  createdAt              DateTime                    @default(now())
+  updatedAt              DateTime                    @updatedAt
+  devices                AdminDevice[]
+  assignedInquiries      Inquiry[]                   @relation("InquiryAssignee")
+  completionLogs         InquiryCompletionLog[]
+  assignmentLogs         InquiryAssignmentLog[]
+  customerFavorites      CustomerFavorite[]
+  consultationRecords    InquiryConsultationRecord[]
+  customerPrivateMemos   CustomerPrivateMemo[]
+  companyPrivateMemos    CompanyPrivateMemo[]
+  companyChangeLogs      CompanyChangeLog[]
+  customerReviewRequests CustomerReviewRequest[]
 }
 
 model Company {
-  id             String     @id @default(cuid())
+  id             String               @id @default(cuid())
   name           String
-  normalizedName String     @unique
+  normalizedName String               @unique
   memo           String?
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
   customers      Customer[]
+  privateMemos   CompanyPrivateMemo[]
 }
 
 model Customer {
@@ -134,6 +162,9 @@ model Customer {
   candidateForReview   CustomerDuplicateReview[] @relation("DuplicateReviewCandidateCustomer")
   mergeLogsAsSource    CustomerMergeLog[]        @relation("CustomerMergeSource")
   mergeLogsAsTarget    CustomerMergeLog[]        @relation("CustomerMergeTarget")
+  privateMemos         CustomerPrivateMemo[]
+  companyChangeLogs    CompanyChangeLog[]
+  reviewRequests       CustomerReviewRequest[]
 
   @@index([normalizedPhone])
   @@index([normalizedEmail])
@@ -141,6 +172,67 @@ model Customer {
   @@index([isArchived, createdAt])
   @@index([mergedIntoCustomerId])
   @@index([createdAt])
+}
+
+model CustomerPrivateMemo {
+  customerId  String
+  adminUserId String
+  memo        String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@id([customerId, adminUserId])
+  @@index([adminUserId])
+}
+
+model CompanyPrivateMemo {
+  companyId   String
+  adminUserId String
+  memo        String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@id([companyId, adminUserId])
+  @@index([adminUserId])
+}
+
+model CompanyChangeLog {
+  id                  String     @id @default(cuid())
+  customerId          String
+  adminUserId         String?
+  adminUsername       String
+  adminDisplayName    String?
+  previousCompanyId   String?
+  previousCompanyName String?
+  newCompanyId        String?
+  newCompanyName      String?
+  createdAt           DateTime   @default(now())
+  customer            Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  adminUser           AdminUser? @relation(fields: [adminUserId], references: [id], onDelete: SetNull)
+
+  @@index([customerId, createdAt])
+  @@index([adminUserId])
+}
+
+model CustomerReviewRequest {
+  id              String                      @id @default(cuid())
+  customerId      String
+  requestedById   String?
+  requestedByName String?
+  type            CustomerReviewRequestType
+  status          CustomerReviewRequestStatus @default(PENDING)
+  note            String?
+  createdAt       DateTime                    @default(now())
+  resolvedAt      DateTime?
+  customer        Customer                    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  requestedBy     AdminUser?                  @relation(fields: [requestedById], references: [id], onDelete: SetNull)
+
+  @@index([customerId, status])
+  @@index([status, createdAt])
 }
 
 model CustomerMergeLog {
@@ -236,6 +328,22 @@ model InquiryAssignmentLog {
 
   @@index([createdAt])
   @@index([inquiryId])
+  @@index([adminUserId])
+}
+
+model InquiryConsultationRecord {
+  id               String                    @id @default(cuid())
+  inquiryId        String
+  result           InquiryConsultationResult
+  memo             String?
+  adminUserId      String?
+  adminUsername    String
+  adminDisplayName String?
+  createdAt        DateTime                  @default(now())
+  inquiry          Inquiry                   @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  adminUser        AdminUser?                @relation(fields: [adminUserId], references: [id], onDelete: SetNull)
+
+  @@index([inquiryId, createdAt])
   @@index([adminUserId])
 }
 

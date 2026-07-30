@@ -5,6 +5,7 @@ export const websiteSections = [
   { key: "performance", title: "성능·기술", requiredCount: 12 },
   { key: "product-lineup", title: "제품 라인업", requiredCount: 4 },
   { key: "applications", title: "적용 분야", requiredCount: 0 },
+  { key: "customer-applications", title: "고객 적용 사례", requiredCount: 0 },
   { key: "environment", title: "환경 데이터", requiredCount: 1 },
   { key: "company", title: "회사·생산", requiredCount: 5 },
 ] as const;

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../constants/colors.dart';
 import '../models/inquiry.dart';
+import 'adaptive_action_buttons.dart';
+import 'duplicate_detection_badge.dart';
 import 'status_chip.dart';
 
 class InquiryCard extends StatelessWidget {
@@ -10,8 +12,11 @@ class InquiryCard extends StatelessWidget {
     required this.onOpen,
     required this.onCall,
     required this.onComplete,
-    this.onAssign,
     this.showAssignment = false,
+    this.showDuplicateDetection = false,
+    this.selectionMode = false,
+    this.selected = false,
+    this.onToggleSelection,
     super.key,
   });
 
@@ -19,174 +24,142 @@ class InquiryCard extends StatelessWidget {
   final VoidCallback onOpen;
   final VoidCallback? onCall;
   final VoidCallback? onComplete;
-  final VoidCallback? onAssign;
   final bool showAssignment;
+  final bool showDuplicateDetection;
+  final bool selectionMode;
+  final bool selected;
+  final VoidCallback? onToggleSelection;
 
-  Widget _info(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 3),
-      child: Text.rich(
-        TextSpan(
-          style: const TextStyle(
-            color: AppColors.text,
-            fontSize: 15,
-            height: 1.45,
-          ),
-          children: [
-            TextSpan(
-              text: '$label  ',
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
-            TextSpan(text: value),
-          ],
-        ),
-      ),
-    );
+  String _relative(DateTime value) {
+    final duration = DateTime.now().difference(value);
+    if (duration.inDays > 0) return '${duration.inDays}일 전';
+    if (duration.inHours > 0) return '${duration.inHours}시간 전';
+    if (duration.inMinutes > 0) return '${duration.inMinutes}분 전';
+    return '방금';
   }
 
   @override
   Widget build(BuildContext context) {
-    final date =
-        DateFormat('yyyy.MM.dd HH:mm').format(inquiry.createdAt.toLocal());
+    final date = DateFormat('M월 d일').format(inquiry.createdAt.toLocal());
+    final lastDate = DateFormat('M월 d일').format(inquiry.lastActionAt.toLocal());
+    final company = inquiry.companyName.trim();
+    final title = company.isNotEmpty ? company : inquiry.contactPersonLabel;
+    final subtitle = company.isNotEmpty
+        ? '${inquiry.contactPersonLabel} · ${inquiryTypeLabel(inquiry.inquiryType)}'
+        : inquiryTypeLabel(inquiry.inquiryType);
 
     return Card(
-      color: AppColors.surface,
+      color: selected ? const Color(0xFFE6F0E9) : AppColors.surface,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: AppColors.line),
+        side: BorderSide(
+          color: selected ? AppColors.primary : AppColors.line,
+          width: selected ? 2 : 1,
+        ),
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: onOpen,
+        onTap: selectionMode ? onToggleSelection : onOpen,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  StatusChip(status: inquiry.status),
-                  const Spacer(),
-                  Text(date,
-                      style: const TextStyle(
-                          color: AppColors.subText, fontSize: 12)),
+                  if (selectionMode) ...[
+                    Checkbox(
+                      value: selected,
+                      onChanged: (_) => onToggleSelection?.call(),
+                    ),
+                    const SizedBox(width: 6),
+                  ],
+                  Expanded(
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        StatusChip(
+                          status: inquiry.status,
+                          label: inquiry.attentionLabel,
+                        ),
+                        if (showDuplicateDetection)
+                          const DuplicateDetectionBadge(compact: true),
+                      ],
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
-              if (inquiry.companyName.trim().isNotEmpty) ...[
-                Text(
-                  inquiry.companyName,
-                  style: const TextStyle(
-                    color: AppColors.text,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: AppColors.text,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
                 ),
-                const SizedBox(height: 6),
-              ],
-              _info('담당자', inquiry.contactPersonLabel),
-              if (showAssignment)
-                _info('문의 담당 관리자', inquiry.assignedAdminLabel),
-              if (inquiry.inquiryType?.isNotEmpty == true)
-                _info('문의 유형', inquiryTypeLabel(inquiry.inquiryType)),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                subtitle,
+                style: const TextStyle(fontSize: 17, height: 1.4),
+              ),
+              const SizedBox(height: 14),
+              if (showAssignment) _info('담당자', inquiry.assignedAdminLabel),
+              _info('접수', date),
               _info(
-                '연락처',
-                inquiry.phone?.isNotEmpty == true ? inquiry.phone! : '연락처 없음',
+                '마지막 처리',
+                '${_relative(inquiry.lastActionAt)} · $lastDate',
               ),
               _info(
                 '접수번호',
-                inquiry.registrationNumber.isNotEmpty
-                    ? inquiry.registrationNumber
-                    : '-',
+                inquiry.registrationNumber.isEmpty
+                    ? '-'
+                    : inquiry.registrationNumber,
               ),
-              if (inquiry.productInterest?.isNotEmpty == true)
-                _info('관심 제품', inquiry.productInterest!),
-              if (inquiry.cargoType?.isNotEmpty == true)
-                _info('화물 종류', inquiry.cargoType!),
-              if (inquiry.loadPerPallet?.isNotEmpty == true)
-                _info('팔레트당 중량', inquiry.loadPerPallet!),
-              if (inquiry.estimatedQuantity?.isNotEmpty == true)
-                _info('예상 수량', inquiry.estimatedQuantity!),
-              if (inquiry.requestedPalletSizes.isNotEmpty)
-                _info('희망 규격', inquiry.requestedPalletSizes.join(', ')),
-              if (inquiry.message?.isNotEmpty == true) ...[
-                const SizedBox(height: 8),
-                Text(
-                  inquiry.message!,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: AppColors.subText),
-                ),
-              ],
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
+              if (!selectionMode) ...[
+                const SizedBox(height: 10),
+                AdaptiveActionButtons(
+                  children: [
+                    OutlinedButton.icon(
                       onPressed: onCall,
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        minimumSize: const Size(0, 48),
-                      ),
-                      icon: const Icon(Icons.phone_rounded, size: 21),
-                      label: Text(
-                        onCall == null ? '연락처 없음' : '전화하기',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      icon: const Icon(Icons.phone_rounded),
+                      label: const Text('전화'),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: onOpen,
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        minimumSize: const Size(0, 48),
-                      ),
-                      icon: const Icon(Icons.visibility_rounded, size: 21),
-                      label: const Text(
-                        '상세보기',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                    FilledButton.icon(
+                      onPressed: onComplete,
+                      icon: const Icon(Icons.check_circle_outline_rounded),
+                      label: const Text('처리 완료'),
                     ),
-                  ),
-                ],
-              ),
-              if (onAssign != null) ...[
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: onAssign,
-                    icon: const Icon(Icons.assignment_ind_rounded, size: 22),
-                    label: const Text('문의 담당자 배정'),
-                  ),
-                ),
-              ],
-              if (onComplete != null) ...[
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: onComplete,
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      minimumSize: const Size.fromHeight(50),
-                    ),
-                    icon: const Icon(Icons.check_circle_rounded, size: 22),
-                    label: const Text(
-                      '처리 완료',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
+                  ],
                 ),
               ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _info(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text.rich(
+        TextSpan(
+          style: const TextStyle(
+            color: AppColors.text,
+            fontSize: 16,
+            height: 1.4,
+          ),
+          children: [
+            TextSpan(
+              text: '$label: ',
+              style: const TextStyle(fontWeight: FontWeight.w900),
+            ),
+            TextSpan(text: value),
+          ],
         ),
       ),
     );

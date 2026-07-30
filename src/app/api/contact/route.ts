@@ -165,7 +165,7 @@ export async function POST(request: Request) {
           from: senderEmail,
           to: receiverEmail,
           ...(data.email ? { replyTo: data.email } : {}),
-          subject: `[ADS Website Inquiry] New B2B Inquiry from ${companyLabel}`,
+          subject: `[아델슨 코리아 웹사이트] 신규 B2B 문의 · ${companyLabel}`,
           text: `
 새로운 홈페이지 문의가 접수되었습니다.
 

@@ -10,6 +10,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
+    "video:optimize": "bash scripts/optimize-videos.sh",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed"

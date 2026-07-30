@@ -22,10 +22,13 @@ class ErrorView extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.subText),
+              style: const TextStyle(color: AppColors.text, fontSize: 17),
             ),
             const SizedBox(height: 16),
-            OutlinedButton(onPressed: onRetry, child: const Text('다시 시도')),
+            OutlinedButton(
+              onPressed: onRetry,
+              child: const Text('다시 불러오기'),
+            ),
           ],
         ),
       ),

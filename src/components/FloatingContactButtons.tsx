@@ -1,21 +1,35 @@
 "use client";
 
-import { scrollToSection } from "@/lib/scrollToSection";
+import { MessageSquareText } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function FloatingContactButtons() {
+  const pathname = usePathname();
+  const [inquiryVisible, setInquiryVisible] = useState(false);
+
+  useEffect(() => {
+    const inquiry = document.getElementById("inquiry");
+    if (!inquiry) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setInquiryVisible(entry.isIntersecting),
+      { threshold: 0.08 },
+    );
+    observer.observe(inquiry);
+    return () => observer.disconnect();
+  }, [pathname]);
+
+  if (pathname === "/" && inquiryVisible) return null;
+
   return (
-    <div className="fixed right-3 bottom-4 z-40 flex w-[144px] flex-col sm:right-8 sm:bottom-8 sm:w-[144px]">
-      <a
-        aria-label="견적 및 문의 작성 섹션으로 이동"
-        className="inline-flex min-h-[52px] items-center justify-center rounded-lg bg-[var(--primary)] px-4 py-3 text-center text-base font-extrabold text-white shadow-[0_8px_20px_rgba(16,37,29,0.14)] transition hover:-translate-y-0.5 hover:bg-[var(--primary-dark)]"
-        href="#inquiry"
-        onClick={(event) => {
-          event.preventDefault();
-          scrollToSection("inquiry");
-        }}
-      >
-        견적 문의하기
-      </a>
-    </div>
+    <Link
+      aria-label="견적 및 문의 작성 화면으로 이동"
+      className="fixed right-8 bottom-8 z-40 hidden min-h-[52px] items-center justify-center gap-2 bg-[var(--primary-dark)] px-5 text-sm font-extrabold text-white shadow-[0_10px_30px_rgba(16,37,29,0.22)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-gold)] md:inline-flex"
+      href="/#inquiry"
+    >
+      <MessageSquareText aria-hidden="true" size={18} />
+      견적 문의하기
+    </Link>
   );
 }

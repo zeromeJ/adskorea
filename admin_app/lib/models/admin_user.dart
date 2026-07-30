@@ -6,6 +6,8 @@ class AdminUser {
     this.isSuperAdmin = false,
     this.isAssistantAdmin = false,
     this.isActive = true,
+    this.pendingInquiryCount = 0,
+    this.staleThreeDayCount = 0,
     this.createdAt,
   });
 
@@ -15,6 +17,8 @@ class AdminUser {
   final bool isSuperAdmin;
   final bool isAssistantAdmin;
   final bool isActive;
+  final int pendingInquiryCount;
+  final int staleThreeDayCount;
   final DateTime? createdAt;
 
   factory AdminUser.fromJson(Map<String, dynamic> json) {
@@ -25,6 +29,8 @@ class AdminUser {
       isSuperAdmin: json['isSuperAdmin'] as bool? ?? false,
       isAssistantAdmin: json['isAssistantAdmin'] as bool? ?? false,
       isActive: json['isActive'] as bool? ?? true,
+      pendingInquiryCount: (json['pendingInquiryCount'] as num?)?.toInt() ?? 0,
+      staleThreeDayCount: (json['staleThreeDayCount'] as num?)?.toInt() ?? 0,
       createdAt: json['createdAt'] == null
           ? null
           : DateTime.parse(json['createdAt'] as String),
