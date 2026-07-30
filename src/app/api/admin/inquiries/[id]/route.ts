@@ -46,6 +46,19 @@ export async function GET(request: Request, context: RouteContext) {
           phone: true,
           email: true,
           company: { select: { id: true, name: true } },
+          inquiries: {
+            orderBy: { createdAt: "desc" },
+            select: {
+              id: true,
+              registrationNumber: true,
+              status: true,
+              inquiryType: true,
+              createdAt: true,
+              assignedAdmin: {
+                select: { displayName: true },
+              },
+            },
+          },
         },
       },
       attachments: { orderBy: { createdAt: "asc" } },
@@ -112,7 +125,19 @@ export async function GET(request: Request, context: RouteContext) {
 
   return NextResponse.json({
     success: true,
-    item: { ...item, attachments, customerMatchCandidates },
+    item: {
+      ...item,
+      customer: item.customer
+        ? {
+            ...item.customer,
+            inquiries: admin.isSuperAdmin ? item.customer.inquiries : [],
+          }
+        : null,
+      attachments,
+      customerMatchCandidates,
+      hasPendingDuplicate:
+        admin.isSuperAdmin && customerMatchCandidates.length > 0,
+    },
   });
 }
 

@@ -83,6 +83,8 @@ export type CmsSiteContent = {
     expiryDate?: string;
     relatedProducts?: string[];
     language: string;
+    fileUrl?: string;
+    previewUrl?: string;
     summary?: string;
     thumbnailUrl?: string;
     koreanSummary?: KoreanDocumentSummary;
@@ -231,7 +233,12 @@ export async function getWebsiteContent(): Promise<CmsSiteContent | null> {
             typeof details.koreanSummary === "object"
               ? (details.koreanSummary as KoreanDocumentSummary)
               : document.koreanSummary,
-          thumbnailUrl: asset("performance", `document${index + 1}`),
+          fileUrl: asset("performance", `document${index + 1}File`) ?? "",
+          previewUrl:
+            asset("performance", `document${index + 1}File`) ?? "",
+          thumbnailUrl:
+            asset("performance", `document${index + 1}`) ??
+            assetThumbnail("performance", `document${index + 1}File`),
         };
       }),
       factoryImage: asset("company", "factory"),

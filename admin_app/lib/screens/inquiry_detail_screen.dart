@@ -4,12 +4,14 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../constants/colors.dart';
 import '../models/admin_user.dart';
+import '../models/customer.dart';
 import '../models/inquiry.dart';
 import '../services/admin_management_service.dart';
 import '../services/api_client.dart';
 import '../services/inquiry_service.dart';
 import '../services/customer_service.dart';
 import '../widgets/error_view.dart';
+import '../widgets/duplicate_detection_badge.dart';
 import '../widgets/loading_view.dart';
 import '../widgets/status_chip.dart';
 
@@ -438,6 +440,83 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
     );
   }
 
+  Widget _previousInquiriesPanel(Inquiry inquiry) {
+    if (!widget.currentAdmin.isSuperAdmin || inquiry.customer == null) {
+      return const SizedBox.shrink();
+    }
+
+    final previousInquiries = inquiry.customer!.inquiries
+        .where(
+          (previous) =>
+              previous.id != inquiry.id &&
+              previous.createdAt.isBefore(inquiry.createdAt),
+        )
+        .toList()
+      ..sort((left, right) => right.createdAt.compareTo(left.createdAt));
+
+    if (previousInquiries.isEmpty) return const SizedBox.shrink();
+
+    return Card(
+      color: AppColors.surface,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: const BorderSide(color: AppColors.line),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        initiallyExpanded: false,
+        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
+        leading: const Icon(
+          Icons.history_rounded,
+          color: AppColors.primary,
+          size: 26,
+        ),
+        title: Text(
+          '이전 문의 ${previousInquiries.length}건',
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        subtitle: const Text(
+          '같은 고객으로 연결된 문의를 펼쳐볼 수 있습니다.',
+          style: TextStyle(color: AppColors.subText),
+        ),
+        children: previousInquiries
+            .map(
+              (previous) => ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+                title: Text(
+                  '접수번호 ${previous.registrationNumber}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                subtitle: Text(
+                  '${inquiryTypeLabel(previous.inquiryType)} · '
+                  '${previous.status == CustomerInquiryStatus.pending ? '진행 중' : '처리 완료'}\n'
+                  '${DateFormat('yyyy.MM.dd HH:mm').format(previous.createdAt.toLocal())}',
+                ),
+                isThreeLine: true,
+                trailing: const Text(
+                  '이동',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                onTap: () => _openPreviousInquiry(previous.id),
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
+
   Future<void> _updateStatus() async {
     final inquiry = _inquiry;
     if (inquiry == null) return;
@@ -446,12 +525,12 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
         ? InquiryStatus.completed
         : InquiryStatus.pending;
 
-    final updated = await widget.inquiryService.updateInquiry(
+    await widget.inquiryService.updateInquiry(
       inquiry.id,
       status: nextStatus,
     );
 
-    setState(() => _inquiry = updated);
+    await _load();
     _showSnack('상태가 변경되었습니다.');
   }
 
@@ -460,14 +539,12 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
     if (inquiry == null) return;
 
     setState(() => _isSaving = true);
-    final updated = await widget.inquiryService.updateInquiry(
+    await widget.inquiryService.updateInquiry(
       inquiry.id,
       adminMemo: _memoController.text,
     );
-    setState(() {
-      _inquiry = updated;
-      _isSaving = false;
-    });
+    await _load();
+    if (mounted) setState(() => _isSaving = false);
     _showSnack('메모가 저장되었습니다.');
   }
 
@@ -655,7 +732,17 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
             inquiry.assignedAdminId == widget.currentAdmin.id);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('문의 상세')),
+      appBar: AppBar(
+        title: const Text('문의 상세'),
+        actions: [
+          if (widget.currentAdmin.isSuperAdmin &&
+              inquiry?.hasPendingDuplicate == true)
+            const Padding(
+              padding: EdgeInsets.only(right: 12),
+              child: Center(child: DuplicateDetectionBadge()),
+            ),
+        ],
+      ),
       body: SafeArea(
         top: false,
         child: _isLoading
@@ -859,6 +946,7 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
                               ),
                             ),
                           ]),
+                          _previousInquiriesPanel(inquiry),
                           _customerConnectionPanel(inquiry),
                           const SizedBox(height: 8),
                           Wrap(

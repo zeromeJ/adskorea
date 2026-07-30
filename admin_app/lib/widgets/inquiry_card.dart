@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../constants/colors.dart';
 import '../models/inquiry.dart';
+import 'duplicate_detection_badge.dart';
 import 'status_chip.dart';
 
 class InquiryCard extends StatelessWidget {
@@ -12,6 +13,7 @@ class InquiryCard extends StatelessWidget {
     required this.onComplete,
     this.onAssign,
     this.showAssignment = false,
+    this.showDuplicateDetection = false,
     super.key,
   });
 
@@ -21,6 +23,7 @@ class InquiryCard extends StatelessWidget {
   final VoidCallback? onComplete;
   final VoidCallback? onAssign;
   final bool showAssignment;
+  final bool showDuplicateDetection;
 
   Widget _info(String label, String value) {
     return Padding(
@@ -65,12 +68,26 @@ class InquiryCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   StatusChip(status: inquiry.status),
                   const Spacer(),
-                  Text(date,
-                      style: const TextStyle(
-                          color: AppColors.subText, fontSize: 12)),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (showDuplicateDetection) ...[
+                        const DuplicateDetectionBadge(compact: true),
+                        const SizedBox(height: 6),
+                      ],
+                      Text(
+                        date,
+                        style: const TextStyle(
+                          color: AppColors.subText,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 12),

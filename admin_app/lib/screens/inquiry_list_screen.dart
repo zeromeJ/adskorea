@@ -498,6 +498,9 @@ class _InquiryListScreenState extends State<InquiryListScreen>
                                         ? () => _markCompleted(inquiry)
                                         : null,
                                     showAssignment: _isAllInquiryView,
+                                    showDuplicateDetection:
+                                        widget.currentAdmin.isSuperAdmin &&
+                                            inquiry.hasPendingDuplicate,
                                   );
                                 },
                                 separatorBuilder: (_, __) =>

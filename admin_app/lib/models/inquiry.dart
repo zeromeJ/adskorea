@@ -89,6 +89,7 @@ class Inquiry {
     this.customerId,
     this.customer,
     this.customerMatchCandidates = const [],
+    this.hasPendingDuplicate = false,
     this.assignedAdminId,
     this.assignedAdminUsername,
     this.assignedAdminDisplayName,
@@ -126,6 +127,7 @@ class Inquiry {
   final String? customerId;
   final Customer? customer;
   final List<CustomerDuplicateCandidate> customerMatchCandidates;
+  final bool hasPendingDuplicate;
   final String? assignedAdminId;
   final String? assignedAdminUsername;
   final String? assignedAdminDisplayName;
@@ -182,6 +184,7 @@ class Inquiry {
               .whereType<Map<String, dynamic>>()
               .map(CustomerDuplicateCandidate.fromJson)
               .toList(),
+      hasPendingDuplicate: json['hasPendingDuplicate'] as bool? ?? false,
       assignedAdminId: json['assignedAdminId'] as String?,
       assignedAdminUsername: assignedAdmin['username'] as String?,
       assignedAdminDisplayName: assignedAdmin['displayName'] as String?,

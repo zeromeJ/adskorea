@@ -62,9 +62,37 @@ const inquiryListSelect = {
       isAssistantAdmin: true,
     },
   },
+  customer: {
+    select: {
+      duplicateReviews: {
+        where: {
+          status: "PENDING",
+          candidateCustomer: { isArchived: false },
+        },
+        take: 1,
+        select: { id: true },
+      },
+    },
+  },
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.InquirySelect;
+
+type InquiryListItem = Prisma.InquiryGetPayload<{
+  select: typeof inquiryListSelect;
+}>;
+
+function serializeInquiryListItem(
+  item: InquiryListItem,
+  showDuplicateDetection: boolean,
+) {
+  const { customer, ...inquiry } = item;
+  return {
+    ...inquiry,
+    hasPendingDuplicate:
+      showDuplicateDetection && customer.duplicateReviews.length > 0,
+  };
+}
 
 export async function GET(request: Request) {
   const admin = await getAdminFromRequest(request);
@@ -197,7 +225,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
-      items: [...pendingItems, ...completedItems],
+      items: [...pendingItems, ...completedItems].map((item) =>
+        serializeInquiryListItem(item, admin.isSuperAdmin),
+      ),
       total,
       counts,
     });
@@ -217,5 +247,12 @@ export async function GET(request: Request) {
     countsPromise,
   ]);
 
-  return NextResponse.json({ success: true, items, total, counts });
+  return NextResponse.json({
+    success: true,
+    items: items.map((item) =>
+      serializeInquiryListItem(item, admin.isSuperAdmin),
+    ),
+    total,
+    counts,
+  });
 }
