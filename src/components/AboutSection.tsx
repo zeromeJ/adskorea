@@ -14,7 +14,7 @@ export default function AboutSection({ factoryImageUrl }: AboutSectionProps) {
         <div className="grid gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
           <div className="order-2 min-w-0 lg:order-1">
             <MediaPlaceholder
-              alt="ADS 아델슨 생산시설 전경"
+              alt="아델슨 생산시설 전경"
               desktopRatio="4:3"
               expandable={false}
               fieldName="companyGallery.featured.image"

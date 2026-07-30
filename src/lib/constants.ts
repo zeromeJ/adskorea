@@ -1,8 +1,8 @@
 import { defaultDocumentSummaries } from "@/lib/documentSummaries";
 
 export const company = {
-  brandName: "ADS 아델슨",
-  brandNameEn: "ADS",
+  brandName: "아델슨 코리아",
+  brandNameEn: "아델슨 코리아",
   legalName: "",
   manufacturerName: "",
   salesCompanyName: "",
@@ -14,49 +14,44 @@ export const company = {
 
 export const navItems = [
   {
-    label: "제품 소개",
-    href: "#product-overview",
+    label: "제품",
+    href: "/products",
     children: [
-      { label: "제품 개요", href: "#product-overview" },
-      { label: "제조공정", href: "#manufacturing-process" },
-      { label: "제품 소개영상", href: "#product-overview-video" },
-      { label: "핵심 장점", href: "#benefits" },
+      { label: "제품군 4종", href: "/products#lineup" },
+      { label: "모델 비교", href: "/products#comparison" },
+      { label: "제품 선택 가이드", href: "/products#selection-guide" },
     ],
   },
   {
-    label: "성능·기술",
-    href: "#performance",
+    label: "성능",
+    href: "/performance",
     children: [
-      { label: "성능 검증", href: "#performance" },
-      { label: "성능 시연 영상", href: "#performance-videos" },
-      { label: "기술자료·시험·인증", href: "#documents" },
+      { label: "제3자 시험", href: "/performance#third-party-tests" },
+      { label: "환경 검증", href: "/performance#environment" },
+      { label: "시연영상", href: "/performance#performance-videos" },
     ],
   },
   {
-    label: "제품 라인업",
-    href: "#product-lineup",
+    label: "적용사례",
+    href: "/#customer-applications",
+    children: [],
+  },
+  {
+    label: "자료",
+    href: "/documents",
     children: [
-      { label: "단면형", href: "#product-single-deck" },
-      { label: "양면형", href: "#product-double-deck" },
-      { label: "3열 받침형", href: "#product-three-runner" },
-      { label: "주문제작형", href: "#product-custom" },
+      { label: "시험자료", href: "/documents#document-list" },
+      { label: "한국어 요약", href: "/documents#document-list" },
+      { label: "제품 카탈로그", href: "/documents#catalog" },
     ],
   },
   {
-    label: "적용 분야",
-    href: "#applications",
+    label: "회사",
+    href: "/company",
     children: [
-      { label: "적용 전 확인사항", href: "#pre-application" },
-      { label: "적용 산업", href: "#applications" },
-    ],
-  },
-  { label: "환경 데이터", href: "#environment", children: [] },
-  {
-    label: "회사·생산",
-    href: "#company",
-    children: [
-      { label: "회사 개요·생산 역량", href: "#company" },
-      { label: "회사 소개영상", href: "#company-overview-video" },
+      { label: "생산 역량", href: "/company#capacity" },
+      { label: "제조공정", href: "/company#process" },
+      { label: "회사 소개영상", href: "/company#company-video" },
     ],
   },
 ];
@@ -136,13 +131,13 @@ export const benefits = [
   },
   {
     eyebrow: "Total Logistics Cost",
-    title: "팔레트 단가가 아닌 물류 총비용 관점",
+    title: "물류 운영 조건을 함께 검토",
     description:
-      "구매단가뿐 아니라 보관공간, 수출 처리, 운송 효율, 파손 위험 및 교체주기를 함께 검토할 수 있습니다. 실제 절감효과는 사용수량과 물류조건에 따라 달라집니다.",
+      "구매가뿐 아니라 보관, 처리, 교체와 운송 조건을 함께 검토합니다. 실제 판단은 사용수량과 물류조건을 기준으로 합니다.",
     points: [
       "보관 효율 검토",
       "수출 포장 운영비 검토",
-      "조건별 비용절감 분석",
+      "조건별 운영 검토",
     ],
   },
 ];
@@ -262,7 +257,7 @@ export const products = [
     mediaField: "product.doubleDeck.gallery",
   },
   {
-    title: "川자형 압축 목재 팔레트",
+    title: "3열 받침형 압축 목재 팔레트",
     englishLabel: "3-Runner Compressed Wood Pallet",
     description:
       "3열 받침 구조를 적용해 지게차 운용, 적재 안정성과 운송 효율을 함께 고려한 압축 목재 팔레트입니다.",
@@ -447,7 +442,6 @@ export const documents = [
 
 export const companyStats = [
   { value: "20+", label: "Years", description: "20년 이상 산업 경험" },
-  { value: "약 490억 원", label: "Investment", description: "총 투자액 환산 참고" },
   { value: "40,000㎡", label: "Site Area", description: "총 부지면적" },
   { value: "12M", label: "Designed Annual Capacity", description: "설계 연간 생산능력 1,200만 개" },
   { value: "30+", label: "Patents / Related Documents", description: "특허 및 관련 증서 30건 이상" },

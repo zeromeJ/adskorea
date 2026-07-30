@@ -27,6 +27,7 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
   final picker = ImagePicker();
   bool loading = true, saving = false, dirty = false;
   String? error;
+  String? saveMessage;
   List<WebsiteAsset> assets = [];
   final Map<String, PendingImageEdit> pending = {};
   final Map<String, PendingFileUpload> pendingFiles = {};
@@ -34,6 +35,10 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
   final Map<String, TextEditingController> documentControllers = {};
   final Map<String, TextEditingController> summaryControllers = {};
   final Map<String, TextEditingController> settingsControllers = {};
+  final Map<String, TextEditingController> applicationControllers = {};
+  List<bool> applicationShowCustomerName = List.filled(6, false);
+  List<bool> applicationPublicUseApproved = List.filled(6, false);
+  List<bool> applicationIsVisible = List.filled(6, true);
   Map<String, dynamic> summaryStructure = {};
   bool summaryPublished = false;
   Map<String, dynamic> sectionData = {};
@@ -56,7 +61,45 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
     for (final controller in settingsControllers.values) {
       controller.dispose();
     }
+    for (final controller in applicationControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
+  }
+
+  void _setCustomerApplicationControllers(Map<String, dynamic> values) {
+    for (final controller in applicationControllers.values) {
+      controller.dispose();
+    }
+    applicationControllers.clear();
+    final stored = values['items'];
+    final items = stored is List ? stored : const [];
+    applicationShowCustomerName = List.filled(6, false);
+    applicationPublicUseApproved = List.filled(6, false);
+    applicationIsVisible = List.filled(6, true);
+    for (var index = 0; index < 6; index++) {
+      final current = items.length > index && items[index] is Map
+          ? Map<String, dynamic>.from(items[index] as Map)
+          : <String, dynamic>{};
+      final defaults = customerApplicationDefaults[index];
+      final merged = {...defaults, ...current};
+      for (final key in const [
+        'title',
+        'description',
+        'cargoType',
+        'operatingEnvironment',
+        'documentedWeight',
+        'sourceLabel',
+        'sourcePage',
+        'customerName',
+      ]) {
+        applicationControllers['$index.$key'] =
+            TextEditingController(text: merged[key]?.toString() ?? '');
+      }
+      applicationShowCustomerName[index] = merged['showCustomerName'] == true;
+      applicationPublicUseApproved[index] = merged['publicUseApproved'] == true;
+      applicationIsVisible[index] = merged['isVisible'] != false;
+    }
   }
 
   void _setSettingsControllers(Map<String, dynamic> values) {
@@ -65,14 +108,25 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
     }
     settingsControllers.clear();
     for (final key in const [
+      'siteDisplayName',
+      'primaryContactEmail',
+      'primaryPhone',
       'brandName',
       'brandNameEn',
       'legalCompanyName',
+      'representativeName',
+      'businessRegistrationNumber',
       'manufacturerName',
       'salesCompanyName',
       'email',
       'phone',
       'address',
+      'manufacturerRelationshipText',
+      'responseProcessText',
+      'responseTimeText',
+      'privacyPurposeText',
+      'privacyRetentionText',
+      'privacyEffectiveDate',
     ]) {
       settingsControllers[key] =
           TextEditingController(text: values[key]?.toString() ?? '');
@@ -240,6 +294,9 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
       sectionData = content.data;
       if (widget.summary.key == 'site-settings') {
         _setSettingsControllers(sectionData);
+      }
+      if (widget.summary.key == 'customer-applications') {
+        _setCustomerApplicationControllers(sectionData);
       }
       final documentIndex = widget.documentIndex;
       if (documentIndex != null) {
@@ -411,7 +468,10 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
   }
 
   Future<void> _save() async {
-    setState(() => saving = true);
+    setState(() {
+      saving = true;
+      saveMessage = null;
+    });
     try {
       final next = assets
           .where((a) =>
@@ -470,12 +530,36 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
           for (final entry in settingsControllers.entries)
             entry.key: entry.value.text.trim(),
         };
+      } else if (widget.summary.key == 'customer-applications') {
+        data = {
+          ...sectionData,
+          'items': List.generate(
+              6,
+              (index) => {
+                    for (final key in const [
+                      'title',
+                      'description',
+                      'cargoType',
+                      'operatingEnvironment',
+                      'documentedWeight',
+                      'sourceLabel',
+                      'sourcePage',
+                      'customerName',
+                    ])
+                      key: applicationControllers['$index.$key']!.text.trim(),
+                    'showCustomerName': applicationShowCustomerName[index],
+                    'publicUseApproved': applicationPublicUseApproved[index],
+                    'isVisible': applicationIsVisible[index],
+                    'sortOrder': index,
+                  }),
+        };
       }
       await widget.service.saveSection(storageSectionKey, next, data: data);
       if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('홈페이지에 반영되었습니다.')));
       await _load();
+      if (mounted) setState(() => saveMessage = '저장되었습니다.');
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -484,6 +568,19 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
     } finally {
       if (mounted) setState(() => saving = false);
     }
+  }
+
+  List<String> get _changeSummary {
+    final changes = <String>[
+      for (final key in pending.keys)
+        '${slots.where((slot) => slot.key == key).map((slot) => slot.label).firstOrNull ?? key} 이미지 교체',
+      for (final key in pendingFiles.keys)
+        '${slots.where((slot) => slot.key == key).map((slot) => slot.label).firstOrNull ?? key} 파일 교체',
+      for (final key in deleted)
+        '${slots.where((slot) => slot.key == key).map((slot) => slot.label).firstOrNull ?? key} 삭제',
+    ];
+    if (dirty && changes.isEmpty) changes.add('입력 내용 수정');
+    return changes;
   }
 
   Widget _buildDocumentInformation() {
@@ -532,14 +629,21 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
 
   Widget _buildSettingsInformation() {
     const fields = [
-      ('brandName', '브랜드명', '예: ADS 아델슨', 1),
-      ('brandNameEn', '영문 브랜드명', '예: ADS', 1),
-      ('legalCompanyName', '법인명', '푸터에 표시할 법인명', 1),
-      ('manufacturerName', '제조사', '푸터에 표시할 제조사명', 1),
-      ('salesCompanyName', '판매사', '푸터에 표시할 판매사명', 1),
-      ('email', '대표 이메일', '예: hello@example.com', 1),
-      ('phone', '대표 전화번호', '예: 02-1234-5678', 1),
+      ('siteDisplayName', '홈페이지 공식 명칭', '아델슨 코리아', 1),
+      ('primaryContactEmail', '대표 이메일', '푸터·문의·개인정보 안내에 공통 사용', 1),
+      ('primaryPhone', '대표 전화번호', '예: 02-1234-5678', 1),
       ('address', '주소', '푸터에 표시할 주소', 2),
+      ('legalCompanyName', '정식 법인명', '확정된 경우에만 입력', 1),
+      ('representativeName', '대표자명', '확정된 경우에만 입력', 1),
+      ('businessRegistrationNumber', '사업자등록번호', '확정된 경우에만 입력', 1),
+      ('manufacturerName', '제조사', '공개 가능한 제조사명', 1),
+      ('salesCompanyName', '판매사', '공개 가능한 판매사명', 1),
+      ('manufacturerRelationshipText', '제조사 관계 설명', '운영자가 확인한 문구만 입력', 2),
+      ('responseProcessText', '문의 처리 절차 문구', '문의 확인 → 담당자 배정 → 연락', 2),
+      ('responseTimeText', '회신시간 안내', '확정된 운영 기준이 있을 때만 입력', 2),
+      ('privacyPurposeText', '개인정보 이용 목적', '문의 확인·회신, 상담 이력 관리, 고객관리', 3),
+      ('privacyRetentionText', '개인정보 보유 기준', '운영·법률 검토가 완료된 문구 입력', 3),
+      ('privacyEffectiveDate', '개인정보처리방침 시행일', '예: 2026년 7월 30일', 1),
     ];
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
@@ -553,14 +657,58 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
             const SizedBox(height: 6),
             const Text('대표 이메일과 전화번호는 푸터 및 견적문의 전화 버튼에 반영됩니다.',
                 style: TextStyle(color: Color(0xFF667085))),
+            const SizedBox(height: 12),
+            Builder(builder: (context) {
+              final missing = <String>[
+                if ((settingsControllers['legalCompanyName']?.text.trim() ?? '')
+                    .isEmpty)
+                  '정식 법인명',
+                if ((settingsControllers['representativeName']?.text.trim() ??
+                        '')
+                    .isEmpty)
+                  '대표자명',
+                if ((settingsControllers['businessRegistrationNumber']
+                            ?.text
+                            .trim() ??
+                        '')
+                    .isEmpty)
+                  '사업자등록번호',
+                if ((settingsControllers['privacyRetentionText']?.text.trim() ??
+                        '')
+                    .isEmpty)
+                  '개인정보 보유 기준',
+                if ((settingsControllers['privacyEffectiveDate']?.text.trim() ??
+                        '')
+                    .isEmpty)
+                  '개인정보처리방침 시행일',
+              ];
+              if (missing.isEmpty) return const SizedBox.shrink();
+              return Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF7E6),
+                  border: Border.all(color: const Color(0xFFE0A63A)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '공개 전 운영자 확인 필요: ${missing.join(', ')}\n비어 있는 항목은 공개 화면에서 숨겨집니다.',
+                  style: const TextStyle(
+                    color: Color(0xFF7A5110),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              );
+            }),
             const SizedBox(height: 16),
             ...fields.map((field) => Padding(
                   padding: const EdgeInsets.only(bottom: 14),
                   child: TextField(
                     controller: settingsControllers[field.$1],
-                    keyboardType: field.$1 == 'email'
+                    keyboardType: field.$1 == 'primaryContactEmail'
                         ? TextInputType.emailAddress
-                        : field.$1 == 'phone'
+                        : field.$1 == 'primaryPhone'
                             ? TextInputType.phone
                             : field.$4 > 1
                                 ? TextInputType.multiline
@@ -579,6 +727,86 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildCustomerApplicationInformation() {
+    return Column(
+      children: List.generate(6, (index) {
+        const fields = [
+          ('title', '사례 제목', 1),
+          ('description', '설명', 2),
+          ('cargoType', '화물 형태', 1),
+          ('operatingEnvironment', '운용 환경', 1),
+          ('documentedWeight', '문서 기재 중량', 1),
+          ('sourceLabel', '출처 배지', 1),
+          ('sourcePage', '원문 PDF 페이지', 1),
+          ('customerName', '고객사명', 1),
+        ];
+        return Card(
+          margin: const EdgeInsets.only(bottom: 14),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('사례 ${index + 1} 정보',
+                    style: const TextStyle(
+                        fontSize: 19, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 6),
+                const Text(
+                  '공개 사용 승인과 현장 사진이 모두 확인된 사례만 공개됩니다.',
+                  style: TextStyle(color: Color(0xFF667085)),
+                ),
+                const SizedBox(height: 16),
+                ...fields.map((field) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: TextField(
+                        controller:
+                            applicationControllers['$index.${field.$1}'],
+                        maxLines: field.$3,
+                        minLines: field.$3,
+                        onChanged: (_) => setState(() => dirty = true),
+                        decoration: InputDecoration(
+                          labelText: field.$2,
+                          border: const OutlineInputBorder(),
+                        ),
+                      ),
+                    )),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('공개 사용 승인 확인'),
+                  subtitle: const Text('승인되지 않은 사례는 공개하지 않습니다.'),
+                  value: applicationPublicUseApproved[index],
+                  onChanged: (value) => setState(() {
+                    applicationPublicUseApproved[index] = value;
+                    dirty = true;
+                  }),
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('공개 화면 노출'),
+                  value: applicationIsVisible[index],
+                  onChanged: (value) => setState(() {
+                    applicationIsVisible[index] = value;
+                    dirty = true;
+                  }),
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('고객사명 공개'),
+                  subtitle: const Text('별도 공개 권한이 확인된 경우에만 켜세요.'),
+                  value: applicationShowCustomerName[index],
+                  onChanged: (value) => setState(() {
+                    applicationShowCustomerName[index] = value;
+                    dirty = true;
+                  }),
+                ),
+              ],
+            ),
+          ),
+        );
+      }),
     );
   }
 
@@ -809,8 +1037,11 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
                 label: Text(fileName == null ? '파일 선택' : '파일 교체'),
               ),
               if (fileName != null)
-                OutlinedButton.icon(
+                TextButton.icon(
                   onPressed: () => _delete(slot),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.red,
+                  ),
                   icon: const Icon(Icons.delete_outline),
                   label: const Text('삭제'),
                 ),
@@ -862,7 +1093,7 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
       child: Scaffold(
         appBar: AppBar(
             title: Text(widget.summary.title,
-                maxLines: 1, overflow: TextOverflow.ellipsis)),
+                maxLines: 2, overflow: TextOverflow.ellipsis)),
         bottomNavigationBar: SafeArea(
             child: Container(
                 padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
@@ -888,151 +1119,205 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
                                   child:
                                       CircularProgressIndicator(strokeWidth: 2))
                               : const Icon(Icons.save),
-                          label: const Text('저장', maxLines: 1)))
+                          label: Text(saving ? '저장 중' : '저장', maxLines: 1)))
                 ]))),
         body: loading
             ? const Center(child: CircularProgressIndicator())
             : error != null
                 ? Center(child: Text(error!))
-                : ListView(padding: const EdgeInsets.all(16), children: [
-                    if (dirty)
-                      Container(
-                          margin: const EdgeInsets.only(bottom: 14),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                              color: const Color(0xFFFFF4D6),
-                              borderRadius: BorderRadius.circular(8)),
-                          child: const Text('저장되지 않은 변경사항이 있습니다.',
-                              style: TextStyle(fontWeight: FontWeight.w800))),
-                    if (widget.documentIndex != null)
-                      _buildDocumentInformation(),
-                    if (widget.documentIndex != null)
-                      _buildSummaryInformation(),
-                    if (widget.summary.key == 'site-settings')
-                      _buildSettingsInformation(),
-                    if (slots.isEmpty &&
-                        widget.documentIndex == null &&
-                        widget.summary.key != 'site-settings')
-                      const Card(
-                          child: Padding(
-                              padding: EdgeInsets.all(20),
-                              child: Text('이 영역의 텍스트와 파일 관리 항목을 준비하고 있습니다.'))),
-                    ...slots.asMap().entries.map((entry) {
-                      final slot = entry.value;
-                      final current = _asset(slot.key);
-                      if (slot.type != WebsiteSlotType.image) {
-                        return _buildFileCard(entry.key, slot, current);
-                      }
-                      final local = pending[slot.key];
-                      return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Card(
+                : Column(children: [
+                    Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                            color: const Color(0xFFEEF3EE),
+                            borderRadius: BorderRadius.circular(8)),
+                        child: const Text('저장을 눌러야 홈페이지에 반영됩니다.',
+                            style: TextStyle(
+                                fontSize: 17, fontWeight: FontWeight.w900))),
+                    Expanded(
+                        child: ListView(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            children: [
+                          if (saveMessage != null)
+                            Container(
                                 margin: const EdgeInsets.only(bottom: 14),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                    color: const Color(0xFFE6F3E9),
+                                    borderRadius: BorderRadius.circular(8)),
+                                child: Text(saveMessage!,
+                                    style: const TextStyle(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w900))),
+                          if (dirty)
+                            Container(
+                                margin: const EdgeInsets.only(bottom: 14),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                    color: const Color(0xFFFFF4D6),
+                                    borderRadius: BorderRadius.circular(8)),
+                                child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text('변경한 항목 ${_changeSummary.length}개',
+                                          style: const TextStyle(
+                                              fontSize: 17,
+                                              fontWeight: FontWeight.w900)),
+                                      const SizedBox(height: 6),
+                                      ..._changeSummary.map((item) => Padding(
+                                          padding:
+                                              const EdgeInsets.only(bottom: 3),
+                                          child: Text('• $item'))),
+                                    ])),
+                          if (widget.documentIndex != null)
+                            _buildDocumentInformation(),
+                          if (widget.documentIndex != null)
+                            _buildSummaryInformation(),
+                          if (widget.summary.key == 'site-settings')
+                            _buildSettingsInformation(),
+                          if (widget.summary.key == 'customer-applications')
+                            _buildCustomerApplicationInformation(),
+                          if (slots.isEmpty &&
+                              widget.documentIndex == null &&
+                              widget.summary.key != 'site-settings' &&
+                              widget.summary.key != 'customer-applications')
+                            const Card(
                                 child: Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                              '${entry.key + 1}. ${slot.label}',
-                                              style: const TextStyle(
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.w800)),
-                                          const SizedBox(height: 6),
-                                          Text(
-                                              '권장 비율 ${slot.ratio} · 권장 크기 ${slot.width}×${slot.height}px'),
-                                          const SizedBox(height: 4),
-                                          Text(slot.description,
-                                              style: const TextStyle(
-                                                  color: Color(0xFF667085))),
-                                          const SizedBox(height: 12),
-                                          AspectRatio(
-                                              aspectRatio: slot.aspect,
-                                              child: ClipRRect(
-                                                  borderRadius:
-                                                      BorderRadius.circular(10),
-                                                  child: local != null
-                                                      ? Image.memory(
-                                                          local.edited,
-                                                          fit: BoxFit.cover)
-                                                      : current?.url != null
-                                                          ? Image.network(
-                                                              current!.url!,
-                                                              fit: BoxFit.cover,
-                                                              errorBuilder: (_,
-                                                                      __,
-                                                                      ___) =>
-                                                                  const Center(
-                                                                      child: Text(
-                                                                          '미리보기를 불러오지 못했습니다.')))
-                                                          : Container(
-                                                              color: const Color(
-                                                                  0xFFF1F3EF),
-                                                              alignment:
-                                                                  Alignment
-                                                                      .center,
-                                                              child: const Text(
-                                                                  '등록된 파일 없음')))),
-                                          const SizedBox(height: 12),
-                                          if (local != null)
-                                            Container(
-                                                width: double.infinity,
-                                                padding:
-                                                    const EdgeInsets.all(10),
-                                                decoration: BoxDecoration(
-                                                    color:
-                                                        const Color(0xFFFFF4D6),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            8)),
-                                                child: Text(
-                                                    '저장 대기 · ${local.fileName}\n하단의 저장 버튼을 눌러야 반영됩니다.',
-                                                    maxLines: 3,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    style: const TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.w700))),
-                                          const SizedBox(height: 10),
-                                          Wrap(
-                                              spacing: 8,
-                                              runSpacing: 8,
+                                    padding: EdgeInsets.all(20),
+                                    child: Text(
+                                        '이 영역의 텍스트와 파일 관리 항목을 준비하고 있습니다.'))),
+                          ...slots.asMap().entries.map((entry) {
+                            final slot = entry.value;
+                            final current = _asset(slot.key);
+                            if (slot.type != WebsiteSlotType.image) {
+                              return _buildFileCard(entry.key, slot, current);
+                            }
+                            final local = pending[slot.key];
+                            return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Card(
+                                      margin: const EdgeInsets.only(bottom: 14),
+                                      child: Padding(
+                                          padding: const EdgeInsets.all(16),
+                                          child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
-                                                FilledButton.icon(
-                                                    onPressed: () =>
-                                                        _choose(slot),
-                                                    icon: const Icon(
-                                                        Icons.photo_library),
-                                                    label: Text(
-                                                        current == null &&
-                                                                local == null
-                                                            ? '파일 선택'
-                                                            : '파일 교체')),
-                                                if (current != null ||
-                                                    local != null)
-                                                  OutlinedButton.icon(
-                                                      onPressed: () => _choose(
-                                                          slot,
-                                                          existing: true),
-                                                      icon: const Icon(
-                                                          Icons.crop),
-                                                      label:
-                                                          const Text('다시 편집')),
-                                                if (current != null ||
-                                                    local != null)
-                                                  OutlinedButton.icon(
-                                                      onPressed: () =>
-                                                          _delete(slot),
-                                                      icon: const Icon(
-                                                          Icons.delete_outline),
-                                                      label: const Text('삭제')),
-                                              ]),
-                                        ]))),
-                          ]);
-                    }),
-                    const SizedBox(height: 80),
+                                                Text(
+                                                    '${entry.key + 1}. ${slot.label}',
+                                                    style: const TextStyle(
+                                                        fontSize: 18,
+                                                        fontWeight:
+                                                            FontWeight.w800)),
+                                                const SizedBox(height: 6),
+                                                Text(
+                                                    '권장 비율 ${slot.ratio} · 권장 크기 ${slot.width}×${slot.height}px'),
+                                                const SizedBox(height: 4),
+                                                Text(slot.description,
+                                                    style: const TextStyle(
+                                                        color:
+                                                            Color(0xFF667085))),
+                                                const SizedBox(height: 12),
+                                                AspectRatio(
+                                                    aspectRatio: slot.aspect,
+                                                    child: ClipRRect(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                                10),
+                                                        child: local != null
+                                                            ? Image.memory(
+                                                                local.edited,
+                                                                fit: BoxFit
+                                                                    .cover)
+                                                            : current?.url !=
+                                                                    null
+                                                                ? Image.network(
+                                                                    current!
+                                                                        .url!,
+                                                                    fit: BoxFit
+                                                                        .cover,
+                                                                    errorBuilder: (_,
+                                                                            __,
+                                                                            ___) =>
+                                                                        const Center(
+                                                                            child: Text(
+                                                                                '미리보기를 불러오지 못했습니다.')))
+                                                                : Container(
+                                                                    color: const Color(0xFFF1F3EF),
+                                                                    alignment: Alignment.center,
+                                                                    child: const Text('등록된 파일 없음')))),
+                                                const SizedBox(height: 12),
+                                                if (local != null)
+                                                  Container(
+                                                      width: double.infinity,
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              10),
+                                                      decoration: BoxDecoration(
+                                                          color: const Color(
+                                                              0xFFFFF4D6),
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(8)),
+                                                      child: Text(
+                                                          '저장 대기 · ${local.fileName}\n하단의 저장 버튼을 눌러야 반영됩니다.',
+                                                          maxLines: 3,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          style: const TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w700))),
+                                                const SizedBox(height: 10),
+                                                Wrap(
+                                                    spacing: 8,
+                                                    runSpacing: 8,
+                                                    children: [
+                                                      FilledButton.icon(
+                                                          onPressed: () =>
+                                                              _choose(slot),
+                                                          icon: const Icon(Icons
+                                                              .photo_library),
+                                                          label: Text(current ==
+                                                                      null &&
+                                                                  local == null
+                                                              ? '파일 선택'
+                                                              : '파일 교체')),
+                                                      if (current != null ||
+                                                          local != null)
+                                                        OutlinedButton.icon(
+                                                            onPressed: () =>
+                                                                _choose(slot,
+                                                                    existing:
+                                                                        true),
+                                                            icon: const Icon(
+                                                                Icons.crop),
+                                                            label: const Text(
+                                                                '다시 편집')),
+                                                      if (current != null ||
+                                                          local != null)
+                                                        TextButton.icon(
+                                                            onPressed: () =>
+                                                                _delete(slot),
+                                                            style: TextButton
+                                                                .styleFrom(
+                                                                    foregroundColor:
+                                                                        Colors
+                                                                            .red),
+                                                            icon: const Icon(Icons
+                                                                .delete_outline),
+                                                            label: const Text(
+                                                                '삭제')),
+                                                    ]),
+                                              ]))),
+                                ]);
+                          }),
+                          const SizedBox(height: 80),
+                        ]))
                   ]),
       ));
 }

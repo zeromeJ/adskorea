@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'api_client.dart';
 
@@ -25,8 +26,10 @@ class PushNotificationService {
   StreamSubscription<RemoteMessage>? _foregroundSubscription;
   StreamSubscription<RemoteMessage>? _openedSubscription;
   bool _localNotificationReady = false;
+  final SharedPreferencesAsync _preferences = SharedPreferencesAsync();
 
   static const _timeout = Duration(seconds: 10);
+  static const _notificationPreferenceKey = 'admin_notifications_enabled';
   static const _channel = AndroidNotificationChannel(
     'new_inquiries',
     '문의 알림',
@@ -78,6 +81,64 @@ class PushNotificationService {
     }
   }
 
+  Future<bool> notificationsEnabled() async {
+    return await _preferences.getBool(_notificationPreferenceKey) ?? true;
+  }
+
+  Future<bool> setNotificationsEnabled(bool enabled) async {
+    if (!enabled) {
+      final token = await getToken();
+      if (token != null && token.isNotEmpty) {
+        try {
+          await client.post('/api/admin/device-token', {
+            'token': token,
+            'enabled': false,
+          }).timeout(_timeout);
+        } catch (error) {
+          _log('Device token removal failed', error);
+        }
+      }
+      await _preferences.setBool(_notificationPreferenceKey, false);
+      await _tokenSubscription?.cancel();
+      await _foregroundSubscription?.cancel();
+      await _openedSubscription?.cancel();
+      _tokenSubscription = null;
+      _foregroundSubscription = null;
+      _openedSubscription = null;
+      await _localNotifications.cancelAll();
+      try {
+        await _messaging.deleteToken().timeout(_timeout);
+        await _messaging.setAutoInitEnabled(false).timeout(_timeout);
+      } catch (error) {
+        _log('Push disable failed', error);
+      }
+      return true;
+    }
+
+    try {
+      await _messaging.setAutoInitEnabled(true).timeout(_timeout);
+    } catch (error) {
+      _log('Push auto init failed', error);
+    }
+    final settings = await requestPermission();
+    final allowed = settings == null ||
+        settings.authorizationStatus == AuthorizationStatus.authorized ||
+        settings.authorizationStatus == AuthorizationStatus.provisional;
+    if (!allowed) {
+      await _preferences.setBool(_notificationPreferenceKey, false);
+      return false;
+    }
+
+    await _preferences.setBool(_notificationPreferenceKey, true);
+    final authToken = client.token;
+    if (authToken != null && authToken.isNotEmpty) {
+      await registerDeviceToken(authToken);
+      listenForTokenRefresh(authToken);
+      await listenForForegroundMessages();
+    }
+    return true;
+  }
+
   void listenForTokenRefresh(String authToken) {
     _tokenSubscription?.cancel();
     _tokenSubscription = _messaging.onTokenRefresh.listen((token) async {
@@ -119,10 +180,8 @@ class PushNotificationService {
   }
 
   Future<void> initializeForAuthenticatedAdmin(String authToken) async {
-    await requestPermission();
-    await registerDeviceToken(authToken);
-    listenForTokenRefresh(authToken);
-    await listenForForegroundMessages();
+    if (!await notificationsEnabled()) return;
+    await setNotificationsEnabled(true);
   }
 
   Future<void> _ensureLocalNotifications() async {

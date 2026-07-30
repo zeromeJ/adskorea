@@ -10,9 +10,20 @@ export type CmsSiteContent = {
   siteSettings?: {
     brandName?: string;
     brandNameEn?: string;
+    siteDisplayName?: string;
+    primaryContactEmail?: string;
+    primaryPhone?: string;
     legalCompanyName?: string;
+    representativeName?: string;
+    businessRegistrationNumber?: string;
     manufacturerName?: string;
     salesCompanyName?: string;
+    manufacturerRelationshipText?: string;
+    responseProcessText?: string;
+    responseTimeText?: string;
+    privacyPurposeText?: string;
+    privacyRetentionText?: string;
+    privacyEffectiveDate?: string;
     email?: string;
     phone?: string;
     address?: string;
@@ -24,8 +35,12 @@ export type CmsSiteContent = {
     heroMobileAspectRatio?: string;
     overviewImage?: string;
     productOverviewVideo?: string;
+    productOverviewVideo720?: string;
+    productOverviewVideo1080?: string;
     productOverviewPoster?: string;
     companyOverviewVideo?: string;
+    companyOverviewVideo720?: string;
+    companyOverviewVideo1080?: string;
     companyOverviewPoster?: string;
     sustainabilityStatementThumbnail?: string;
     sectionOrder?: string[];
@@ -100,6 +115,21 @@ export type CmsSiteContent = {
     thumbnailUrl?: string;
     fileUrl?: string;
   };
+  customerApplications?: Array<{
+    title: string;
+    description: string;
+    imageUrl?: string;
+    cargoType: string;
+    operatingEnvironment: string;
+    documentedWeight?: string;
+    sourceLabel: string;
+    sourcePage?: string;
+    customerName?: string;
+    showCustomerName: boolean;
+    publicUseApproved: boolean;
+    sortOrder: number;
+    isVisible: boolean;
+  }>;
 };
 
 function formatFileSize(size?: number | null) {
@@ -130,6 +160,18 @@ export async function getWebsiteContent(): Promise<CmsSiteContent | null> {
       const value = (metadata as Record<string, unknown>).thumbnailUrl;
       return typeof value === "string" ? value : undefined;
     };
+    const assetMetadataText = (
+      section: string,
+      itemKey: string,
+      key: string,
+    ) => {
+      const metadata = assetRecord(section, itemKey)?.metadata;
+      if (!metadata || Array.isArray(metadata) || typeof metadata !== "object") {
+        return undefined;
+      }
+      const value = (metadata as Record<string, unknown>)[key];
+      return typeof value === "string" ? value : undefined;
+    };
     const assetRecordWithLegacy = (
       section: string,
       itemKey: string,
@@ -143,6 +185,20 @@ export async function getWebsiteContent(): Promise<CmsSiteContent | null> {
       legacyItemKey = itemKey,
     ) => assetRecordWithLegacy(section, itemKey, legacySection, legacyItemKey)?.url ?? undefined;
     const settings = (byKey.get("site-settings")?.data ?? {}) as CmsSiteContent["siteSettings"];
+    const normalizedSettings = settings
+      ? {
+          ...settings,
+          siteDisplayName:
+            settings.siteDisplayName || settings.brandName || "아델슨 코리아",
+          primaryContactEmail:
+            settings.primaryContactEmail || settings.email || undefined,
+          primaryPhone: settings.primaryPhone || settings.phone || undefined,
+        }
+      : undefined;
+    const homeData = (byKey.get("home")?.data ?? {}) as {
+      sectionOrder?: string[];
+      sectionVisibility?: Array<{ section: string; visible: boolean }>;
+    };
     const videoData = (byKey.get("intro-videos")?.data ?? {}) as Record<string, string>;
     const currentProductImages = assets("product-lineup");
     const productImages = new Map(
@@ -179,7 +235,7 @@ export async function getWebsiteContent(): Promise<CmsSiteContent | null> {
     const heroWidth = heroAsset?.width ?? 0;
     const heroHeight = heroAsset?.height ?? 0;
     return {
-      siteSettings: settings,
+      siteSettings: normalizedSettings,
       homePage: {
         heroDesktopImage: heroAsset?.url ?? undefined,
         heroMobileImage: heroAsset?.originalUrl ?? heroAsset?.url ?? undefined,
@@ -190,9 +246,31 @@ export async function getWebsiteContent(): Promise<CmsSiteContent | null> {
         overviewImage: assetWithLegacy("product-overview", "overview", "main-images"),
         sustainabilityStatementThumbnail: assetWithLegacy("environment", "carbonStatement", "main-images"),
         productOverviewVideo: asset("product-overview", "productOverviewVideo") ?? videoData.productOverviewVideo,
+        productOverviewVideo720: assetMetadataText(
+          "product-overview",
+          "productOverviewVideo",
+          "optimized720Url",
+        ),
+        productOverviewVideo1080: assetMetadataText(
+          "product-overview",
+          "productOverviewVideo",
+          "optimized1080Url",
+        ),
         productOverviewPoster: assetWithLegacy("product-overview", "productOverviewPoster", "intro-videos"),
         companyOverviewVideo: asset("company", "companyOverviewVideo") ?? videoData.companyOverviewVideo,
+        companyOverviewVideo720: assetMetadataText(
+          "company",
+          "companyOverviewVideo",
+          "optimized720Url",
+        ),
+        companyOverviewVideo1080: assetMetadataText(
+          "company",
+          "companyOverviewVideo",
+          "optimized1080Url",
+        ),
         companyOverviewPoster: assetWithLegacy("company", "companyOverviewPoster", "intro-videos"),
+        sectionOrder: homeData.sectionOrder,
+        sectionVisibility: homeData.sectionVisibility,
       },
       products: mappedProducts,
       performanceVideos: performanceVideoFallbacks.map((video, index) => ({
@@ -254,6 +332,46 @@ export async function getWebsiteContent(): Promise<CmsSiteContent | null> {
         thumbnailUrl: asset("company", "catalogCover") ?? assetThumbnail("company", "catalogFile"),
         fileUrl: asset("company", "catalogFile"),
       } : undefined,
+      customerApplications: (() => {
+        const section = byKey.get("customer-applications");
+        const rawItems =
+          section?.data &&
+          !Array.isArray(section.data) &&
+          typeof section.data === "object" &&
+          Array.isArray((section.data as Record<string, unknown>).items)
+            ? ((section.data as Record<string, unknown>).items as unknown[])
+            : [];
+        return rawItems
+          .flatMap((value, index) => {
+            if (!value || Array.isArray(value) || typeof value !== "object") {
+              return [];
+            }
+            const item = value as Record<string, unknown>;
+            const text = (key: string) =>
+              typeof item[key] === "string" ? (item[key] as string) : "";
+            return [{
+              title: text("title"),
+              description: text("description"),
+              imageUrl:
+                asset("customer-applications", `case${index + 1}`) ||
+                text("image") ||
+                undefined,
+              cargoType: text("cargoType"),
+              operatingEnvironment: text("operatingEnvironment"),
+              documentedWeight: text("documentedWeight") || undefined,
+              sourceLabel:
+                text("sourceLabel") || "제조사 제공 적용 사례",
+              sourcePage: text("sourcePage") || undefined,
+              customerName: text("customerName") || undefined,
+              showCustomerName: item.showCustomerName === true,
+              publicUseApproved: item.publicUseApproved === true,
+              sortOrder:
+                typeof item.sortOrder === "number" ? item.sortOrder : index,
+              isVisible: item.isVisible !== false,
+            }];
+          })
+          .sort((left, right) => left.sortOrder - right.sortOrder);
+      })(),
     };
   } catch (error) {
     console.warn("Website content DB fetch failed; using fallback content.", error);

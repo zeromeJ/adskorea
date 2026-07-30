@@ -26,8 +26,12 @@ export async function GET(request: Request) {
         : {};
     const registeredCount =
       definition.key === "site-settings"
-        ? ["email", "phone"].filter(
-            (key) => typeof data[key] === "string" && data[key].trim().length > 0,
+        ? [
+            data.primaryContactEmail || data.email,
+            data.primaryPhone || data.phone,
+          ].filter(
+            (value) =>
+              typeof value === "string" && value.trim().length > 0,
           ).length
         : section?.assets.length ?? 0;
     return {

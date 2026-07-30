@@ -3,9 +3,14 @@ import '../constants/colors.dart';
 import '../models/inquiry.dart';
 
 class StatusChip extends StatelessWidget {
-  const StatusChip({required this.status, super.key});
+  const StatusChip({
+    required this.status,
+    this.label,
+    super.key,
+  });
 
   final InquiryStatus status;
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
@@ -18,10 +23,10 @@ class StatusChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
-        inquiryStatusLabel(status),
+        label ?? inquiryStatusLabel(status),
         style: TextStyle(
           color: isCompleted ? AppColors.subText : Colors.white,
-          fontSize: 12,
+          fontSize: 15,
           fontWeight: FontWeight.w700,
         ),
       ),

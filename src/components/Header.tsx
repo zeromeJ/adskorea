@@ -1,427 +1,232 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
+import {
+  ChevronDown,
+  FileDown,
+  Menu,
+  MessageSquareText,
+  X,
+} from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { navItems } from "@/lib/constants";
-import { scrollToSection } from "@/lib/scrollToSection";
-import { LinkButton } from "@/components/ui/Button";
-
-type NavigationItem = {
-  label: string;
-  href: string;
-  children?: { label: string; href: string }[];
-};
-
-const desktopNavItems: NavigationItem[] = navItems;
-
-const trackedNavItems: NavigationItem[] = [
-  ...navItems,
-  { label: "견적 문의", href: "#inquiry" },
-];
-
-const mobileNavItems: NavigationItem[] = [
-  { label: "홈", href: "#hero" },
-  { label: "도입 전 과제", href: "#problem" },
-  ...trackedNavItems,
-];
-
-const trackedSectionIds = Array.from(
-  new Set(
-    mobileNavItems.flatMap((item) => [
-      item.href.slice(1),
-      ...(item.children ?? []).map((child) => child.href.slice(1)),
-    ]),
-  ),
-);
+import { productBrochureDownloadPath } from "@/lib/downloads";
+import { trackEvent } from "@/lib/trackEvent";
 
 export default function Header({
   logoUrl,
-  brandName = "ADS 아델슨",
+  brandName = "아델슨 코리아",
 }: {
   logoUrl?: string;
   brandName?: string;
 }) {
-  const [activeSection, setActiveSection] = useState("");
-  const [mobileLogoVisible, setMobileLogoVisible] = useState(true);
-  const [openDesktopMenu, setOpenDesktopMenu] = useState<string | null>(null);
-  const closeMenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const touchPrimedMenuRef = useRef<string | null>(null);
-  const mobileNavRef = useRef<HTMLElement>(null);
-  const mobilePointerStartXRef = useRef<number | null>(null);
-  const mobileNavDraggedRef = useRef(false);
-  const activeMobileSection =
-    mobileNavItems.find(
-      (item) =>
-        activeSection === item.href.slice(1) ||
-        item.children?.some((child) => activeSection === child.href.slice(1)),
-    )?.href.slice(1) ?? activeSection;
+  const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+  const [activeAnchor, setActiveAnchor] = useState("");
+  const [desktopMenuOpen, setDesktopMenuOpen] = useState(false);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const desktopCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    let frameId = 0;
-    const updateActiveSection = () => {
-      frameId = 0;
-      const header = document.querySelector<HTMLElement>("[data-site-header]");
-      const headerHeight = Math.max(header?.getBoundingClientRect().bottom ?? 64, 0);
-      const activationLine = headerHeight + 28;
-      let current = "";
-      let nearestTop = Number.NEGATIVE_INFINITY;
-
-      for (const sectionId of trackedSectionIds) {
-        const section = document.getElementById(sectionId);
-        const sectionTop = section?.getBoundingClientRect().top;
-        if (
-          sectionTop !== undefined &&
-          sectionTop <= activationLine &&
-          sectionTop > nearestTop
-        ) {
-          current = sectionId;
-          nearestTop = sectionTop;
-        }
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
       }
-
-      setActiveSection(current);
     };
-    const handleScroll = () => {
-      if (!frameId) frameId = window.requestAnimationFrame(updateActiveSection);
-    };
-
-    updateActiveSection();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", handleScroll);
+    document.addEventListener("keydown", onKeyDown);
     return () => {
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleScroll);
-      if (frameId) window.cancelAnimationFrame(frameId);
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setDesktopMenuOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      if (desktopCloseTimerRef.current) {
+        clearTimeout(desktopCloseTimerRef.current);
+      }
     };
   }, []);
 
   useEffect(() => {
-    let lastY = Math.max(window.scrollY, 0);
-    let accumulatedDistance = 0;
-    let direction: "up" | "down" | null = null;
-    let frameId = 0;
-
-    const updateLogoVisibility = () => {
-      frameId = 0;
-      const currentY = Math.max(window.scrollY, 0);
-
-      if (window.innerWidth >= 1024 || currentY <= 24) {
-        setMobileLogoVisible(true);
-        lastY = currentY;
-        accumulatedDistance = 0;
-        direction = null;
-        return;
-      }
-
-      const delta = currentY - lastY;
-      lastY = currentY;
-      if (Math.abs(delta) < 1) return;
-
-      const nextDirection = delta > 0 ? "down" : "up";
-      if (nextDirection !== direction) {
-        direction = nextDirection;
-        accumulatedDistance = 0;
-      }
-      accumulatedDistance += Math.abs(delta);
-
-      if (
-        direction === "down" &&
-        currentY > 80 &&
-        accumulatedDistance >= 48
-      ) {
-        setMobileLogoVisible(false);
-        accumulatedDistance = 0;
-      } else if (direction === "up" && accumulatedDistance >= 32) {
-        setMobileLogoVisible(true);
-        accumulatedDistance = 0;
-      }
-    };
-
-    const handleViewportChange = () => {
-      if (!frameId) frameId = window.requestAnimationFrame(updateLogoVisibility);
-    };
-
-    updateLogoVisibility();
-    window.addEventListener("scroll", handleViewportChange, { passive: true });
-    window.addEventListener("resize", handleViewportChange);
-    return () => {
-      window.removeEventListener("scroll", handleViewportChange);
-      window.removeEventListener("resize", handleViewportChange);
-      if (frameId) window.cancelAnimationFrame(frameId);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!activeMobileSection || !mobileNavRef.current) return;
-    const activeItem = mobileNavRef.current.querySelector<HTMLElement>(
-      `[data-mobile-section="${activeMobileSection}"]`,
+    if (pathname !== "/") return;
+    const section = document.getElementById("customer-applications");
+    if (!section) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setActiveAnchor(entry.isIntersecting ? entry.target.id : "");
+      },
+      { rootMargin: "-25% 0px -55% 0px", threshold: 0 },
     );
-    if (!activeItem) return;
-    const nav = mobileNavRef.current;
-    const centeredPosition =
-      activeItem.offsetLeft + activeItem.offsetWidth / 2 - nav.clientWidth / 2;
-    const maxScrollPosition = Math.max(nav.scrollWidth - nav.clientWidth, 0);
-    mobileNavRef.current.scrollTo({
-      left: Math.min(Math.max(centeredPosition, 0), maxScrollPosition),
-      behavior: "auto",
-    });
-  }, [activeMobileSection]);
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, [pathname]);
 
-  useEffect(() => {
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpenDesktopMenu(null);
-    };
-    document.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.removeEventListener("keydown", closeOnEscape);
-      if (closeMenuTimerRef.current) clearTimeout(closeMenuTimerRef.current);
-    };
-  }, []);
-
-  useEffect(() => {
-    const storageKey = `ads-scroll-position:${window.location.pathname}`;
-    const previousRestoration = window.history.scrollRestoration;
-    const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
-    const shouldRestore = !window.location.hash && (navigation?.type === "reload" || navigation?.type === "back_forward");
-    let frameId = 0;
-    let restoring = shouldRestore;
-
-    window.history.scrollRestoration = "manual";
-    if (shouldRestore) {
-      const savedPosition = Number(window.sessionStorage.getItem(storageKey));
-      if (Number.isFinite(savedPosition)) {
-        window.requestAnimationFrame(() => {
-          window.requestAnimationFrame(() => {
-            window.scrollTo({ top: savedPosition, behavior: "auto" });
-            restoring = false;
-          });
-        });
-      } else {
-        restoring = false;
-      }
+  const isActive = (href: string) => {
+    if (href.startsWith("/#")) {
+      return pathname === "/" && activeAnchor === href.split("#")[1];
     }
+    return href === "/" ? pathname === "/" : pathname.startsWith(href);
+  };
 
-    const savePosition = () => {
-      frameId = 0;
-      if (restoring) return;
-      window.sessionStorage.setItem(storageKey, String(window.scrollY));
-    };
-    const handleScroll = () => {
-      if (!frameId) frameId = window.requestAnimationFrame(savePosition);
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("pagehide", savePosition);
-    return () => {
-      savePosition();
-      window.history.scrollRestoration = previousRestoration;
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("pagehide", savePosition);
-      if (frameId) window.cancelAnimationFrame(frameId);
-    };
-  }, []);
-
-  function navigate(event: React.MouseEvent<HTMLAnchorElement>, href: string) {
-    event.preventDefault();
-    setOpenDesktopMenu(null);
-    if (window.innerWidth < 1024) {
-      setMobileLogoVisible(href === "#hero");
-      setActiveSection(href.slice(1));
-    }
-    scrollToSection(href.slice(1));
+  function cancelDesktopMenuClose() {
+    if (!desktopCloseTimerRef.current) return;
+    clearTimeout(desktopCloseTimerRef.current);
+    desktopCloseTimerRef.current = null;
   }
 
-  function handleMobilePointerDown(event: React.PointerEvent<HTMLAnchorElement>) {
-    mobilePointerStartXRef.current = event.clientX;
-    mobileNavDraggedRef.current = false;
+  function openDesktopMenu() {
+    cancelDesktopMenuClose();
+    setDesktopMenuOpen(true);
   }
 
-  function handleMobilePointerMove(event: React.PointerEvent<HTMLAnchorElement>) {
-    const startX = mobilePointerStartXRef.current;
-    if (startX !== null && Math.abs(event.clientX - startX) > 8) {
-      mobileNavDraggedRef.current = true;
-    }
+  function closeDesktopMenu() {
+    cancelDesktopMenuClose();
+    setDesktopMenuOpen(false);
   }
 
-  function handleMobileNavigation(
-    event: React.MouseEvent<HTMLAnchorElement>,
-    href: string,
-  ) {
-    if (mobileNavDraggedRef.current) {
-      event.preventDefault();
-      mobileNavDraggedRef.current = false;
-      mobilePointerStartXRef.current = null;
-      return;
-    }
-    mobilePointerStartXRef.current = null;
-    navigate(event, href);
+  function scheduleDesktopMenuClose() {
+    cancelDesktopMenuClose();
+    desktopCloseTimerRef.current = setTimeout(() => {
+      setDesktopMenuOpen(false);
+      desktopCloseTimerRef.current = null;
+    }, 140);
   }
 
-  function cancelScheduledMenuClose() {
-    if (!closeMenuTimerRef.current) return;
-    clearTimeout(closeMenuTimerRef.current);
-    closeMenuTimerRef.current = null;
-  }
-
-  function openMenu(label: string) {
-    cancelScheduledMenuClose();
-    setOpenDesktopMenu(label);
-  }
-
-  function scheduleMenuClose() {
-    cancelScheduledMenuClose();
-    closeMenuTimerRef.current = setTimeout(() => {
-      setOpenDesktopMenu(null);
-      closeMenuTimerRef.current = null;
-    }, 180);
-  }
-
-  function handleTopLevelNavigation(
-    event: React.MouseEvent<HTMLAnchorElement>,
-    item: NavigationItem,
-  ) {
-    const usesTouchNavigation = window.matchMedia(
-      "(hover: none), (pointer: coarse)",
-    ).matches;
-    if (
-      usesTouchNavigation &&
-      (touchPrimedMenuRef.current === item.label || openDesktopMenu !== item.label)
-    ) {
-      event.preventDefault();
-      touchPrimedMenuRef.current = null;
-      openMenu(item.label);
-      return;
-    }
-    navigate(event, item.href);
+  function closeMenu() {
+    setOpen(false);
+    triggerRef.current?.focus();
   }
 
   return (
     <header
-      className={`sticky top-0 z-50 border-b bg-[rgba(247,245,239,0.96)] backdrop-blur-xl transition-transform duration-200 motion-reduce:transition-none ${openDesktopMenu ? "border-transparent" : "border-[var(--line)]"} ${mobileLogoVisible ? "translate-y-0" : "-translate-y-12 md:-translate-y-14 lg:translate-y-0"}`}
+      className="sticky top-0 z-50 border-b border-[var(--line)] bg-[rgba(247,245,239,0.96)] backdrop-blur-xl"
       data-site-header
     >
-      <div
-        className={`mx-auto flex h-12 w-[calc(100%-32px)] max-w-[1240px] items-center justify-between gap-4 overflow-hidden transition-opacity duration-200 md:h-14 md:w-[calc(100%-40px)] lg:grid lg:h-[76px] lg:grid-cols-[72px_minmax(0,1fr)_104px] lg:gap-6 lg:overflow-visible lg:opacity-100 xl:grid-cols-[82px_minmax(0,1fr)_112px] xl:gap-8 ${mobileLogoVisible ? "opacity-100" : "opacity-0"}`}
-      >
-        <a
+      <div className="mx-auto flex h-16 w-[calc(100%-32px)] max-w-[1240px] items-center justify-between gap-4 lg:grid lg:h-[76px] lg:w-[calc(100%-40px)] lg:grid-cols-[92px_minmax(0,1fr)_112px] lg:gap-8">
+        <Link
           aria-label={`${brandName} 홈`}
           className="flex shrink-0 items-center"
-          href="#hero"
-          onClick={(event) => navigate(event, "#hero")}
+          href="/"
         >
           <Image
-            alt={`${brandName} logo`}
-            className="h-7 w-auto object-contain md:h-8 lg:h-9 xl:h-10"
+            alt=""
+            className="h-8 w-auto object-contain lg:h-10"
             height={540}
             priority
             src={logoUrl || "/images/logo_new.png"}
             unoptimized={Boolean(logoUrl?.startsWith("http"))}
             width={966}
           />
-        </a>
+        </Link>
 
-        <div className="hidden lg:contents">
-          <nav
-            className="grid min-w-0 grid-cols-6 items-center gap-2 whitespace-nowrap text-sm text-[var(--sub-text)] xl:gap-3"
-            onMouseEnter={() => openMenu("sitemap")}
-            onMouseLeave={scheduleMenuClose}
+        <nav
+          aria-label="주요 메뉴"
+          className="hidden min-w-0 grid-cols-5 items-center gap-2 whitespace-nowrap text-sm text-[var(--sub-text)] lg:grid"
+          onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget)) {
+              scheduleDesktopMenuClose();
+            }
+          }}
+          onMouseEnter={openDesktopMenu}
+          onMouseLeave={scheduleDesktopMenuClose}
+        >
+          {navItems.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <Link
+                aria-controls="desktop-sitemap"
+                aria-current={active ? "page" : undefined}
+                aria-expanded={desktopMenuOpen}
+                aria-haspopup="true"
+                className={`inline-flex min-h-11 items-center justify-center px-2 text-center transition-colors focus-visible:rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)] ${
+                  active
+                    ? "font-extrabold text-[var(--primary-dark)]"
+                    : "font-medium hover:text-[var(--primary)]"
+                }`}
+                href={item.href}
+                key={item.href}
+                onClick={closeDesktopMenu}
+                onFocus={openDesktopMenu}
+              >
+                {item.label}
+                <ChevronDown
+                  aria-hidden="true"
+                  className={`ml-1 h-3.5 w-3.5 transition-transform ${
+                    desktopMenuOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="flex items-center gap-2">
+          <Link
+            className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[var(--primary)] px-3 text-sm font-extrabold text-white transition hover:bg-[var(--primary-dark)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)] sm:px-4"
+            href="/#inquiry"
           >
-            {desktopNavItems.map((item) => {
-              const selected =
-                activeSection === item.href.slice(1) ||
-                item.children?.some(
-                  (child) => activeSection === child.href.slice(1),
-                );
-              const isOpen = Boolean(openDesktopMenu);
-              return (
-                <div
-                  className="relative min-w-0"
-                  key={item.href}
-                  onBlur={(event) => {
-                    if (!event.currentTarget.contains(event.relatedTarget)) {
-                      scheduleMenuClose();
-                    }
-                  }}
-                  onFocus={() => openMenu(item.label)}
-                >
-                  <a
-                    aria-controls="desktop-sitemap"
-                    aria-current={selected ? "page" : undefined}
-                    aria-expanded={Boolean(openDesktopMenu)}
-                    aria-haspopup="true"
-                    className={`inline-flex min-h-11 w-full items-center justify-center gap-1 px-1 text-center transition-colors duration-200 focus-visible:rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)] xl:px-2 ${
-                      selected
-                        ? "font-extrabold text-[var(--primary-dark)]"
-                        : "font-medium hover:text-[var(--primary)]"
-                    }`}
-                    href={item.href}
-                    onClick={(event) => handleTopLevelNavigation(event, item)}
-                    onPointerDown={(event) => {
-                      if (
-                        event.pointerType !== "mouse" &&
-                        openDesktopMenu !== item.label
-                      ) {
-                        touchPrimedMenuRef.current = item.label;
-                      }
-                    }}
-                  >
-                    {item.label}
-                    <svg
-                      aria-hidden="true"
-                      className={`h-3.5 w-3.5 shrink-0 transition-transform duration-150 motion-reduce:transition-none ${isOpen ? "rotate-180" : ""}`}
-                      fill="none"
-                      viewBox="0 0 16 16"
-                    >
-                      <path d="m4 6 4 4 4-4" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" />
-                    </svg>
-                  </a>
-                </div>
-              );
-            })}
-          </nav>
-          <LinkButton aria-current={activeSection === "inquiry" ? "page" : undefined} className={`w-full shrink-0 whitespace-nowrap px-3 xl:px-4 ${activeSection === "inquiry" ? "ring-2 ring-[var(--sub-sage)] ring-offset-2" : ""}`} href="#inquiry">
-            견적 문의
-          </LinkButton>
+            <MessageSquareText aria-hidden="true" size={17} />
+            <span className="hidden sm:inline">견적 문의</span>
+            <span className="sm:hidden">문의</span>
+          </Link>
+          <button
+            aria-controls="mobile-navigation"
+            aria-expanded={open}
+            aria-label="전체 메뉴 열기"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-[var(--line)] bg-white text-[var(--primary-deep)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)] lg:hidden"
+            onClick={() => setOpen(true)}
+            ref={triggerRef}
+            type="button"
+          >
+            <Menu aria-hidden="true" size={22} />
+          </button>
         </div>
-
       </div>
 
-      {openDesktopMenu ? (
+      {desktopMenuOpen ? (
         <div
-          className="absolute top-full left-0 z-[70] hidden w-full bg-[rgba(247,245,239,0.96)] shadow-[0_12px_22px_rgba(16,37,29,0.08)] backdrop-blur-xl motion-safe:animate-[header-dropdown-in_160ms_ease-out] lg:block"
+          className="absolute top-full left-0 z-[60] hidden w-full border-t border-[var(--line)] bg-[rgba(247,245,239,0.98)] shadow-[0_12px_22px_rgba(16,37,29,0.08)] backdrop-blur-xl motion-safe:animate-[header-dropdown-in_160ms_ease-out] lg:block"
           id="desktop-sitemap"
           onBlur={(event) => {
             if (!event.currentTarget.contains(event.relatedTarget)) {
-              scheduleMenuClose();
+              scheduleDesktopMenuClose();
             }
           }}
-          onFocus={cancelScheduledMenuClose}
-          onMouseEnter={cancelScheduledMenuClose}
-          onMouseLeave={scheduleMenuClose}
+          onFocus={cancelDesktopMenuClose}
+          onMouseEnter={cancelDesktopMenuClose}
+          onMouseLeave={scheduleDesktopMenuClose}
         >
-          <div className="mx-auto grid w-[calc(100%-40px)] max-w-[1240px] grid-cols-[72px_minmax(0,1fr)_104px] items-start gap-6 pt-1.5 pb-4 xl:grid-cols-[82px_minmax(0,1fr)_112px] xl:gap-8 xl:pt-2 xl:pb-5">
+          <div className="mx-auto grid w-[calc(100%-40px)] max-w-[1240px] grid-cols-[92px_minmax(0,1fr)_112px] gap-8 py-4">
             <div aria-hidden="true" />
-            <div className="grid min-w-0 grid-cols-6 gap-2 xl:gap-3">
-              {desktopNavItems.map((item) => (
-                <div className="grid min-w-0 content-start gap-0.5" key={item.href}>
-                  {(item.children ?? []).map((child) => {
-                    const childSelected = activeSection === child.href.slice(1);
-                    return (
-                      <a
-                        aria-current={childSelected ? "page" : undefined}
-                        className={`flex min-h-9 min-w-0 items-center justify-center whitespace-nowrap rounded-md px-1 text-center text-xs tracking-[-0.02em] transition-colors focus-visible:outline-2 focus-visible:outline-[var(--primary)] xl:px-2 xl:text-[13px] ${
-                          childSelected
-                            ? "font-extrabold text-[var(--primary-dark)]"
-                            : "font-medium text-[var(--sub-text)] hover:bg-white/55 hover:text-[var(--primary)]"
-                        }`}
-                        href={child.href}
-                        key={child.href}
-                        onClick={(event) => navigate(event, child.href)}
-                      >
-                        {child.label}
-                      </a>
-                    );
-                  })}
+            <div className="grid min-w-0 grid-cols-5 gap-2">
+              {navItems.map((item) => (
+                <div className="grid min-w-0 content-start gap-1" key={item.href}>
+                  {item.children.map((child) => (
+                    <Link
+                      className="flex min-h-9 items-center justify-center px-2 text-center text-xs font-medium text-[var(--sub-text)] transition-colors hover:bg-white/70 hover:text-[var(--primary)] focus-visible:outline-2 focus-visible:outline-[var(--primary)]"
+                      href={child.href}
+                      key={`${item.href}:${child.label}`}
+                      onClick={closeDesktopMenu}
+                    >
+                      {child.label}
+                    </Link>
+                  ))}
                 </div>
               ))}
             </div>
@@ -430,38 +235,65 @@ export default function Header({
         </div>
       ) : null}
 
-      <nav
-        aria-label="모바일 섹션 내비게이션"
-        className="touch-horizontal-scroller no-scrollbar flex w-full snap-x gap-2 overflow-x-auto border-t border-[var(--line)] px-4 py-2 lg:hidden"
-        data-mobile-navigation
-        ref={mobileNavRef}
-      >
-        {mobileNavItems.map((item) => {
-          const section = item.href.slice(1);
-          const selected = activeMobileSection === section;
-          return (
-            <a
-              aria-current={selected ? "page" : undefined}
-              className={`inline-flex min-h-10 shrink-0 snap-start items-center justify-center rounded-xl border px-3.5 text-sm whitespace-nowrap transition ${selected ? "border-[var(--primary)] bg-[var(--primary)] font-extrabold text-white" : "border-[var(--line)] bg-transparent font-medium text-[var(--text)]"}`}
-              data-mobile-section={section}
-              href={item.href}
-              key={item.href}
-              onClick={(event) => handleMobileNavigation(event, item.href)}
-              onPointerCancel={() => {
-                mobilePointerStartXRef.current = null;
-                mobileNavDraggedRef.current = false;
-              }}
-              onPointerDown={handleMobilePointerDown}
-              onPointerMove={handleMobilePointerMove}
-              onPointerUp={() => {
-                mobilePointerStartXRef.current = null;
-              }}
-            >
-              {item.label}
-            </a>
-          );
-        })}
-      </nav>
+      {open ? (
+        <div
+          aria-label="모바일 전체 메뉴"
+          aria-modal="true"
+          className="fixed inset-0 z-[70] bg-[rgba(9,24,18,0.5)] lg:hidden"
+          id="mobile-navigation"
+          role="dialog"
+        >
+          <div className="ml-auto flex min-h-dvh w-[min(88vw,380px)] flex-col bg-[var(--background)] shadow-2xl">
+            <div className="flex h-16 items-center justify-between border-b border-[var(--line)] px-5">
+              <strong className="text-base">전체 메뉴</strong>
+              <button
+                aria-label="전체 메뉴 닫기"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-[var(--line)] bg-white focus-visible:outline-2 focus-visible:outline-[var(--primary)]"
+                onClick={closeMenu}
+                ref={closeButtonRef}
+                type="button"
+              >
+                <X aria-hidden="true" size={22} />
+              </button>
+            </div>
+            <nav aria-label="모바일 주요 메뉴" className="grid p-5">
+              {navItems.map((item) => (
+                <Link
+                  aria-current={isActive(item.href) ? "page" : undefined}
+                  className={`flex min-h-14 items-center border-l-4 px-4 text-base font-extrabold ${
+                    isActive(item.href)
+                      ? "border-[var(--accent-gold)] bg-[var(--primary-dark)] text-white"
+                      : "border-transparent border-b-[var(--line)] text-[var(--primary-deep)]"
+                  }`}
+                  href={item.href}
+                  key={item.href}
+                  onClick={() => setOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              ))}
+              <Link
+                className="mt-3 flex min-h-14 items-center border-l-4 border-transparent px-4 text-base font-extrabold text-[var(--primary-deep)]"
+                href="/#inquiry"
+                onClick={() => setOpen(false)}
+              >
+                견적 문의
+              </Link>
+            </nav>
+            <div className="mt-auto border-t border-[var(--line)] p-5">
+              <a
+                className="flex min-h-12 items-center justify-center gap-2 border border-[var(--sub-sage)] bg-[var(--sub-mint)] px-4 font-extrabold text-[var(--primary-deep)]"
+                download
+                href={productBrochureDownloadPath}
+                onClick={() => trackEvent("catalog_download", { location: "mobile_menu" })}
+              >
+                <FileDown aria-hidden="true" size={19} />
+                제품 카탈로그 다운로드
+              </a>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </header>
   );
 }

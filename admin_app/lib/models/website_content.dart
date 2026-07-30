@@ -288,6 +288,71 @@ final websiteDocumentDefaults = <Map<String, dynamic>>[
   },
 ];
 
+final customerApplicationDefaults = <Map<String, dynamic>>[
+  {
+    'title': '고중량 톤백 적재',
+    'description': '화학 원료 톤백의 고단 적재 사례',
+    'cargoType': '톤백 화물',
+    'operatingEnvironment': '고단 적재',
+    'documentedWeight': '2.4톤/팔레트',
+    'sourceLabel': '제조사 제공 적용 사례',
+    'sourcePage': '4',
+  },
+  {
+    'title': '컨테이너 적재',
+    'description': '수출 컨테이너 내 화물 적재 사례',
+    'cargoType': '산업 화물',
+    'operatingEnvironment': '컨테이너 적재',
+    'documentedWeight': '2톤/팔레트',
+    'sourceLabel': '제조사 제공 적용 사례',
+    'sourcePage': '3 또는 5',
+  },
+  {
+    'title': '랙 보관',
+    'description': '창고 랙 구조에 보관한 적용 사례',
+    'cargoType': '산업 화물',
+    'operatingEnvironment': '랙 보관',
+    'documentedWeight': '1.25톤/팔레트',
+    'sourceLabel': '제조사 제공 적용 사례',
+    'sourcePage': '6',
+  },
+  {
+    'title': '자동화 이송설비',
+    'description': '자동화 이송설비 운용 환경 적용 사례',
+    'cargoType': '산업 화물',
+    'operatingEnvironment': '자동화 이송설비',
+    'documentedWeight': '',
+    'sourceLabel': '제조사 제공 적용 사례',
+    'sourcePage': '14',
+  },
+  {
+    'title': '화학용 소형 금속 용기',
+    'description': '소형 금속 용기 화물 적재 사례',
+    'cargoType': '화학용 소형 금속 용기',
+    'operatingEnvironment': '현장 적재',
+    'documentedWeight': '',
+    'sourceLabel': '제조사 제공 적용 사례',
+    'sourcePage': '17',
+  },
+  {
+    'title': '박스 화물',
+    'description': '박스형 화물의 적재·운용 사례',
+    'cargoType': '박스 화물',
+    'operatingEnvironment': '현장 적재',
+    'documentedWeight': '',
+    'sourceLabel': '제조사 제공 적용 사례',
+    'sourcePage': '18',
+  },
+]
+    .map((item) => {
+          ...item,
+          'customerName': '',
+          'showCustomerName': false,
+          'publicUseApproved': false,
+          'isVisible': true,
+        })
+    .toList();
+
 List<ImageSlot> websiteDocumentSlots(int index) => [
       ImageSlot(
           key: 'document${index + 1}',
@@ -404,6 +469,19 @@ final websiteImageSlots = <String, List<ImageSlot>>{
         description: '주문제작 제품군 대표 이미지입니다.'),
   ],
   'applications': const [],
+  'customer-applications': [
+    ...List.generate(
+      6,
+      (i) => ImageSlot(
+        key: 'case${i + 1}',
+        label: '고객 적용 사례 ${i + 1} 현장 사진',
+        ratio: '4:3 원본 비율 유지',
+        width: 1200,
+        height: 900,
+        description: '원본 PDF에서 추출한 현장 사진만 등록하세요. 생성형 보정과 고객사명 노출은 금지됩니다.',
+      ),
+    ),
+  ],
   'environment': const [
     ImageSlot(
         key: 'carbonStatement',

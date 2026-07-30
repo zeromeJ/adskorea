@@ -8,14 +8,12 @@ export function scrollToSection(id: string, headerOffset?: number) {
   const prefersReducedMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)",
   ).matches;
-  const isMobileNavigation = window.matchMedia("(max-width: 1023px)").matches;
   const header = document.querySelector<HTMLElement>("[data-site-header]");
-  const mobileNavigation = document.querySelector<HTMLElement>(
-    "[data-mobile-navigation]",
+  const isMobileNavigation = window.matchMedia("(max-width: 1023px)").matches;
+  const defaultOffset = Math.ceil(
+    header?.getBoundingClientRect().height ??
+      (isMobileNavigation ? 65 : 77),
   );
-  const defaultOffset = isMobileNavigation
-    ? (mobileNavigation?.offsetHeight ?? 56)
-    : Math.max(header?.getBoundingClientRect().bottom ?? 76, 0);
   const offset = headerOffset ?? defaultOffset;
   const top =
     id === "hero"

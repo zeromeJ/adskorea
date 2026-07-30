@@ -34,11 +34,17 @@ body {
   color: var(--text);
   font-family: var(--font-kr);
   letter-spacing: 0;
+  line-height: 1.5;
 }
 
 html,
 body {
   max-width: 100%;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 65px;
 }
 
 *,
@@ -70,18 +76,9 @@ canvas {
   display: none;
 }
 
-section[id] {
-  scroll-margin-top: 64px;
-}
-
-[id^="product-"] {
-  scroll-margin-top: 64px;
-}
-
 @media (min-width: 1024px) {
-  section[id],
-  [id^="product-"] {
-    scroll-margin-top: 88px;
+  html {
+    scroll-padding-top: 77px;
   }
 }
 
@@ -103,6 +100,41 @@ textarea {
   font: inherit;
   min-width: 0;
   max-width: 100%;
+}
+
+a,
+button,
+input,
+select,
+textarea,
+summary,
+[tabindex]:not([tabindex="-1"]) {
+  outline-color: var(--primary);
+}
+
+:where(main, [data-site-header]) :where(a, button)[class*="min-h-"] {
+  border-radius: 0.5rem;
+}
+
+main :where(article, details)[class*="border"],
+main form[class*="bg-white"] {
+  border-radius: 0.625rem;
+}
+
+.skip-link {
+  position: fixed;
+  left: 1rem;
+  top: -5rem;
+  z-index: 100;
+  background: white;
+  color: var(--primary-deep);
+  border: 2px solid var(--primary);
+  padding: 0.75rem 1rem;
+  font-weight: 800;
+}
+
+.skip-link:focus {
+  top: 1rem;
 }
 
 textarea {

@@ -6,11 +6,42 @@ class InquiryListResult {
     required this.counts,
     required this.items,
     required this.total,
+    required this.summary,
   });
 
   final InquiryListCounts counts;
   final List<Inquiry> items;
   final int total;
+  final InquiryWorkSummary summary;
+}
+
+class InquiryWorkSummary {
+  const InquiryWorkSummary({
+    this.unassigned = 0,
+    this.staleOneDay = 0,
+    this.staleThreeDay = 0,
+    this.minePending = 0,
+  });
+
+  final int unassigned;
+  final int staleOneDay;
+  final int staleThreeDay;
+  final int minePending;
+
+  static int _count(Map<String, dynamic> values, String key) =>
+      (values[key] as num?)?.toInt() ?? 0;
+
+  factory InquiryWorkSummary.fromJson(dynamic json) {
+    final values = json is Map
+        ? Map<String, dynamic>.from(json)
+        : const <String, dynamic>{};
+    return InquiryWorkSummary(
+      unassigned: _count(values, 'unassigned'),
+      staleOneDay: _count(values, 'stale1d'),
+      staleThreeDay: _count(values, 'stale3d'),
+      minePending: _count(values, 'minePending'),
+    );
+  }
 }
 
 class InquiryListCounts {
@@ -55,7 +86,7 @@ class InquiryService {
     String status = 'PENDING',
     String search = '',
     int page = 1,
-    int limit = 30,
+    int limit = 100,
   }) async {
     final json = await client.get('/api/admin/inquiries', {
       'scope': scope,
@@ -73,6 +104,7 @@ class InquiryService {
       counts: InquiryListCounts.fromJson(json['counts']),
       items: items,
       total: json['total'] as int? ?? items.length,
+      summary: InquiryWorkSummary.fromJson(json['summary']),
     );
   }
 
@@ -99,5 +131,27 @@ class InquiryService {
       'assignedAdminId': adminId,
     });
     return Inquiry.fromJson(json['item'] as Map<String, dynamic>);
+  }
+
+  Future<int> bulkAssignInquiries(
+    List<String> inquiryIds,
+    String? adminId,
+  ) async {
+    final json = await client.post('/api/admin/inquiries/bulk-assign', {
+      'inquiryIds': inquiryIds,
+      'assignedAdminId': adminId,
+    });
+    return (json['changedCount'] as num?)?.toInt() ?? 0;
+  }
+
+  Future<void> addConsultationRecord(
+    String id, {
+    required InquiryConsultationResult result,
+    String? memo,
+  }) async {
+    await client.post('/api/admin/inquiries/$id/consultations', {
+      'result': inquiryConsultationResultToApi(result),
+      'memo': memo,
+    });
   }
 }

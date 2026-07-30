@@ -37,8 +37,15 @@ class CustomerService {
     return Customer.fromJson(json['item'] as Map<String, dynamic>);
   }
 
-  Future<void> updateCustomerMemo(String id, String memo) async {
-    await client.patch('/api/admin/customers/$id', {'memo': memo});
+  Future<void> updateCustomerMemo(
+    String id,
+    String memo, {
+    String visibility = 'SHARED',
+  }) async {
+    await client.patch('/api/admin/customers/$id', {
+      'memo': memo,
+      'memoVisibility': visibility,
+    });
   }
 
   Future<void> setFavorite(String id, bool favorite) async {
@@ -52,8 +59,54 @@ class CustomerService {
     return CompanyDetail.fromJson(json['item'] as Map<String, dynamic>);
   }
 
-  Future<void> updateCompanyMemo(String id, String memo) async {
-    await client.patch('/api/admin/companies/$id', {'memo': memo});
+  Future<void> updateCompanyMemo(
+    String id,
+    String memo, {
+    String visibility = 'SHARED',
+  }) async {
+    await client.patch('/api/admin/companies/$id', {
+      'memo': memo,
+      'memoVisibility': visibility,
+    });
+  }
+
+  Future<List<CustomerCompany>> searchCompanies(String search) async {
+    final json = await client.get('/api/admin/companies', {'search': search});
+    return (json['items'] as List<dynamic>? ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .map(CustomerCompany.fromJson)
+        .toList();
+  }
+
+  Future<CustomerCompany> createCompany(String name) async {
+    final json = await client.post('/api/admin/companies', {'name': name});
+    return CustomerCompany.fromJson(
+      json['item'] as Map<String, dynamic>? ?? const {},
+    );
+  }
+
+  Future<void> changeCustomerCompany(
+    String customerId, {
+    required String action,
+    String? companyId,
+    String? companyName,
+  }) async {
+    await client.patch('/api/admin/customers/$customerId/company', {
+      'action': action,
+      if (companyId != null) 'companyId': companyId,
+      if (companyName != null) 'companyName': companyName,
+    });
+  }
+
+  Future<void> requestReview(
+    String customerId, {
+    required String type,
+    String? note,
+  }) async {
+    await client.post('/api/admin/customers/$customerId/review-request', {
+      'type': type,
+      'note': note,
+    });
   }
 
   Future<void> linkInquiryToCustomer(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../constants/colors.dart';
 import '../models/admin_user.dart';
 import '../models/customer.dart';
@@ -37,8 +38,10 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
   String _filter = 'ALL';
   String _search = '';
   bool _isLoading = true;
+  bool _isRefreshing = false;
   String? _error;
   List<Customer> _items = [];
+  final Set<String> _changingFavorites = {};
 
   @override
   void initState() {
@@ -62,7 +65,8 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
 
   Future<void> _load() async {
     setState(() {
-      _isLoading = true;
+      _isLoading = _items.isEmpty;
+      _isRefreshing = _items.isNotEmpty;
       _error = null;
     });
     try {
@@ -74,13 +78,33 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
     } catch (_) {
       if (mounted) setState(() => _error = '고객 목록을 불러오지 못했습니다.');
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isRefreshing = false;
+        });
+      }
     }
   }
 
   Future<void> _searchCustomers() async {
     FocusManager.instance.primaryFocus?.unfocus();
     _search = _searchController.text.trim();
+    await _load();
+  }
+
+  Future<void> _clearSearch() async {
+    _searchController.clear();
+    _search = '';
+    await _load();
+  }
+
+  Future<void> _resetFilters() async {
+    _searchController.clear();
+    setState(() {
+      _search = '';
+      _filter = 'ALL';
+    });
     await _load();
   }
 
@@ -105,6 +129,27 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
     await _load();
   }
 
+  Future<void> _toggleFavorite(Customer customer) async {
+    if (!_changingFavorites.add(customer.id)) return;
+    setState(() {});
+    try {
+      await widget.customerService.setFavorite(
+        customer.id,
+        !customer.isFavorite,
+      );
+      await _load();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('즐겨찾기를 변경하지 못했습니다.')),
+        );
+      }
+    } finally {
+      _changingFavorites.remove(customer.id);
+      if (mounted) setState(() {});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final filters = <ButtonSegment<String>>[
@@ -116,12 +161,12 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
       if (widget.currentAdmin.isSuperAdmin)
         const ButtonSegment(
           value: 'DUPLICATES',
-          label: Text('중복 검토'),
+          label: Text('중복 확인'),
         ),
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('고객 관리')),
+      appBar: AppBar(title: const Text('고객')),
       bottomNavigationBar: NavigationBar(
         height: 72,
         selectedIndex: 1,
@@ -132,12 +177,12 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
           NavigationDestination(
             icon: Icon(Icons.assignment_outlined),
             selectedIcon: Icon(Icons.assignment),
-            label: '문의 관리',
+            label: '문의',
           ),
           NavigationDestination(
             icon: Icon(Icons.people_outline),
             selectedIcon: Icon(Icons.people),
-            label: '고객 관리',
+            label: '고객',
           ),
         ],
       ),
@@ -147,21 +192,28 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      textInputAction: TextInputAction.search,
-                      onSubmitted: (_) => _searchCustomers(),
-                      decoration: const InputDecoration(
-                        labelText: '고객 검색',
-                        hintText: '접수번호, 전화번호, 이메일, 회사명, 고객명',
-                        prefixIcon: Icon(Icons.search),
-                      ),
+                  TextField(
+                    controller: _searchController,
+                    textInputAction: TextInputAction.search,
+                    onChanged: (_) => setState(() {}),
+                    onSubmitted: (_) => _searchCustomers(),
+                    decoration: InputDecoration(
+                      labelText: '고객 검색',
+                      hintText: '회사명, 고객명, 전화번호, 접수번호 검색',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _searchController.text.isEmpty
+                          ? null
+                          : IconButton(
+                              tooltip: '검색어 지우기',
+                              onPressed: _clearSearch,
+                              icon: const Icon(Icons.close),
+                            ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(height: 8),
                   FilledButton(
                     onPressed: _isLoading ? null : _searchCustomers,
                     child: const Text('검색'),
@@ -169,6 +221,15 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                 ],
               ),
             ),
+            if (_isRefreshing) ...[
+              const LinearProgressIndicator(
+                semanticsLabel: '새로 불러오는 중',
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 4),
+                child: Text('새로 불러오는 중'),
+              ),
+            ],
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
               child: SizedBox(
@@ -182,13 +243,49 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                 ),
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEEF3EE),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _filter == 'ALL'
+                            ? '전체 고객'
+                            : _filter == 'FAVORITES'
+                                ? '즐겨찾기'
+                                : '중복 확인',
+                        style: const TextStyle(fontWeight: FontWeight.w900),
+                      ),
+                    ),
+                    if (_filter != 'ALL' || _search.isNotEmpty)
+                      TextButton(
+                        onPressed: _resetFilters,
+                        child: const Text('초기화'),
+                      ),
+                  ],
+                ),
+              ),
+            ),
             Expanded(
               child: _isLoading
                   ? const LoadingView()
                   : _error != null
                       ? ErrorView(message: _error!, onRetry: _load)
                       : _items.isEmpty
-                          ? const EmptyState(message: '조건에 맞는 고객이 없습니다.')
+                          ? EmptyState(
+                              message: _search.isNotEmpty
+                                  ? '검색 결과가 없습니다.'
+                                  : '조건에 맞는 고객이 없습니다.',
+                              actionLabel:
+                                  _search.isNotEmpty ? '검색 초기화' : '전체 보기',
+                              onAction: _resetFilters,
+                            )
                           : RefreshIndicator(
                               onRefresh: _load,
                               child: ListView.separated(
@@ -228,14 +325,31 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                                                     ),
                                                   ),
                                                 ),
-                                                if (customer.isFavorite)
-                                                  const Chip(
-                                                    avatar: Icon(
-                                                      Icons.star,
-                                                      size: 18,
-                                                    ),
-                                                    label: Text('즐겨찾기'),
+                                                IconButton(
+                                                  tooltip: customer.isFavorite
+                                                      ? '즐겨찾기 해제'
+                                                      : '즐겨찾기',
+                                                  onPressed: _changingFavorites
+                                                          .contains(
+                                                    customer.id,
+                                                  )
+                                                      ? null
+                                                      : () => _toggleFavorite(
+                                                            customer,
+                                                          ),
+                                                  icon: Icon(
+                                                    customer.isFavorite
+                                                        ? Icons.star_rounded
+                                                        : Icons
+                                                            .star_border_rounded,
+                                                    color: customer.isFavorite
+                                                        ? const Color(
+                                                            0xFFC49A33,
+                                                          )
+                                                        : AppColors.subText,
+                                                    size: 30,
                                                   ),
+                                                ),
                                               ],
                                             ),
                                             const SizedBox(height: 4),
@@ -248,32 +362,23 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                                               ),
                                             ),
                                             const SizedBox(height: 10),
-                                            if (customer.phone?.isNotEmpty ==
-                                                true)
-                                              Text(
-                                                '전화번호  ${customer.phone}',
-                                                style: const TextStyle(
-                                                  fontSize: 16,
-                                                ),
-                                              ),
-                                            if (customer.email?.isNotEmpty ==
-                                                true)
-                                              Text(
-                                                '이메일  ${customer.email}',
-                                                style: const TextStyle(
-                                                  fontSize: 16,
-                                                ),
-                                              ),
-                                            const SizedBox(height: 10),
                                             Wrap(
                                               spacing: 8,
                                               runSpacing: 8,
                                               children: [
                                                 Chip(
                                                   label: Text(
-                                                    '문의 ${customer.inquiryCount}건',
+                                                    '진행 중 ${customer.pendingInquiryCount}건',
                                                   ),
                                                 ),
+                                                if (customer.hasStaleInquiry)
+                                                  const Chip(
+                                                    avatar: Icon(
+                                                      Icons.schedule,
+                                                      size: 18,
+                                                    ),
+                                                    label: Text('미처리 있음'),
+                                                  ),
                                                 if (customer
                                                     .hasPendingDuplicate)
                                                   const Chip(
@@ -285,11 +390,15 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                                                   ),
                                               ],
                                             ),
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              '최근 문의  ${customer.recentInquiryAt == null ? "-" : DateFormat("yyyy.MM.dd").format(customer.recentInquiryAt!.toLocal())}',
+                                            ),
                                             const SizedBox(height: 8),
                                             const Align(
                                               alignment: Alignment.centerRight,
                                               child: Text(
-                                                '고객 상세 보기  ›',
+                                                '상세  ›',
                                                 style: TextStyle(
                                                   fontWeight: FontWeight.w800,
                                                   color: AppColors.primary,

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import {
-  canManageInquiries,
   getAdminFromRequest,
   unauthorizedResponse,
 } from "@/lib/admin/auth";
@@ -25,6 +24,11 @@ export async function GET(request: Request, context: RouteContext) {
       phone: true,
       email: true,
       memo: true,
+      privateMemos: {
+        where: { adminUserId: admin.id },
+        select: { memo: true },
+        take: 1,
+      },
       createdAt: true,
       company: { select: { id: true, name: true } },
       favorites: {
@@ -45,7 +49,19 @@ export async function GET(request: Request, context: RouteContext) {
           },
         },
       },
-      ...(canManageInquiries(admin)
+      companyChangeLogs: {
+        orderBy: { createdAt: "desc" },
+        take: 20,
+        select: {
+          id: true,
+          previousCompanyName: true,
+          newCompanyName: true,
+          adminDisplayName: true,
+          adminUsername: true,
+          createdAt: true,
+        },
+      },
+      ...(admin.isSuperAdmin
         ? {
             duplicateReviews: {
               where: {
@@ -130,11 +146,24 @@ export async function GET(request: Request, context: RouteContext) {
   }
 
   const { favorites, ...customer } = item;
+  const pendingDuplicateCount = await prisma.customerDuplicateReview.count({
+    where: {
+      newCustomerId: id,
+      status: "PENDING",
+      candidateCustomer: { isArchived: false },
+    },
+  });
+  const {
+    privateMemos,
+    ...customerWithoutPrivateMemoList
+  } = customer;
   return NextResponse.json({
     success: true,
     item: {
-      ...customer,
+      ...customerWithoutPrivateMemoList,
       isFavorite: favorites.length > 0,
+      privateMemo: privateMemos[0]?.memo ?? null,
+      hasPendingDuplicate: pendingDuplicateCount > 0,
     },
   });
 }
@@ -143,7 +172,10 @@ export async function PATCH(request: Request, context: RouteContext) {
   const admin = await getAdminFromRequest(request);
   if (!admin) return unauthorizedResponse();
   const { id } = await context.params;
-  const body = (await request.json()) as { memo?: string };
+  const body = (await request.json()) as {
+    memo?: string;
+    memoVisibility?: "SHARED" | "PRIVATE";
+  };
 
   const existing = await prisma.customer.findFirst({
     where: { id, ...customerVisibilityWhere(admin) },
@@ -156,9 +188,29 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   }
 
-  await prisma.customer.update({
-    where: { id },
-    data: { memo: body.memo?.trim() || null },
-  });
+  const memo = body.memo?.trim() || "";
+  if (body.memoVisibility === "PRIVATE") {
+    if (memo) {
+      await prisma.customerPrivateMemo.upsert({
+        where: {
+          customerId_adminUserId: {
+            customerId: id,
+            adminUserId: admin.id,
+          },
+        },
+        create: { customerId: id, adminUserId: admin.id, memo },
+        update: { memo },
+      });
+    } else {
+      await prisma.customerPrivateMemo.deleteMany({
+        where: { customerId: id, adminUserId: admin.id },
+      });
+    }
+  } else {
+    await prisma.customer.update({
+      where: { id },
+      data: { memo: memo || null },
+    });
+  }
   return NextResponse.json({ success: true });
 }

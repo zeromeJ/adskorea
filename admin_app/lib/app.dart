@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'constants/colors.dart';
 import 'models/admin_user.dart';
 import 'screens/inquiry_list_screen.dart';
@@ -13,6 +14,7 @@ import 'services/inquiry_service.dart';
 import 'services/customer_service.dart';
 import 'services/push_notification_service.dart';
 import 'services/website_content_service.dart';
+import 'screens/onboarding_screen.dart';
 
 class AdsInquiryAdminApp extends StatefulWidget {
   const AdsInquiryAdminApp({super.key});
@@ -43,6 +45,8 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
   int _inquiryRefreshVersion = 0;
   int _customerRefreshVersion = 0;
   int _homeIndex = 0;
+  final SharedPreferencesAsync _preferences = SharedPreferencesAsync();
+  bool _checkingOnboarding = false;
 
   @override
   void initState() {
@@ -74,6 +78,7 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
     if (admin != null && token != null) {
       unawaited(
           _pushNotificationService.initializeForAuthenticatedAdmin(token));
+      _scheduleOnboarding();
     }
   }
 
@@ -89,6 +94,32 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
     if (value && token != null) {
       unawaited(
           _pushNotificationService.initializeForAuthenticatedAdmin(token));
+      _scheduleOnboarding();
+    }
+  }
+
+  void _scheduleOnboarding() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_maybeShowOnboarding());
+    });
+  }
+
+  Future<void> _maybeShowOnboarding() async {
+    if (_checkingOnboarding || !_isLoggedIn) return;
+    _checkingOnboarding = true;
+    try {
+      final onboardingKey =
+          'admin_onboarding_completed_${_currentAdmin?.id ?? 'unknown'}';
+      final completed = await _preferences.getBool(onboardingKey) ?? false;
+      if (completed || !mounted) return;
+      final result = await _navigatorKey.currentState?.push<bool>(
+        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+      );
+      if (result == true) {
+        await _preferences.setBool(onboardingKey, true);
+      }
+    } finally {
+      _checkingOnboarding = false;
     }
   }
 
@@ -134,18 +165,18 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
         colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
         scaffoldBackgroundColor: AppColors.background,
         textTheme: const TextTheme(
-          bodyMedium: TextStyle(fontSize: 16, height: 1.4),
+          bodyMedium: TextStyle(fontSize: 17, height: 1.45),
           bodyLarge: TextStyle(fontSize: 17, height: 1.4),
-          labelLarge: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          labelLarge: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
         ),
         appBarTheme: const AppBarTheme(
           backgroundColor: AppColors.primaryDeep,
           foregroundColor: Colors.white,
           centerTitle: false,
-          toolbarHeight: 60,
+          toolbarHeight: 64,
           titleTextStyle: TextStyle(
             color: Colors.white,
-            fontSize: 20,
+            fontSize: 22,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -179,18 +210,42 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
         ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
-            minimumSize: const Size(0, 48),
+            minimumSize: const Size(0, 52),
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
           ),
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
-            minimumSize: const Size(0, 48),
+            minimumSize: const Size(0, 52),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
         ),
         textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(minimumSize: const Size(0, 48)),
+          style: TextButton.styleFrom(
+            minimumSize: const Size(0, 52),
+            textStyle: const TextStyle(fontSize: 17),
+          ),
+        ),
+        navigationBarTheme: NavigationBarThemeData(
+          height: 76,
+          indicatorColor: AppColors.primary,
+          labelTextStyle: WidgetStateProperty.resolveWith((states) {
+            return TextStyle(
+              fontSize: 17,
+              fontWeight: states.contains(WidgetState.selected)
+                  ? FontWeight.w900
+                  : FontWeight.w700,
+              color: AppColors.text,
+            );
+          }),
+          iconTheme: WidgetStateProperty.resolveWith((states) {
+            return IconThemeData(
+              size: 28,
+              color: states.contains(WidgetState.selected)
+                  ? Colors.white
+                  : AppColors.subText,
+            );
+          }),
         ),
       ),
       home: _isLoading
@@ -205,6 +260,7 @@ class _AdsInquiryAdminAppState extends State<AdsInquiryAdminApp> {
                       adminManagementService: _adminManagementService,
                       inquiryService: _inquiryService,
                       customerService: _customerService,
+                      pushNotificationService: _pushNotificationService,
                       refreshVersion: _inquiryRefreshVersion,
                       websiteContentService: _websiteContentService,
                       onOpenCustomers: () => setState(() {

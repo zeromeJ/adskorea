@@ -14,6 +14,10 @@ import '../widgets/error_view.dart';
 import '../widgets/duplicate_detection_badge.dart';
 import '../widgets/loading_view.dart';
 import '../widgets/status_chip.dart';
+import '../widgets/adaptive_action_buttons.dart';
+import 'assignment_picker_screen.dart';
+import 'attachment_detail_screen.dart';
+import 'consultation_record_screen.dart';
 
 class InquiryDetailScreen extends StatefulWidget {
   const InquiryDetailScreen({
@@ -41,8 +45,8 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
   bool _isSaving = false;
   bool _isAssigning = false;
   bool _isCustomerAction = false;
+  bool _memoSaved = false;
   String? _error;
-  String? _selectedAdminId;
   List<AdminUser> _admins = [];
   final _memoController = TextEditingController();
 
@@ -80,8 +84,8 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
       setState(() {
         _inquiry = inquiry;
         _admins = activeAdmins;
-        _selectedAdminId = inquiry.assignedAdminId;
         _memoController.text = inquiry.adminMemo ?? '';
+        _memoSaved = false;
       });
     } on ApiException catch (error) {
       if (mounted) setState(() => _error = error.message);
@@ -108,55 +112,18 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
     }
   }
 
-  String _adminLabel(AdminUser admin) {
-    final role = admin.isSuperAdmin
-        ? ' · 최고 관리자'
-        : admin.isAssistantAdmin
-            ? ' · 보조 관리자'
-            : '';
-    return '${admin.displayLabel}$role';
-  }
-
-  Future<void> _confirmAssignment() async {
+  Future<void> _openAssignment() async {
     final inquiry = _inquiry;
-    if (inquiry == null ||
-        _selectedAdminId == inquiry.assignedAdminId ||
-        _isAssigning) {
-      return;
-    }
-    AdminUser? selectedAdmin;
-    for (final admin in _admins) {
-      if (admin.id == _selectedAdminId) {
-        selectedAdmin = admin;
-        break;
-      }
-    }
-    final targetLabel =
-        selectedAdmin == null ? '미배정 상태' : _adminLabel(selectedAdmin);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('담당자 배정을 확인해 주세요'),
-        content: Text(
-          selectedAdmin == null
-              ? '${inquiry.companyNameLabel} 문의의 담당자 배정을 해제할까요?'
-              : '${inquiry.companyNameLabel} 문의를\n$targetLabel\n담당으로 배정할까요?\n\n확인하면 해당 관리자에게 알림이 전송됩니다.',
+    if (inquiry == null || _isAssigning) return;
+    final choice = await Navigator.of(context).push<AssignmentChoice>(
+      MaterialPageRoute(
+        builder: (_) => AssignmentPickerScreen(
+          admins: _admins,
+          currentAdminId: inquiry.assignedAdminId,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('취소'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(selectedAdmin == null ? '배정 해제' : '배정 확정'),
-          ),
-        ],
       ),
     );
-    if (confirmed == true) {
-      await _assignAdmin(_selectedAdminId);
-    }
+    if (choice != null) await _assignAdmin(choice.adminId);
   }
 
   Future<void> _linkCustomer(String customerId, String customerName) async {
@@ -278,9 +245,56 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
     );
   }
 
+  Future<void> _requestDuplicateReview(Inquiry inquiry) async {
+    final customerId = inquiry.customerId;
+    if (customerId == null || _isCustomerAction) return;
+    setState(() => _isCustomerAction = true);
+    try {
+      await widget.customerService.requestReview(
+        customerId,
+        type: 'DUPLICATE_REVIEW',
+      );
+      _showSnack('최고 관리자에게 검토를 요청했습니다.');
+    } on ApiException catch (error) {
+      _showSnack(error.message);
+    } finally {
+      if (mounted) setState(() => _isCustomerAction = false);
+    }
+  }
+
   Widget _customerConnectionPanel(Inquiry inquiry) {
     final candidates = inquiry.customerMatchCandidates;
     if (candidates.isEmpty) {
+      if (inquiry.hasPendingDuplicate && !widget.currentAdmin.isSuperAdmin) {
+        return Card(
+          elevation: 0,
+          color: const Color(0xFFFFF7E8),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '확인 필요',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 8),
+                const Text('같은 고객일 가능성이 있는 기록이 있습니다.'),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: _isCustomerAction
+                        ? null
+                        : () => _requestDuplicateReview(inquiry),
+                    child: Text(_isCustomerAction ? '요청 중' : '검토 요청'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
       if (!widget.currentAdmin.isSuperAdmin || inquiry.customer == null) {
         return const SizedBox.shrink();
       }
@@ -332,7 +346,7 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    '기존 고객 가능성',
+                    '같은 고객인지 확인',
                     style: TextStyle(
                       fontSize: 19,
                       fontWeight: FontWeight.w900,
@@ -414,7 +428,7 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
                                     candidate.nameLabel,
                                   ),
                           icon: const Icon(Icons.link),
-                          label: const Text('이 후보 1명 연결'),
+                          label: const Text('기존 고객과 연결'),
                         ),
                       ),
                     ),
@@ -427,7 +441,7 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
               child: OutlinedButton.icon(
                 onPressed: _isCustomerAction ? null : _keepNewCustomer,
                 icon: const Icon(Icons.person_add_alt_1),
-                label: const Text('새 고객으로 유지'),
+                label: const Text('별도 유지'),
               ),
             ),
             if (_isCustomerAction) ...[
@@ -519,33 +533,122 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
 
   Future<void> _updateStatus() async {
     final inquiry = _inquiry;
-    if (inquiry == null) return;
+    if (inquiry == null || _isSaving) return;
 
     final nextStatus = inquiry.status == InquiryStatus.pending
         ? InquiryStatus.completed
         : InquiryStatus.pending;
-
-    await widget.inquiryService.updateInquiry(
-      inquiry.id,
-      status: nextStatus,
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          nextStatus == InquiryStatus.completed ? '완료할까요?' : '진행 중으로 바꿀까요?',
+        ),
+        content: Text(
+          nextStatus == InquiryStatus.completed
+              ? '처리가 끝난 문의로 이동합니다.'
+              : '다시 진행 중인 문의로 이동합니다.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              nextStatus == InquiryStatus.completed ? '완료' : '진행 중',
+            ),
+          ),
+        ],
+      ),
     );
-
+    if (confirmed != true) return;
+    setState(() => _isSaving = true);
+    await widget.inquiryService.updateInquiry(inquiry.id, status: nextStatus);
     await _load();
-    _showSnack('상태가 변경되었습니다.');
+    if (!mounted) return;
+    setState(() => _isSaving = false);
+    if (nextStatus == InquiryStatus.completed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 10),
+          content: const Text('처리 완료되었습니다.'),
+          action: SnackBarAction(
+            label: '되돌리기',
+            onPressed: () async {
+              await widget.inquiryService.updateInquiry(
+                inquiry.id,
+                status: InquiryStatus.pending,
+              );
+              await _load();
+            },
+          ),
+        ),
+      );
+    } else {
+      _showSnack('진행 중으로 변경했습니다.');
+    }
   }
 
   Future<void> _saveMemo() async {
     final inquiry = _inquiry;
     if (inquiry == null) return;
 
-    setState(() => _isSaving = true);
-    await widget.inquiryService.updateInquiry(
-      inquiry.id,
-      adminMemo: _memoController.text,
+    setState(() {
+      _isSaving = true;
+      _memoSaved = false;
+    });
+    try {
+      await widget.inquiryService.updateInquiry(
+        inquiry.id,
+        adminMemo: _memoController.text,
+      );
+      await _load();
+      if (mounted) setState(() => _memoSaved = true);
+    } on ApiException catch (error) {
+      _showSnack(error.message);
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  Future<void> _openConsultationRecord() async {
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => ConsultationRecordScreen(
+          inquiryId: widget.inquiryId,
+          service: widget.inquiryService,
+        ),
+      ),
     );
-    await _load();
-    if (mounted) setState(() => _isSaving = false);
-    _showSnack('메모가 저장되었습니다.');
+    if (saved == true) await _load();
+  }
+
+  bool get _hasUnsavedMemo =>
+      _inquiry != null &&
+      _memoController.text.trim() != (_inquiry!.adminMemo ?? '').trim();
+
+  Future<bool> _confirmLeave() async {
+    if (!_hasUnsavedMemo) return true;
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('나가시겠습니까?'),
+            content: const Text('저장하지 않은 내용이 있습니다.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('계속 작성'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('나가기'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
   }
 
   void _showSnack(String message) {
@@ -589,6 +692,111 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
     );
   }
 
+  String _idleLabel(Inquiry inquiry) {
+    final duration = inquiry.idleDuration;
+    if (duration.inDays > 0) return '${duration.inDays}일';
+    if (duration.inHours > 0) return '${duration.inHours}시간';
+    if (duration.inMinutes > 0) return '${duration.inMinutes}분';
+    return '방금 처리';
+  }
+
+  Widget _summarySection(Inquiry inquiry) {
+    return _section('핵심 정보', [
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          StatusChip(status: inquiry.status, label: inquiry.attentionLabel),
+          if (inquiry.hasPendingDuplicate && widget.currentAdmin.isSuperAdmin)
+            const DuplicateDetectionBadge(),
+        ],
+      ),
+      const SizedBox(height: 14),
+      _row('담당자', inquiry.assignedAdminLabel),
+      _row('미처리 기간', _idleLabel(inquiry)),
+      _row('접수번호', inquiry.registrationNumber),
+    ]);
+  }
+
+  Widget _contactSection(Inquiry inquiry) {
+    return _section('연락처', [
+      const Text(
+        '전화번호',
+        style: TextStyle(fontWeight: FontWeight.w900),
+      ),
+      const SizedBox(height: 4),
+      SelectableText(
+        inquiry.phone?.isNotEmpty == true ? inquiry.phone! : '-',
+        style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
+      ),
+      const SizedBox(height: 10),
+      SizedBox(
+        width: double.infinity,
+        child: OutlinedButton(
+          onPressed: inquiry.phone?.isNotEmpty == true
+              ? () => _launch('sms', inquiry.phone)
+              : null,
+          child: const Text('문자'),
+        ),
+      ),
+      const SizedBox(height: 18),
+      const Text(
+        '이메일',
+        style: TextStyle(fontWeight: FontWeight.w900),
+      ),
+      const SizedBox(height: 4),
+      SelectableText(
+        inquiry.email?.isNotEmpty == true ? inquiry.email! : '-',
+        style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900),
+      ),
+      const SizedBox(height: 10),
+      SizedBox(
+        width: double.infinity,
+        child: OutlinedButton(
+          onPressed: inquiry.email?.isNotEmpty == true
+              ? () => _copyEmail(inquiry.email!)
+              : null,
+          child: const Text('복사'),
+        ),
+      ),
+    ]);
+  }
+
+  Widget _consultationHistory(Inquiry inquiry) {
+    if (inquiry.consultationRecords.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return _section('상담 기록', [
+      ...inquiry.consultationRecords.map(
+        (record) => Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                inquiryConsultationResultLabel(record.result),
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                '${record.adminLabel} · '
+                '${DateFormat('yyyy.MM.dd HH:mm').format(record.createdAt.toLocal())}',
+              ),
+              if (record.memo?.isNotEmpty == true) ...[
+                const SizedBox(height: 4),
+                Text(record.memo!),
+              ],
+              const Divider(height: 20),
+            ],
+          ),
+        ),
+      ),
+    ]);
+  }
+
   Widget _row(String label, String? value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -601,31 +809,6 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
                 Text(label, style: const TextStyle(color: AppColors.subText)),
           ),
           Expanded(child: Text(value?.isNotEmpty == true ? value! : '-')),
-        ],
-      ),
-    );
-  }
-
-  Widget _emailRow(String email) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const SizedBox(
-            width: 110,
-            child: Text(
-              '이메일',
-              style: TextStyle(color: AppColors.subText),
-            ),
-          ),
-          Expanded(child: SelectableText(email)),
-          IconButton(
-            tooltip: '이메일 복사',
-            visualDensity: VisualDensity.compact,
-            onPressed: () => _copyEmail(email),
-            icon: const Icon(Icons.copy_rounded, size: 20),
-          ),
         ],
       ),
     );
@@ -731,261 +914,230 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
         (widget.currentAdmin.isSuperAdmin ||
             inquiry.assignedAdminId == widget.currentAdmin.id);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('문의 상세'),
-        actions: [
-          if (widget.currentAdmin.isSuperAdmin &&
-              inquiry?.hasPendingDuplicate == true)
-            const Padding(
-              padding: EdgeInsets.only(right: 12),
-              child: Center(child: DuplicateDetectionBadge()),
-            ),
-        ],
-      ),
-      body: SafeArea(
-        top: false,
-        child: _isLoading
-            ? const LoadingView()
-            : _error != null
-                ? ErrorView(message: _error!, onRetry: _load)
-                : inquiry == null
-                    ? ErrorView(
-                        message: '문의를 찾을 수 없습니다.',
-                        onRetry: _load,
-                      )
-                    : ListView(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                        children: [
-                          if (widget.currentAdmin.canManageInquiries)
-                            _section('문의 담당자 배정', [
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: inquiry.assignedAdminId == null
-                                      ? const Color(0xFFFFF4E5)
-                                      : const Color(0xFFEEF3EE),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  '현재 담당: ${inquiry.assignedAdminLabel}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w800,
+    return PopScope(
+      canPop: !_hasUnsavedMemo,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        if (await _confirmLeave() && context.mounted) {
+          Navigator.pop(context);
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('문의 상세'),
+          actions: [
+            if (widget.currentAdmin.isSuperAdmin &&
+                inquiry?.hasPendingDuplicate == true)
+              const Padding(
+                padding: EdgeInsets.only(right: 12),
+                child: Center(child: DuplicateDetectionBadge()),
+              ),
+          ],
+        ),
+        bottomNavigationBar: inquiry == null
+            ? null
+            : SafeArea(
+                minimum: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AdaptiveActionButtons(
+                      children: [
+                        OutlinedButton(
+                          onPressed: canProcessInquiry
+                              ? _openConsultationRecord
+                              : null,
+                          child: const Text('상담 기록하기'),
+                        ),
+                        FilledButton(
+                          onPressed: requiresAssignment ||
+                                  !canProcessInquiry ||
+                                  _isSaving
+                              ? null
+                              : _updateStatus,
+                          child: Text(
+                            _isSaving
+                                ? '처리 중'
+                                : requiresAssignment
+                                    ? '배정 후 완료 가능'
+                                    : !canProcessInquiry
+                                        ? '담당 문의만 가능'
+                                        : inquiry.status ==
+                                                InquiryStatus.pending
+                                            ? '처리 완료'
+                                            : '다시 진행',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+        body: SafeArea(
+          top: false,
+          child: _isLoading
+              ? const LoadingView()
+              : _error != null
+                  ? ErrorView(message: _error!, onRetry: _load)
+                  : inquiry == null
+                      ? ErrorView(
+                          message: '문의를 찾을 수 없습니다.',
+                          onRetry: _load,
+                        )
+                      : ListView(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                          children: [
+                            _summarySection(inquiry),
+                            if (widget.currentAdmin.canManageInquiries)
+                              _section('담당자', [
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: inquiry.assignedAdminId == null
+                                        ? const Color(0xFFFFF4E5)
+                                        : const Color(0xFFEEF3EE),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    '현재 담당: ${inquiry.assignedAdminLabel}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: 12),
-                              DropdownButtonFormField<String>(
-                                key: ValueKey(inquiry.assignedAdminId ?? ''),
-                                initialValue: inquiry.assignedAdminId ?? '',
-                                decoration: const InputDecoration(
-                                  labelText: '담당 관리자',
-                                ),
-                                items: [
-                                  const DropdownMenuItem(
-                                    value: '',
-                                    child: Text('미배정'),
+                                const SizedBox(height: 12),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: FilledButton(
+                                    onPressed:
+                                        _isAssigning ? null : _openAssignment,
+                                    child: Text(
+                                      _isAssigning ? '처리 중' : '담당자 선택',
+                                    ),
                                   ),
-                                  ..._admins.map(
-                                    (admin) => DropdownMenuItem(
-                                      value: admin.id,
-                                      child: Text(_adminLabel(admin)),
+                                ),
+                                if (_isAssigning) ...[
+                                  const SizedBox(height: 12),
+                                  const LinearProgressIndicator(),
+                                ],
+                                if (inquiry.assignedAt != null) ...[
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    '마지막 배정: ${DateFormat('yyyy.MM.dd HH:mm').format(inquiry.assignedAt!.toLocal())}',
+                                    style: const TextStyle(
+                                      color: AppColors.subText,
                                     ),
                                   ),
                                 ],
-                                onChanged: _isAssigning
-                                    ? null
-                                    : (value) => setState(() {
-                                          _selectedAdminId =
-                                              value == null || value.isEmpty
-                                                  ? null
-                                                  : value;
-                                        }),
+                              ]),
+                            _contactSection(inquiry),
+                            _section('기본 정보', [
+                              _row(
+                                  '접수 시간',
+                                  DateFormat('yyyy.MM.dd HH:mm')
+                                      .format(inquiry.createdAt.toLocal())),
+                              if (inquiry.companyName.trim().isNotEmpty)
+                                _row('회사명', inquiry.companyName),
+                              _row('담당자', inquiry.contactPersonLabel),
+                              _row('부서·직책', inquiry.department),
+                              _row('문의 유형',
+                                  inquiryTypeLabel(inquiry.inquiryType)),
+                              _row('회신 방법',
+                                  _responseMethodLabel(inquiry.responseMethod)),
+                            ]),
+                            _section('문의 조건', [
+                              _row('산업 분야', inquiry.industry),
+                              _row('화물 종류', inquiry.cargoType),
+                              _row('팔레트당 중량', inquiry.loadPerPallet),
+                              _row('예상 수량', inquiry.estimatedQuantity),
+                              _row('희망 규격', _palletSizesLabel(inquiry)),
+                              _row('납품 지역', inquiry.exportCountry),
+                              _row('랙 적재', _booleanLabel(inquiry.rackStorage)),
+                              _row('자동화 설비',
+                                  _booleanLabel(inquiry.automationUse)),
+                              _row(
+                                  '지게차 사용', _booleanLabel(inquiry.forkliftUse)),
+                              _row('핸드파레트',
+                                  _booleanLabel(inquiry.handPalletTruckUse)),
+                              _row('현재 팔레트', inquiry.currentPalletType),
+                              _row('관심 제품', inquiry.productInterest),
+                            ]),
+                            if (inquiry.inquiryDetails.isNotEmpty)
+                              _section('문의 유형별 상세 정보', [
+                                ...inquiry.inquiryDetails.entries.map(
+                                  (entry) => _row(
+                                    _detailLabel(entry.key),
+                                    entry.value?.toString() == 'YES'
+                                        ? '예'
+                                        : entry.value?.toString(),
+                                  ),
+                                ),
+                              ]),
+                            _section('문의 내용', [
+                              Text(inquiry.message?.isNotEmpty == true
+                                  ? inquiry.message!
+                                  : '-'),
+                            ]),
+                            if (inquiry.attachments.isNotEmpty)
+                              _section('첨부파일', [
+                                ...inquiry.attachments.map(
+                                  (attachment) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: OutlinedButton.icon(
+                                      onPressed: () =>
+                                          Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              AttachmentDetailScreen(
+                                            attachment: attachment,
+                                          ),
+                                        ),
+                                      ),
+                                      icon: const Icon(Icons.attach_file,
+                                          size: 20),
+                                      label: Text(attachment.fileName),
+                                    ),
+                                  ),
+                                ),
+                              ]),
+                            _section('관리자 메모', [
+                              TextField(
+                                controller: _memoController,
+                                readOnly: !canProcessInquiry,
+                                minLines: 3,
+                                maxLines: 6,
+                                decoration: InputDecoration(
+                                  hintText: canProcessInquiry
+                                      ? '관리자 메모를 입력하세요.'
+                                      : '본인에게 배정된 문의만 메모를 수정할 수 있습니다.',
+                                ),
                               ),
                               const SizedBox(height: 12),
-                              SizedBox(
-                                width: double.infinity,
-                                child: FilledButton.icon(
-                                  onPressed: _selectedAdminId ==
-                                              inquiry.assignedAdminId ||
-                                          _isAssigning
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: FilledButton(
+                                  onPressed: _isSaving || !canProcessInquiry
                                       ? null
-                                      : _confirmAssignment,
-                                  icon: const Icon(Icons.assignment_ind),
-                                  label: Text(
-                                    inquiry.assignedAdminId == null
-                                        ? '담당자 배정 확인'
-                                        : _selectedAdminId == null
-                                            ? '배정 해제 확인'
-                                            : '담당자 변경 확인',
-                                  ),
+                                      : _saveMemo,
+                                  child: Text(_isSaving ? '저장 중' : '저장'),
                                 ),
                               ),
-                              if (_isAssigning) ...[
-                                const SizedBox(height: 12),
-                                const LinearProgressIndicator(),
-                              ],
-                              if (inquiry.assignedAt != null) ...[
-                                const SizedBox(height: 10),
-                                Text(
-                                  '마지막 배정: ${DateFormat('yyyy.MM.dd HH:mm').format(inquiry.assignedAt!.toLocal())}',
-                                  style: const TextStyle(
-                                    color: AppColors.subText,
-                                    fontSize: 13,
-                                  ),
+                              if (_memoSaved) ...[
+                                const SizedBox(height: 8),
+                                const Text(
+                                  '저장되었습니다.',
+                                  style: TextStyle(fontWeight: FontWeight.w900),
                                 ),
                               ],
                             ]),
-                          _section('기본 정보', [
-                            _row(
-                                '접수 시간',
-                                DateFormat('yyyy.MM.dd HH:mm')
-                                    .format(inquiry.createdAt.toLocal())),
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Row(
-                                children: [
-                                  const SizedBox(
-                                      width: 110, child: Text('처리 상태')),
-                                  StatusChip(status: inquiry.status),
-                                ],
-                              ),
-                            ),
-                            if (inquiry.companyName.trim().isNotEmpty)
-                              _row('회사명', inquiry.companyName),
-                            _row('담당자', inquiry.contactPersonLabel),
-                            _row('부서·직책', inquiry.department),
-                            _row(
-                                '문의 유형', inquiryTypeLabel(inquiry.inquiryType)),
-                            _row('문의 담당 관리자', inquiry.assignedAdminLabel),
-                            if (inquiry.email?.isNotEmpty == true)
-                              _emailRow(inquiry.email!)
-                            else
-                              _row('이메일', inquiry.email),
-                            _row('연락처', inquiry.phone),
-                            _row('접수번호', inquiry.registrationNumber),
-                            _row('회신 방법',
-                                _responseMethodLabel(inquiry.responseMethod)),
-                          ]),
-                          _section('문의 조건', [
-                            _row('산업 분야', inquiry.industry),
-                            _row('화물 종류', inquiry.cargoType),
-                            _row('팔레트당 중량', inquiry.loadPerPallet),
-                            _row('예상 수량', inquiry.estimatedQuantity),
-                            _row('희망 규격', _palletSizesLabel(inquiry)),
-                            _row('납품 지역', inquiry.exportCountry),
-                            _row('랙 적재', _booleanLabel(inquiry.rackStorage)),
-                            _row(
-                                '자동화 설비', _booleanLabel(inquiry.automationUse)),
-                            _row('지게차 사용', _booleanLabel(inquiry.forkliftUse)),
-                            _row('핸드파레트',
-                                _booleanLabel(inquiry.handPalletTruckUse)),
-                            _row('현재 팔레트', inquiry.currentPalletType),
-                            _row('관심 제품', inquiry.productInterest),
-                          ]),
-                          if (inquiry.inquiryDetails.isNotEmpty)
-                            _section('문의 유형별 상세 정보', [
-                              ...inquiry.inquiryDetails.entries.map(
-                                (entry) => _row(
-                                  _detailLabel(entry.key),
-                                  entry.value?.toString() == 'YES'
-                                      ? '예'
-                                      : entry.value?.toString(),
-                                ),
-                              ),
-                            ]),
-                          _section('문의 내용', [
-                            Text(inquiry.message?.isNotEmpty == true
-                                ? inquiry.message!
-                                : '-'),
-                          ]),
-                          if (inquiry.attachments.isNotEmpty)
-                            _section('첨부파일', [
-                              ...inquiry.attachments.map(
-                                (attachment) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 8),
-                                  child: OutlinedButton.icon(
-                                    onPressed:
-                                        attachment.downloadUrl?.isNotEmpty ==
-                                                true
-                                            ? () => launchUrl(
-                                                  Uri.parse(
-                                                      attachment.downloadUrl!),
-                                                  mode: LaunchMode
-                                                      .externalApplication,
-                                                )
-                                            : null,
-                                    icon:
-                                        const Icon(Icons.attach_file, size: 20),
-                                    label: Text(attachment.fileName),
-                                  ),
-                                ),
-                              ),
-                            ]),
-                          _section('관리자 메모', [
-                            TextField(
-                              controller: _memoController,
-                              readOnly: !canProcessInquiry,
-                              minLines: 3,
-                              maxLines: 6,
-                              decoration: InputDecoration(
-                                hintText: canProcessInquiry
-                                    ? '관리자 메모를 입력하세요.'
-                                    : '본인에게 배정된 문의만 메모를 수정할 수 있습니다.',
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: FilledButton(
-                                onPressed: _isSaving || !canProcessInquiry
-                                    ? null
-                                    : _saveMemo,
-                                child: Text(_isSaving ? '저장 중...' : '메모 저장'),
-                              ),
-                            ),
-                          ]),
-                          _previousInquiriesPanel(inquiry),
-                          _customerConnectionPanel(inquiry),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              OutlinedButton.icon(
-                                onPressed: inquiry.phone?.isNotEmpty == true
-                                    ? () => _launch('tel', inquiry.phone)
-                                    : null,
-                                icon: const Icon(Icons.phone, size: 22),
-                                label: const Text('전화하기'),
-                              ),
-                              OutlinedButton(
-                                onPressed: inquiry.email?.isNotEmpty == true
-                                    ? () => _launch('mailto', inquiry.email)
-                                    : null,
-                                child: const Text('이메일 보내기'),
-                              ),
-                              FilledButton(
-                                onPressed:
-                                    requiresAssignment || !canProcessInquiry
-                                        ? null
-                                        : _updateStatus,
-                                child: Text(
-                                  requiresAssignment
-                                      ? '담당자 배정 후 처리 가능'
-                                      : !canProcessInquiry
-                                          ? '담당 문의만 처리 가능'
-                                          : inquiry.status ==
-                                                  InquiryStatus.pending
-                                              ? '처리 완료로 변경'
-                                              : '진행 중으로 되돌리기',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                            _consultationHistory(inquiry),
+                            _previousInquiriesPanel(inquiry),
+                            _customerConnectionPanel(inquiry),
+                          ],
+                        ),
+        ),
       ),
     );
   }
