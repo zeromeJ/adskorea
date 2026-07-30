@@ -53,6 +53,7 @@ class InquiryListScreen extends StatefulWidget {
 class _InquiryListScreenState extends State<InquiryListScreen>
     with WidgetsBindingObserver {
   final _searchController = TextEditingController();
+  final _scrollController = ScrollController();
   late String _scope;
   late String _status;
   String _searchQuery = '';
@@ -63,6 +64,7 @@ class _InquiryListScreenState extends State<InquiryListScreen>
   InquiryListCounts _counts = const InquiryListCounts();
   InquiryWorkSummary _summary = const InquiryWorkSummary();
   bool _selectionMode = false;
+  bool _showScrollToTop = false;
   final Set<String> _selectedIds = {};
 
   @override
@@ -71,6 +73,7 @@ class _InquiryListScreenState extends State<InquiryListScreen>
     _scope = widget.currentAdmin.canManageInquiries ? 'ALL' : 'MINE';
     _status = widget.currentAdmin.canManageInquiries ? 'ALL' : 'PENDING';
     WidgetsBinding.instance.addObserver(this);
+    _scrollController.addListener(_handleScroll);
     _load();
   }
 
@@ -85,8 +88,28 @@ class _InquiryListScreenState extends State<InquiryListScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _scrollController
+      ..removeListener(_handleScroll)
+      ..dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _handleScroll() {
+    final show =
+        _scrollController.hasClients && _scrollController.offset >= 420;
+    if (show != _showScrollToTop && mounted) {
+      setState(() => _showScrollToTop = show);
+    }
+  }
+
+  Future<void> _scrollToTop() async {
+    if (!_scrollController.hasClients) return;
+    await _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOut,
+    );
   }
 
   @override
@@ -399,6 +422,13 @@ class _InquiryListScreenState extends State<InquiryListScreen>
       appBar: AppBar(
         title: Text(_scope == 'ALL' ? '전체 문의' : '내 문의'),
       ),
+      floatingActionButton: _showScrollToTop
+          ? FloatingActionButton.extended(
+              onPressed: _scrollToTop,
+              icon: const Icon(Icons.arrow_upward_rounded),
+              label: const Text('맨 위로'),
+            )
+          : null,
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -488,6 +518,7 @@ class _InquiryListScreenState extends State<InquiryListScreen>
                     child: RefreshIndicator(
                       onRefresh: () => _load(showLoading: false),
                       child: CustomScrollView(
+                        controller: _scrollController,
                         physics: const AlwaysScrollableScrollPhysics(),
                         slivers: [
                           SliverToBoxAdapter(child: _topControls()),
@@ -572,61 +603,48 @@ class _InquiryListScreenState extends State<InquiryListScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            '업무 요약',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 10),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final width = (constraints.maxWidth - 10) / 2;
-              return Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: widget.currentAdmin.canManageInquiries
-                    ? [
-                        _summaryButton(
-                          width,
-                          '배정 대기',
-                          _summary.unassigned,
-                          () => _openSummary('UNASSIGNED'),
-                        ),
-                        _summaryButton(
-                          width,
-                          '처리 대기',
-                          _summary.staleTotal,
-                          () => _openSummary('STALE_ALL'),
-                        ),
-                        _summaryButton(
-                          width,
-                          '내 문의 총',
-                          _summary.mineAll,
-                          () => _openSummary('MINE_ALL'),
-                        ),
-                        _summaryButton(
-                          width,
-                          '진행 중인 문의',
-                          _summary.minePending,
-                          () => _openSummary('MINE_PENDING'),
-                        ),
-                      ]
-                    : [
-                        _summaryButton(
-                          width,
-                          '내 문의 총',
-                          _summary.mineAll,
-                          () => _openSummary('MINE_ALL'),
-                        ),
-                        _summaryButton(
-                          width,
-                          '진행 중인 문의',
-                          _summary.minePending,
-                          () => _openSummary('MINE_PENDING'),
-                        ),
-                      ],
-              );
-            },
-          ),
+          if (widget.currentAdmin.canManageInquiries) ...[
+            const Text(
+              '업무 요약',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 10),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final width = (constraints.maxWidth - 10) / 2;
+                return Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    _summaryButton(
+                      width,
+                      '배정 대기',
+                      _summary.unassigned,
+                      () => _openSummary('UNASSIGNED'),
+                    ),
+                    _summaryButton(
+                      width,
+                      '처리 대기',
+                      _summary.staleTotal,
+                      () => _openSummary('STALE_ALL'),
+                    ),
+                    _summaryButton(
+                      width,
+                      '내 문의',
+                      _summary.mineAll,
+                      () => _openSummary('MINE_ALL'),
+                    ),
+                    _summaryButton(
+                      width,
+                      '진행 중',
+                      _summary.minePending,
+                      () => _openSummary('MINE_PENDING'),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
           const SizedBox(height: 18),
           TextField(
             controller: _searchController,
