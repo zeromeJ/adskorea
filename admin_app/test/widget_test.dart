@@ -3,6 +3,7 @@ import 'package:ads_inquiry_admin/models/completion_log.dart';
 import 'package:ads_inquiry_admin/models/customer.dart';
 import 'package:ads_inquiry_admin/models/inquiry.dart';
 import 'package:ads_inquiry_admin/widgets/inquiry_card.dart';
+import 'package:ads_inquiry_admin/widgets/status_chip.dart';
 import 'package:ads_inquiry_admin/models/admin_user.dart';
 import 'package:ads_inquiry_admin/screens/assignment_picker_screen.dart';
 import 'package:ads_inquiry_admin/screens/consultation_record_screen.dart';
@@ -32,6 +33,51 @@ void main() {
     expect(inquiry.attentionLabel, '3일 미처리');
     expect(inquiry.attentionPriority, 0);
   });
+
+  test('work summary combines stale counts and includes all assigned inquiries',
+      () {
+    final summary = InquiryWorkSummary.fromJson({
+      'unassigned': 3,
+      'stale1d': 2,
+      'stale3d': 1,
+      'minePending': 4,
+      'mineAll': 9,
+    });
+
+    expect(summary.unassigned, 3);
+    expect(summary.staleTotal, 3);
+    expect(summary.minePending, 4);
+    expect(summary.mineAll, 9);
+  });
+
+  for (final label in const ['1일 미처리', '3일 미처리']) {
+    testWidgets('$label uses its warning color', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: StatusChip(
+              status: InquiryStatus.pending,
+              label: label,
+            ),
+          ),
+        ),
+      );
+
+      final container = tester.widget<Container>(
+        find
+            .ancestor(
+              of: find.text(label),
+              matching: find.byType(Container),
+            )
+            .first,
+      );
+      final color = (container.decoration! as BoxDecoration).color;
+      expect(
+        color,
+        label == '1일 미처리' ? const Color(0xFFE87817) : const Color(0xFFC62828),
+      );
+    });
+  }
 
   for (final scale in const [1.0, 1.3, 1.5]) {
     testWidgets('inquiry card supports ${scale * 100}% text', (tester) async {
@@ -225,6 +271,19 @@ void main() {
     expect(candidate.reasonLabel, '전화번호 일치 · 회사명 일치');
     expect(
         candidate.customer.inquiries.single.registrationNumber, '2607280001');
+  });
+
+  test('customer list metrics parse pending count and recent inquiry date', () {
+    final customer = Customer.fromJson({
+      'id': 'customer',
+      'name': '김담당',
+      'pendingInquiryCount': 3,
+      'recentInquiryAt': '2026-07-28T12:02:22.375Z',
+    });
+
+    expect(customer.pendingInquiryCount, 3);
+    expect(
+        customer.recentInquiryAt, DateTime.parse('2026-07-28T12:02:22.375Z'));
   });
 
   test('customer merge history keeps each merge independently undoable', () {

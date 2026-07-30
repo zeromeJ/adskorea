@@ -21,6 +21,7 @@ function parseStatus(status: string | null, canViewUnassigned: boolean) {
   if (
     status === "PENDING" ||
     status === "COMPLETED" ||
+    status === "STALE_ALL" ||
     status === "STALE_1D" ||
     status === "STALE_3D"
   ) {
@@ -161,6 +162,11 @@ export async function GET(request: Request) {
           }
         : status === "COMPLETED"
           ? { status: InquiryStatus.COMPLETED }
+          : status === "STALE_ALL"
+            ? {
+                status: InquiryStatus.PENDING,
+                lastActionAt: { lte: oneDayAgo },
+              }
           : status === "STALE_1D"
             ? {
                 status: InquiryStatus.PENDING,
@@ -237,11 +243,18 @@ export async function GET(request: Request) {
         status: InquiryStatus.PENDING,
       },
     }),
-  ]).then(([unassigned, stale1d, stale3d, minePending]) => ({
+    prisma.inquiry.count({
+      where: {
+        assignedAdminId: admin.id,
+      },
+    }),
+  ]).then(([unassigned, stale1d, stale3d, minePending, mineAll]) => ({
     unassigned,
     stale1d,
     stale3d,
+    staleTotal: stale1d + stale3d,
     minePending,
+    mineAll,
   }));
 
   const [rankedRows, total, counts, summary] = await Promise.all([

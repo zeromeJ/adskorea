@@ -4,8 +4,12 @@ import '../constants/colors.dart';
 import '../models/admin_user.dart';
 import '../models/customer.dart';
 import '../services/admin_management_service.dart';
+import '../services/auth_service.dart';
 import '../services/customer_service.dart';
 import '../services/inquiry_service.dart';
+import '../services/push_notification_service.dart';
+import '../services/website_content_service.dart';
+import '../widgets/admin_menu_drawer.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_view.dart';
 import '../widgets/loading_view.dart';
@@ -17,7 +21,11 @@ class CustomerListScreen extends StatefulWidget {
     required this.customerService,
     required this.inquiryService,
     required this.adminManagementService,
+    required this.authService,
+    required this.pushNotificationService,
+    required this.websiteContentService,
     required this.refreshVersion,
+    required this.onLogout,
     required this.onOpenInquiries,
     super.key,
   });
@@ -26,7 +34,11 @@ class CustomerListScreen extends StatefulWidget {
   final CustomerService customerService;
   final InquiryService inquiryService;
   final AdminManagementService adminManagementService;
+  final AuthService authService;
+  final PushNotificationService pushNotificationService;
+  final WebsiteContentService websiteContentService;
   final int refreshVersion;
+  final VoidCallback onLogout;
   final VoidCallback onOpenInquiries;
 
   @override
@@ -166,6 +178,16 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
     ];
 
     return Scaffold(
+      drawer: AdminMenuDrawer(
+        currentAdmin: widget.currentAdmin,
+        authService: widget.authService,
+        adminManagementService: widget.adminManagementService,
+        customerService: widget.customerService,
+        inquiryService: widget.inquiryService,
+        pushNotificationService: widget.pushNotificationService,
+        websiteContentService: widget.websiteContentService,
+        onLogout: widget.onLogout,
+      ),
       appBar: AppBar(title: const Text('고객')),
       bottomNavigationBar: NavigationBar(
         height: 72,

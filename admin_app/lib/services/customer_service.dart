@@ -22,14 +22,60 @@ class CustomerService {
       'search': search,
       'limit': '100',
     });
-    final items = (json['items'] as List<dynamic>)
+    final rawItems = (json['items'] as List<dynamic>)
         .whereType<Map<String, dynamic>>()
-        .map(Customer.fromJson)
+        .map((item) => Map<String, dynamic>.from(item))
         .toList();
+    await _fillMissingListMetrics(rawItems);
+    final items = rawItems.map(Customer.fromJson).toList();
     return CustomerListResult(
       items: items,
       total: json['total'] as int? ?? items.length,
     );
+  }
+
+  Future<void> _fillMissingListMetrics(
+    List<Map<String, dynamic>> rawItems,
+  ) async {
+    final missing = rawItems
+        .asMap()
+        .entries
+        .where(
+          (entry) =>
+              !entry.value.containsKey('pendingInquiryCount') ||
+              !entry.value.containsKey('recentInquiryAt'),
+        )
+        .toList();
+    const batchSize = 6;
+    for (var start = 0; start < missing.length; start += batchSize) {
+      final end = start + batchSize < missing.length
+          ? start + batchSize
+          : missing.length;
+      await Future.wait(
+        missing.sublist(start, end).map((entry) async {
+          final id = entry.value['id'] as String? ?? '';
+          if (id.isEmpty) return;
+          try {
+            final detail = await fetchCustomer(id);
+            final pendingCount = detail.inquiries
+                .where(
+                  (inquiry) => inquiry.status == CustomerInquiryStatus.pending,
+                )
+                .length;
+            final sortedInquiries = [
+              ...detail.inquiries
+            ]..sort((left, right) => right.createdAt.compareTo(left.createdAt));
+            entry.value['pendingInquiryCount'] = pendingCount;
+            entry.value['inquiryCount'] = detail.inquiryCount;
+            entry.value['recentInquiryAt'] = sortedInquiries.isEmpty
+                ? null
+                : sortedInquiries.first.createdAt.toUtc().toIso8601String();
+          } catch (_) {
+            // 구버전 목록 API를 보완하는 요청이므로 개별 실패는 목록을 막지 않는다.
+          }
+        }),
+      );
+    }
   }
 
   Future<Customer> fetchCustomer(String id) async {

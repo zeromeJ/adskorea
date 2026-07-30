@@ -113,6 +113,7 @@ class _InquiryListScreenState extends State<InquiryListScreen>
         scope: _scope,
         status: _status,
         search: _searchQuery,
+        currentAdminId: widget.currentAdmin.id,
       );
       final sortedItems = [...result.items]..sort((left, right) {
           final priority =
@@ -251,7 +252,10 @@ class _InquiryListScreenState extends State<InquiryListScreen>
     setState(() {
       _selectionMode = false;
       _selectedIds.clear();
-      if (type == 'MINE') {
+      if (type == 'MINE_ALL') {
+        _scope = 'MINE';
+        _status = 'ALL';
+      } else if (type == 'MINE_PENDING') {
         _scope = 'MINE';
         _status = 'PENDING';
       } else {
@@ -350,6 +354,7 @@ class _InquiryListScreenState extends State<InquiryListScreen>
         'UNASSIGNED' => '배정 전',
         'PENDING' => '진행 중',
         'COMPLETED' => '완료',
+        'STALE_ALL' => '처리 대기',
         _ => '전체',
       };
 
@@ -358,7 +363,7 @@ class _InquiryListScreenState extends State<InquiryListScreen>
 
   List<String> get _visibleStatuses => _isAllInquiryView
       ? const ['ALL', 'UNASSIGNED', 'PENDING', 'COMPLETED']
-      : const ['PENDING', 'COMPLETED'];
+      : const ['ALL', 'PENDING', 'COMPLETED'];
 
   bool get _hasFilters =>
       _searchQuery.isNotEmpty ||
@@ -368,6 +373,7 @@ class _InquiryListScreenState extends State<InquiryListScreen>
 
   String get _conditionLabel {
     final scopeLabel = _scope == 'ALL' ? '전체 문의' : '내 문의';
+    if (_status == 'STALE_ALL') return '$scopeLabel · 처리 대기';
     if (_status == 'STALE_1D') return '$scopeLabel · 1일 미처리';
     if (_status == 'STALE_3D') return '$scopeLabel · 3일 미처리';
     return '$scopeLabel · ${_labelForStatus(_status)}';
@@ -381,6 +387,7 @@ class _InquiryListScreenState extends State<InquiryListScreen>
       'COMPLETED' => '완료된 문의가 없습니다.',
       'STALE_1D' => '1일 미처리 문의가 없습니다.',
       'STALE_3D' => '3일 미처리 문의가 없습니다.',
+      'STALE_ALL' => '처리 대기 문의가 없습니다.',
       _ => '접수된 문의가 없습니다.',
     };
   }
@@ -576,32 +583,47 @@ class _InquiryListScreenState extends State<InquiryListScreen>
               return Wrap(
                 spacing: 10,
                 runSpacing: 10,
-                children: [
-                  _summaryButton(
-                    width,
-                    '배정 전',
-                    _summary.unassigned,
-                    () => _openSummary('UNASSIGNED'),
-                  ),
-                  _summaryButton(
-                    width,
-                    '1일 미처리',
-                    _summary.staleOneDay,
-                    () => _openSummary('STALE_1D'),
-                  ),
-                  _summaryButton(
-                    width,
-                    '3일 미처리',
-                    _summary.staleThreeDay,
-                    () => _openSummary('STALE_3D'),
-                  ),
-                  _summaryButton(
-                    width,
-                    '내 진행 중',
-                    _summary.minePending,
-                    () => _openSummary('MINE'),
-                  ),
-                ],
+                children: widget.currentAdmin.canManageInquiries
+                    ? [
+                        _summaryButton(
+                          width,
+                          '배정 대기',
+                          _summary.unassigned,
+                          () => _openSummary('UNASSIGNED'),
+                        ),
+                        _summaryButton(
+                          width,
+                          '처리 대기',
+                          _summary.staleTotal,
+                          () => _openSummary('STALE_ALL'),
+                        ),
+                        _summaryButton(
+                          width,
+                          '내 문의 총',
+                          _summary.mineAll,
+                          () => _openSummary('MINE_ALL'),
+                        ),
+                        _summaryButton(
+                          width,
+                          '진행 중인 문의',
+                          _summary.minePending,
+                          () => _openSummary('MINE_PENDING'),
+                        ),
+                      ]
+                    : [
+                        _summaryButton(
+                          width,
+                          '내 문의 총',
+                          _summary.mineAll,
+                          () => _openSummary('MINE_ALL'),
+                        ),
+                        _summaryButton(
+                          width,
+                          '진행 중인 문의',
+                          _summary.minePending,
+                          () => _openSummary('MINE_PENDING'),
+                        ),
+                      ],
               );
             },
           ),

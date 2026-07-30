@@ -21,25 +21,47 @@ class InquiryWorkSummary {
     this.staleOneDay = 0,
     this.staleThreeDay = 0,
     this.minePending = 0,
+    this.mineAll = 0,
   });
 
   final int unassigned;
   final int staleOneDay;
   final int staleThreeDay;
   final int minePending;
+  final int mineAll;
+
+  int get staleTotal => staleOneDay + staleThreeDay;
 
   static int _count(Map<String, dynamic> values, String key) =>
       (values[key] as num?)?.toInt() ?? 0;
 
-  factory InquiryWorkSummary.fromJson(dynamic json) {
+  factory InquiryWorkSummary.fromJson(
+    dynamic json, {
+    int fallbackUnassigned = 0,
+    int fallbackStaleOneDay = 0,
+    int fallbackStaleThreeDay = 0,
+    int fallbackMinePending = 0,
+    int fallbackMineAll = 0,
+  }) {
     final values = json is Map
         ? Map<String, dynamic>.from(json)
         : const <String, dynamic>{};
     return InquiryWorkSummary(
-      unassigned: _count(values, 'unassigned'),
-      staleOneDay: _count(values, 'stale1d'),
-      staleThreeDay: _count(values, 'stale3d'),
-      minePending: _count(values, 'minePending'),
+      unassigned: values.containsKey('unassigned')
+          ? _count(values, 'unassigned')
+          : fallbackUnassigned,
+      staleOneDay: values.containsKey('stale1d')
+          ? _count(values, 'stale1d')
+          : fallbackStaleOneDay,
+      staleThreeDay: values.containsKey('stale3d')
+          ? _count(values, 'stale3d')
+          : fallbackStaleThreeDay,
+      minePending: values.containsKey('minePending')
+          ? _count(values, 'minePending')
+          : fallbackMinePending,
+      mineAll: values.containsKey('mineAll')
+          ? _count(values, 'mineAll')
+          : fallbackMineAll,
     );
   }
 }
@@ -87,6 +109,7 @@ class InquiryService {
     String search = '',
     int page = 1,
     int limit = 100,
+    String? currentAdminId,
   }) async {
     final json = await client.get('/api/admin/inquiries', {
       'scope': scope,
@@ -99,12 +122,39 @@ class InquiryService {
     final items = (json['items'] as List<dynamic>)
         .map((item) => Inquiry.fromJson(item as Map<String, dynamic>))
         .toList();
+    final counts = InquiryListCounts.fromJson(json['counts']);
+    final mineItems = currentAdminId == null
+        ? const <Inquiry>[]
+        : items
+            .where((item) => item.assignedAdminId == currentAdminId)
+            .toList();
+    final fallbackItems = scope == 'MINE' ? items : mineItems;
 
     return InquiryListResult(
-      counts: InquiryListCounts.fromJson(json['counts']),
+      counts: counts,
       items: items,
       total: json['total'] as int? ?? items.length,
-      summary: InquiryWorkSummary.fromJson(json['summary']),
+      summary: InquiryWorkSummary.fromJson(
+        json['summary'],
+        fallbackUnassigned: scope == 'ALL' ? counts.unassigned : 0,
+        fallbackStaleOneDay: items
+            .where((item) =>
+                item.status == InquiryStatus.pending &&
+                item.idleDuration.inHours >= 24 &&
+                item.idleDuration.inHours < 72)
+            .length,
+        fallbackStaleThreeDay: items
+            .where((item) =>
+                item.status == InquiryStatus.pending &&
+                item.idleDuration.inHours >= 72)
+            .length,
+        fallbackMinePending: scope == 'MINE'
+            ? counts.pending
+            : fallbackItems
+                .where((item) => item.status == InquiryStatus.pending)
+                .length,
+        fallbackMineAll: scope == 'MINE' ? counts.all : fallbackItems.length,
+      ),
     );
   }
 
