@@ -1,15 +1,17 @@
 import { defaultDocumentSummaries } from "@/lib/documentSummaries";
 
+import { siteConfig } from "@/data/catalog/siteConfig";
+
 export const company = {
   brandName: "아델슨 코리아",
   brandNameEn: "아델슨 코리아",
   legalName: "",
   manufacturerName: "",
   salesCompanyName: "",
-  email: "hello@adskorea.co.kr",
-  phone: "",
-  phoneHref: "",
-  address: "",
+  email: siteConfig.contact.email,
+  phone: siteConfig.contact.phoneDisplay,
+  phoneHref: siteConfig.contact.phoneHref,
+  address: siteConfig.contact.address,
 };
 
 export const navItems = [
@@ -42,7 +44,7 @@ export const navItems = [
     children: [
       { label: "시험자료", href: "/documents#document-list" },
       { label: "한국어 요약", href: "/documents#document-list" },
-      { label: "제품 카탈로그", href: "/documents#catalog" },
+      { label: "제품 카탈로그", href: "/catalog" },
     ],
   },
   {
@@ -241,31 +243,31 @@ export const sustainabilityPoints = [
 
 export const products = [
   {
-    title: "단면 압축 목재 팔레트",
-    englishLabel: "Single-Sided Molded Pallet",
+    title: "단면형 압축성형 목재 팔레트",
+    englishLabel: "Single-Deck Compressed Wood Pallet",
     description:
-      "수출 포장과 일반 적재 환경에 적용할 수 있는 친환경 압축 목재 팔레트입니다.",
+      "수출 포장과 일반 적재 환경에 적용할 수 있는 단면형 압축성형 목재 팔레트입니다.",
     specs: ["수출 포장 대응", "중첩 보관 구조", "모델별 사양 상이"],
     mediaField: "product.singleDeck.gallery",
   },
   {
-    title: "양면 압축 목재 팔레트",
-    englishLabel: "Double-Sided Molded Pallet",
+    title: "양면형 압축성형 목재 팔레트",
+    englishLabel: "Double-Deck Compressed Wood Pallet",
     description:
       "상·하부 구조 안정성과 고중량 화물 운송 및 고단 적재 조건을 고려한 제품군입니다.",
     specs: ["고중량 적재조건 검토", "안정적인 일체형 구조", "모델별 사양 상이"],
     mediaField: "product.doubleDeck.gallery",
   },
   {
-    title: "3열 받침형 압축 목재 팔레트",
+    title: "3열 받침형 압축성형 목재 팔레트",
     englishLabel: "3-Runner Compressed Wood Pallet",
     description:
-      "3열 받침 구조를 적용해 지게차 운용, 적재 안정성과 운송 효율을 함께 고려한 압축 목재 팔레트입니다.",
+      "3열 받침 구조를 적용해 지게차 운용, 적재 안정성과 운송 효율을 함께 고려한 압축성형 목재 팔레트입니다.",
     specs: ["고강도 압축 구조", "보관 효율 개선", "수출 포장 대응"],
     mediaField: "product.threeRunner.gallery",
   },
   {
-    title: "특수 압축 목재 팔레트",
+    title: "특수형 압축성형 목재 팔레트",
     englishLabel: "Custom Compressed Wood Pallet",
     description:
       "제품 특성, 보관 환경과 수출 조건에 따라 특수 규격과 구조를 상담할 수 있습니다.",
@@ -469,9 +471,9 @@ export const currentPalletTypeOptions = [
 ];
 
 export const productInterestOptions = [
-  "단면 압축 목재 팔레트",
-  "양면 압축 목재 팔레트",
-  "川자형 압축 목재 팔레트",
-  "특수 압축 목재 팔레트",
-  "아직 정하지 않음",
+  "미정",
+  "단면형 압축성형 목재 팔레트",
+  "양면형 압축성형 목재 팔레트",
+  "3열 받침형 압축성형 목재 팔레트",
+  "특수형 압축성형 목재 팔레트",
 ];

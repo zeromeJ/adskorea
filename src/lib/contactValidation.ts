@@ -72,12 +72,13 @@ export function normalizeContactBody(body: ContactRequestBody) {
 export function validateContactBody(data: ReturnType<typeof normalizeContactBody>) {
   if (!data.privacyAgreed) return "입력값을 확인해 주세요.";
   if (!inquiryTypes.some((item) => item.value === data.inquiryType)) return "문의 유형을 확인해 주세요.";
-  if (data.companyName.length > 100) return "입력값을 확인해 주세요.";
-  if (data.contactPerson.length > 50) return "입력값을 확인해 주세요.";
+  if (!data.companyName || data.companyName.length > 100) return "회사명을 확인해 주세요.";
+  if (!data.contactPerson || data.contactPerson.length > 50) return "담당자명을 확인해 주세요.";
   if (data.department.length > 100) return "입력값을 확인해 주세요.";
-  if (!data.phone || data.phone.length > 30 || !isValidPhone(data.phone)) return "올바른 전화번호 형식으로 입력해 주세요.";
+  if (!data.phone && !data.email) return "전화번호 또는 이메일 중 하나를 입력해 주세요.";
+  if (data.phone && (data.phone.length > 30 || !isValidPhone(data.phone))) return "올바른 전화번호 형식으로 입력해 주세요.";
   const requiresDeliveryRegion =
-    data.inquiryType === "quote" || data.inquiryType === "consulting";
+    data.inquiryType === "quote" || data.inquiryType === "consulting" || data.inquiryType === "custom";
   if (
     requiresDeliveryRegion &&
     !deliveryRegionOptions.includes(
@@ -97,7 +98,7 @@ export function validateContactBody(data: ReturnType<typeof normalizeContactBody
   }
   if (data.email.length > 254 || (data.email && !isValidEmail(data.email))) return "올바른 이메일 형식을 입력해 주세요.";
   if (!data.responseMethod) return "회신 방법을 확인해 주세요.";
-  if (data.message.length > 1500) return "문의 내용은 최대 1,500자입니다.";
+  if (!data.message || data.message.length > 1500) return "문의 내용을 입력해 주세요. 최대 1,500자입니다.";
   if (data.productInterest.length > 100 || data.estimatedQuantity.length > 100 || data.industry.length > 100) return "입력값을 확인해 주세요.";
   if (data.estimatedQuantity && !estimatedQuantityOptions.includes(data.estimatedQuantity as (typeof estimatedQuantityOptions)[number])) return "예상 수량을 확인해 주세요.";
   return "";

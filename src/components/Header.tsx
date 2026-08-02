@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ChevronDown,
-  FileDown,
+  BookOpen,
   Menu,
   MessageSquareText,
   X,
@@ -12,7 +12,6 @@ import {
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { navItems } from "@/lib/constants";
-import { productBrochureDownloadPath } from "@/lib/downloads";
 import { trackEvent } from "@/lib/trackEvent";
 
 export default function Header({
@@ -25,12 +24,22 @@ export default function Header({
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [activeAnchor, setActiveAnchor] = useState("");
+  const [scrolled, setScrolled] = useState(false);
   const [desktopMenuOpen, setDesktopMenuOpen] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const desktopCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const catalogNavItems = [
+    { label: "제품", href: "/catalog#product-overview", children: [{ label: "제품 개요", href: "/catalog#product-overview" }, { label: "제품 라인업", href: "/catalog#lineup" }] },
+    { label: "성능", href: "/catalog#test-2025", children: [{ label: "2025 물리성능", href: "/catalog#test-2025" }, { label: "2026 TBK 시험", href: "/catalog#test-2026" }, { label: "환경 검증", href: "/catalog#carbon-footprint" }] },
+    { label: "적용사례", href: "/catalog#applications", children: [] },
+    { label: "자료", href: "/catalog#documents", children: [{ label: "공식 문서 자료실", href: "/catalog#documents" }] },
+    { label: "회사", href: "/catalog#company", children: [{ label: "회사 및 생산 역량", href: "/catalog#company" }, { label: "R&D·품질관리", href: "/catalog#rnd-quality" }] },
+  ];
+  const resolvedNavItems = pathname === "/catalog" ? catalogNavItems : navItems;
+  const contactHref = pathname === "/catalog" ? "/catalog#contact" : "/#inquiry";
 
   useEffect(() => {
     if (!open) return;
@@ -42,6 +51,22 @@ export default function Header({
         setOpen(false);
         triggerRef.current?.focus();
       }
+      if (event.key === "Tab") {
+        const dialog = document.getElementById("mobile-navigation");
+        const focusable = dialog?.querySelectorAll<HTMLElement>(
+          "button, a[href], [tabindex]:not([tabindex='-1'])",
+        );
+        if (!focusable?.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
     };
     document.addEventListener("keydown", onKeyDown);
     return () => {
@@ -49,6 +74,13 @@ export default function Header({
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [open]);
+
+  useEffect(() => {
+    const update = () => setScrolled(window.scrollY > 8);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, []);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -64,22 +96,44 @@ export default function Header({
   }, []);
 
   useEffect(() => {
-    if (pathname !== "/") return;
-    const section = document.getElementById("customer-applications");
-    if (!section) return;
+    const ids = pathname === "/catalog"
+      ? ["market", "product-overview", "advantages", "comparison", "structure", "manufacturing", "performance-videos", "test-2025", "test-2026", "formaldehyde", "carbon-footprint", "lineup", "specifications", "application-check", "applications", "company", "rnd-quality", "documents", "application-review", "contact"]
+      : pathname === "/"
+        ? ["customer-applications"]
+        : [];
+    const sections = ids
+      .map((id) => document.getElementById(id))
+      .filter((section): section is HTMLElement => Boolean(section));
+    if (!sections.length) return;
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        setActiveAnchor(entry.isIntersecting ? entry.target.id : "");
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((left, right) => left.boundingClientRect.top - right.boundingClientRect.top);
+        if (visible[0]) setActiveAnchor(visible[0].target.id);
       },
-      { rootMargin: "-25% 0px -55% 0px", threshold: 0 },
+      { rootMargin: "-22% 0px -62% 0px", threshold: 0 },
     );
-    observer.observe(section);
+    sections.forEach((section) => observer.observe(section));
     return () => observer.disconnect();
   }, [pathname]);
 
   const isActive = (href: string) => {
     if (href.startsWith("/#")) {
       return pathname === "/" && activeAnchor === href.split("#")[1];
+    }
+    if (href.startsWith("/catalog#")) {
+      if (pathname !== "/catalog") return false;
+      const target = href.split("#")[1];
+      const groups: Record<string, string[]> = {
+        "product-overview": ["market", "product-overview", "advantages", "comparison", "structure", "manufacturing", "lineup", "specifications"],
+        "test-2025": ["performance-videos", "test-2025", "test-2026", "formaldehyde", "carbon-footprint"],
+        applications: ["application-check", "applications"],
+        documents: ["documents"],
+        company: ["company", "rnd-quality"],
+        contact: ["application-review", "contact"],
+      };
+      return (groups[target] || [target]).includes(activeAnchor);
     }
     return href === "/" ? pathname === "/" : pathname.startsWith(href);
   };
@@ -115,7 +169,7 @@ export default function Header({
 
   return (
     <header
-      className="sticky top-0 z-50 border-b border-[var(--line)] bg-[rgba(247,245,239,0.96)] backdrop-blur-xl"
+      className={`sticky top-0 z-50 bg-[rgba(247,245,239,0.96)] backdrop-blur-xl ${scrolled ? "border-b border-[var(--line)]" : "border-b border-transparent"}`}
       data-site-header
     >
       <div className="mx-auto flex h-16 w-[calc(100%-32px)] max-w-[1240px] items-center justify-between gap-4 lg:grid lg:h-[76px] lg:w-[calc(100%-40px)] lg:grid-cols-[92px_minmax(0,1fr)_112px] lg:gap-8">
@@ -146,7 +200,7 @@ export default function Header({
           onMouseEnter={openDesktopMenu}
           onMouseLeave={scheduleDesktopMenuClose}
         >
-          {navItems.map((item) => {
+          {resolvedNavItems.map((item) => {
             const active = isActive(item.href);
             return (
               <Link
@@ -179,7 +233,7 @@ export default function Header({
         <div className="flex items-center gap-2">
           <Link
             className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[var(--primary)] px-3 text-sm font-extrabold text-white transition hover:bg-[var(--primary-dark)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)] sm:px-4"
-            href="/#inquiry"
+            href={contactHref}
           >
             <MessageSquareText aria-hidden="true" size={17} />
             <span className="hidden sm:inline">견적 문의</span>
@@ -215,7 +269,7 @@ export default function Header({
           <div className="mx-auto grid w-[calc(100%-40px)] max-w-[1240px] grid-cols-[92px_minmax(0,1fr)_112px] gap-8 py-4">
             <div aria-hidden="true" />
             <div className="grid min-w-0 grid-cols-5 gap-2">
-              {navItems.map((item) => (
+              {resolvedNavItems.map((item) => (
                 <div className="grid min-w-0 content-start gap-1" key={item.href}>
                   {item.children.map((child) => (
                     <Link
@@ -257,7 +311,7 @@ export default function Header({
               </button>
             </div>
             <nav aria-label="모바일 주요 메뉴" className="grid p-5">
-              {navItems.map((item) => (
+              {resolvedNavItems.map((item) => (
                 <Link
                   aria-current={isActive(item.href) ? "page" : undefined}
                   className={`flex min-h-14 items-center border-l-4 px-4 text-base font-extrabold ${
@@ -274,22 +328,21 @@ export default function Header({
               ))}
               <Link
                 className="mt-3 flex min-h-14 items-center border-l-4 border-transparent px-4 text-base font-extrabold text-[var(--primary-deep)]"
-                href="/#inquiry"
+                href={contactHref}
                 onClick={() => setOpen(false)}
               >
                 견적 문의
               </Link>
             </nav>
             <div className="mt-auto border-t border-[var(--line)] p-5">
-              <a
+              <Link
                 className="flex min-h-12 items-center justify-center gap-2 border border-[var(--sub-sage)] bg-[var(--sub-mint)] px-4 font-extrabold text-[var(--primary-deep)]"
-                download
-                href={productBrochureDownloadPath}
-                onClick={() => trackEvent("catalog_download", { location: "mobile_menu" })}
+                href={pathname === "/catalog" ? "/catalog#catalog-guide" : "/catalog"}
+                onClick={() => trackEvent("catalog_view", { location: "mobile_menu" })}
               >
-                <FileDown aria-hidden="true" size={19} />
-                제품 카탈로그 다운로드
-              </a>
+                <BookOpen aria-hidden="true" size={19} />
+                {pathname === "/catalog" ? "카탈로그 목차" : "웹 카탈로그 보기"}
+              </Link>
             </div>
           </div>
         </div>

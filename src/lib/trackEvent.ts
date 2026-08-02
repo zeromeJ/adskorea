@@ -1,7 +1,7 @@
 export type TrackEventName =
   | "hero_product_click"
   | "hero_inquiry_click"
-  | "catalog_download"
+  | "catalog_view"
   | "product_view"
   | "product_inquiry_click"
   | "performance_detail_view"

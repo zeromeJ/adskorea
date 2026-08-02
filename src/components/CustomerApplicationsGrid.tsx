@@ -60,7 +60,7 @@ export default function CustomerApplicationsGrid({
           </div>
           <div className="p-5">
             <SourceBadge kind="application" label={item.sourceLabel} />
-            <h3 className="mt-4 text-xl font-extrabold">{item.title}</h3>
+            <h3 className="mt-2 text-xl font-extrabold">{item.title}</h3>
             <p className="mt-2 text-sm leading-6 text-[var(--sub-text)]">
               {item.description}
             </p>

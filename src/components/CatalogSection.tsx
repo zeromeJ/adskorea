@@ -1,5 +1,6 @@
 import MediaPlaceholder from "@/components/ui/MediaPlaceholder";
 import SectionTitle from "@/components/ui/SectionTitle";
+import Link from "next/link";
 
 type Catalog = {
   title: string;
@@ -45,13 +46,12 @@ export default function CatalogSection({ catalog }: { catalog?: Catalog }) {
               {catalog.fileSize ? <div>파일 크기: {catalog.fileSize}</div> : null}
             </dl>
             <div className="mt-5 flex flex-wrap gap-2">
-              <a
+              <Link
                 className="rounded-md bg-[var(--primary)] px-4 py-3 text-sm font-bold text-white"
-                download
-                href={catalog.fileUrl}
+                href="/catalog"
               >
-                다운로드
-              </a>
+                카탈로그 보기
+              </Link>
             </div>
           </div>
         </div>

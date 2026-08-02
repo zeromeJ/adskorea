@@ -1,8 +1,11 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import { FileDown } from "lucide-react";
+import { BookOpen } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { siteConfig } from "@/data/catalog/siteConfig";
 import { company, navItems } from "@/lib/constants";
-import { productBrochureDownloadPath } from "@/lib/downloads";
 
 export type FooterSettings = {
   siteDisplayName?: string;
@@ -15,13 +18,23 @@ export type FooterSettings = {
 };
 
 export default function Footer({ settings }: { settings?: FooterSettings }) {
+  const pathname = usePathname();
   const brandName =
     settings?.siteDisplayName || settings?.brandName || company.brandName;
-  const email =
-    settings?.primaryContactEmail || settings?.email || company.email;
-  const phone = settings?.primaryPhone || settings?.phone || company.phone;
-  const address = settings?.address || company.address;
-  const phoneHref = phone ? `tel:${phone.replace(/[^+\d]/g, "")}` : "";
+  const email = siteConfig.contact.email;
+  const phone = siteConfig.contact.phoneDisplay;
+  const address = siteConfig.contact.address;
+  const phoneHref = siteConfig.contact.phoneHref;
+  const footerItems = pathname === "/catalog"
+    ? [
+        { label: "제품", href: "#product-overview" },
+        { label: "성능", href: "#test-2025" },
+        { label: "적용사례", href: "#applications" },
+        { label: "자료", href: "#documents" },
+        { label: "회사", href: "#company" },
+        { label: "견적 문의", href: "#contact" },
+      ]
+    : [...navItems, { label: "견적 문의", href: "/#inquiry", children: [] }];
 
   return (
     <footer className="bg-[var(--primary-deep)] px-5 py-12 text-white lg:px-8 lg:py-16">
@@ -42,7 +55,7 @@ export default function Footer({ settings }: { settings?: FooterSettings }) {
         </div>
 
         <nav aria-label="푸터 메뉴" className="grid content-start gap-1">
-          {navItems.map((item) => (
+          {footerItems.map((item) => (
             <Link
               className="flex min-h-11 items-center text-sm font-bold text-white/75 hover:text-white"
               href={item.href}
@@ -77,14 +90,13 @@ export default function Footer({ settings }: { settings?: FooterSettings }) {
             </p>
           ) : null}
           {address ? <p className="mt-1">주소 {address}</p> : null}
-          <a
+          {pathname !== "/catalog" ? <Link
             className="mt-5 inline-flex min-h-12 items-center gap-2 border border-[var(--sub-sage)] bg-[var(--sub-mint)] px-4 font-extrabold text-[var(--primary-deep)] hover:bg-[#cfe0d2]"
-            download
-            href={productBrochureDownloadPath}
+            href="/catalog"
           >
-            <FileDown aria-hidden="true" size={18} />
-            제품 카탈로그 다운로드
-          </a>
+            <BookOpen aria-hidden="true" size={18} />
+            웹 카탈로그 보기
+          </Link> : null}
         </div>
       </div>
 
@@ -93,7 +105,7 @@ export default function Footer({ settings }: { settings?: FooterSettings }) {
           <Link className="hover:text-white" href="/privacy">
             개인정보처리방침
           </Link>
-          <Link className="hover:text-white" href="/documents#usage-notice">
+          <Link className="hover:text-white" href="/documents/usage">
             자료 이용 안내
           </Link>
         </div>

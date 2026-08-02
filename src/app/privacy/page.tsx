@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { siteConfig } from "@/data/catalog/siteConfig";
 import { getWebsiteContent } from "@/lib/websiteContent";
 
 export const revalidate = 300;
@@ -19,22 +20,24 @@ export default async function PrivacyPage() {
     "문의 확인 및 회신, 견적·기술 상담, 상담 이력 관리, 재문의 대응과 고객관리";
   const retention =
     settings?.privacyRetentionText ||
-    "고객관리 및 재문의 대응 목적이 유지되는 동안 보관하며, 삭제 요청이 접수된 경우 관련 기준에 따라 처리합니다.";
+    siteConfig.privacy.retentionFallback;
   const effectiveDate = settings?.privacyEffectiveDate;
-  const contactEmail =
-    settings?.primaryContactEmail || settings?.email || undefined;
-  const phone = settings?.primaryPhone || settings?.phone || undefined;
+  const contactEmail = siteConfig.contact.email;
+  const phone = siteConfig.contact.phoneDisplay;
 
   const sections = [
     ["collection", "수집항목"],
     ["purpose", "이용목적"],
     ["retention", "보유 기준"],
+    ["third-party", "제3자 제공"],
+    ["outsourcing", "처리 위탁"],
+    ["rights", "정보주체의 권리"],
     ["deletion", "삭제 요청 방법"],
     ["contact", "개인정보 문의"],
   ];
 
   return (
-    <main className="bg-white" id="main-content">
+    <main className="bg-white" id="main-content" tabIndex={-1}>
       <header className="border-b border-[var(--line)] bg-[var(--background)] px-5 py-14 lg:px-8 lg:py-20">
         <div className="mx-auto max-w-[920px]">
           <p className="en text-xs font-bold uppercase tracking-[0.18em] text-[var(--accent-gold-dark)]">
@@ -79,10 +82,11 @@ export default async function PrivacyPage() {
                 1. 수집항목
               </h2>
               <p className="mt-4">
-                필수항목은 전화번호와 개인정보 수집·이용 동의입니다. 견적
+                필수항목은 회사명, 담당자명, 전화번호 또는 이메일 중 하나,
+                문의 유형, 문의 내용과 개인정보 수집·이용 동의입니다. 견적
                 요청과 적용·주문제작 상담에는 납품 지역이 추가로 필요합니다.
-                회사명, 담당자명, 이메일, 문의 내용, 화물·설비 상세정보와
-                첨부파일은 사용자가 선택해 제공할 수 있습니다.
+                화물·설비 상세정보와 첨부파일은 사용자가 선택해 제공할 수
+                있습니다.
               </p>
             </section>
 
@@ -108,9 +112,42 @@ export default async function PrivacyPage() {
               </p>
             </section>
 
+            <section id="third-party">
+              <h2 className="text-2xl font-extrabold text-[var(--text)]">
+                4. 제3자 제공
+              </h2>
+              <p className="mt-4">
+                수집한 개인정보는 원칙적으로 제3자에게 제공하지 않습니다.
+                법률에 특별한 규정이 있거나 정보주체가 사전에 동의한 경우에는
+                제공받는 자, 목적, 항목과 보유기간을 별도로 안내합니다.
+              </p>
+            </section>
+
+            <section id="outsourcing">
+              <h2 className="text-2xl font-extrabold text-[var(--text)]">
+                5. 처리 위탁
+              </h2>
+              <p className="mt-4">
+                개인정보 처리 위탁 현황은 관리자 확인이 필요합니다. 위탁이
+                발생하는 경우 수탁자와 위탁 업무 내용을 이 방침에 공개하고,
+                관련 법령에 따라 안전하게 관리합니다.
+              </p>
+            </section>
+
+            <section id="rights">
+              <h2 className="text-2xl font-extrabold text-[var(--text)]">
+                6. 정보주체의 권리
+              </h2>
+              <p className="mt-4">
+                정보주체는 본인의 개인정보에 대해 열람, 정정, 삭제와 처리정지를
+                요청할 수 있습니다. 아래 개인정보 문의 연락처로 요청하면 본인
+                확인과 관련 기준 검토 후 처리 절차를 안내합니다.
+              </p>
+            </section>
+
             <section id="deletion">
               <h2 className="text-2xl font-extrabold text-[var(--text)]">
-                4. 삭제 요청 방법
+                7. 삭제 요청 방법
               </h2>
               <p className="mt-4">
                 본인 확인이 가능한 연락처와 함께 개인정보 삭제 요청을
@@ -129,7 +166,7 @@ export default async function PrivacyPage() {
 
             <section id="contact">
               <h2 className="text-2xl font-extrabold text-[var(--text)]">
-                5. 개인정보 문의
+                8. 개인정보 문의
               </h2>
               <div className="mt-4 border border-[var(--line)] bg-[var(--background)] p-5">
                 {contactEmail ? (

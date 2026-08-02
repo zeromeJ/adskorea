@@ -17,9 +17,10 @@ import {
 } from "@/lib/contactSchema";
 import { productInterestOptions } from "@/lib/constants";
 import { trackEvent } from "@/lib/trackEvent";
+import { siteConfig } from "@/data/catalog/siteConfig";
 
 const maxAttachmentBytes = 50 * 1024 * 1024;
-const allowedExtensions = [".pdf", ".jpg", ".jpeg", ".png", ".webp", ".zip"];
+const allowedExtensions = [".pdf", ".jpg", ".jpeg", ".png", ".webp", ".docx", ".xlsx", ".zip"];
 const typeGuidance: Record<
   Exclude<ContactFormData["inquiryType"], "">,
   { time: string; fields: string; attachment: string }
@@ -39,12 +40,65 @@ const typeGuidance: Record<
     fields: "화물 중량·크기와 사용설비",
     attachment: "화물·설비 사진 또는 도면",
   },
+  custom: {
+    time: "약 3~5분",
+    fields: "화물 규격·중량과 설비 조건",
+    attachment: "도면, 사양서 또는 현장 사진",
+  },
+  technical: {
+    time: "약 1~2분",
+    fields: "회사정보와 필요한 문서",
+    attachment: "검토 중인 문서",
+  },
   other: {
     time: "약 1~2분",
     fields: "전화번호와 필요한 자료",
     attachment: "검토 중인 문서",
   },
 };
+
+const catalogDetailGroups = [
+  {
+    title: "화물정보",
+    fields: [
+      ["cargoType", "화물 종류", "예: 톤백, 드럼, 박스"],
+      ["cargoLength", "화물 길이", "mm"],
+      ["cargoWidth", "화물 너비", "mm"],
+      ["cargoHeight", "화물 높이", "mm"],
+      ["unitWeight", "단위 화물 중량", "kg"],
+      ["totalWeight", "팔레트당 총중량", "kg"],
+      ["loadDistribution", "하중분포 설명", "집중·균등 하중, 무게중심 등"],
+    ],
+  },
+  {
+    title: "설비정보",
+    fields: [
+      ["rackUse", "랙 사용 여부", "사용 / 미사용 / 미정"],
+      ["rackBeamSpacing", "랙 빔 간격", "mm"],
+      ["forkliftType", "지게차 종류", "예: 카운터밸런스"],
+      ["forkEntry", "포크 진입 방향", "2방향 / 4방향"],
+      ["automationUse", "자동화 설비 여부", "사용 / 미사용 / 미정"],
+      ["conveyorUse", "컨베이어 여부", "롤러 / 체인 / 미사용"],
+      ["rollerSpacing", "롤러 간격", "mm"],
+    ],
+  },
+  {
+    title: "운송정보",
+    fields: [
+      ["useRegion", "국내·수출 사용", "국내 / 수출 / 병행"],
+      ["exportCountry", "목적국", "국가명"],
+      ["transportMethod", "운송 방식", "해상 / 항공 / 육상"],
+      ["containerSize", "컨테이너 규격", "20ft / 40ft 등"],
+    ],
+  },
+  {
+    title: "수량·일정",
+    fields: [
+      ["monthlyQuantity", "월 사용량", "개/월"],
+      ["requestedDelivery", "희망 납기", "희망 일자 또는 기간"],
+    ],
+  },
+] as const;
 
 function fieldClass(invalid = false) {
   return `min-h-12 w-full border bg-white px-4 text-base outline-none transition focus:ring-4 ${
@@ -57,9 +111,13 @@ function fieldClass(invalid = false) {
 export default function InquirySection({
   phone = "",
   email = "",
+  sectionId = "inquiry",
+  catalogMode = false,
 }: {
   phone?: string;
   email?: string;
+  sectionId?: string;
+  catalogMode?: boolean;
 }) {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<ContactFormData>(
@@ -128,18 +186,44 @@ export default function InquirySection({
           deliveryRegion:
             formData.details.deliveryRegion ||
             (formData.inquiryType === "quote" ||
-            formData.inquiryType === "consulting"
+            formData.inquiryType === "consulting" ||
+            formData.inquiryType === "custom"
               ? ""
               : deliveryRegionOptions[0]),
         },
       });
-      if (errors.phone || errors.email || errors.responseMethod) {
+      if (
+        errors.companyName ||
+        errors.contactPerson ||
+        errors.phone ||
+        errors.email ||
+        errors.responseMethod
+      ) {
         setValidationAttempted(true);
         document
           .getElementById(
-            errors.phone ? "phone" : errors.email ? "email" : "responseMethod",
+            errors.companyName
+              ? "companyName"
+              : errors.contactPerson
+                ? "contactPerson"
+                : errors.phone
+                  ? "phone"
+                  : errors.email
+                    ? "email"
+                    : "responseMethod",
           )
           ?.focus();
+        return;
+      }
+    }
+    if (step === 3) {
+      const errors = getContactFormFieldErrors({
+        ...formData,
+        privacyAgreed: true,
+      });
+      if (errors.message) {
+        setValidationAttempted(true);
+        document.getElementById("message")?.focus();
         return;
       }
     }
@@ -162,7 +246,7 @@ export default function InquirySection({
       return;
     }
     if (unsupported) {
-      setAttachmentError("PDF, JPG, PNG, WEBP, ZIP 파일만 첨부할 수 있습니다.");
+      setAttachmentError("PDF, JPG, PNG, WEBP, DOCX, XLSX, ZIP 파일만 첨부할 수 있습니다.");
       return;
     }
     if (tooLarge) {
@@ -183,6 +267,28 @@ export default function InquirySection({
     if (Object.keys(errors).length) {
       setValidationAttempted(true);
       setError("필수 입력 항목을 확인해 주세요.");
+      const basicError =
+        errors.companyName ||
+        errors.contactPerson ||
+        errors.phone ||
+        errors.email;
+      if (basicError) setStep(2);
+      else if (errors.message) setStep(3);
+      else setStep(4);
+      requestAnimationFrame(() => {
+        const target = errors.companyName
+          ? "companyName"
+          : errors.contactPerson
+            ? "contactPerson"
+            : errors.phone
+              ? "phone"
+              : errors.email
+                ? "email"
+                : errors.message
+                  ? "message"
+                  : "privacyAgreed";
+        document.getElementById(target)?.focus();
+      });
       return;
     }
     setLoading(true);
@@ -239,7 +345,9 @@ export default function InquirySection({
     ? getContactFormFieldErrors(formData)
     : {};
   const requiresRegion =
-    formData.inquiryType === "quote" || formData.inquiryType === "consulting";
+    formData.inquiryType === "quote" ||
+    formData.inquiryType === "consulting" ||
+    formData.inquiryType === "custom";
   const guidance = formData.inquiryType
     ? typeGuidance[formData.inquiryType]
     : null;
@@ -247,21 +355,26 @@ export default function InquirySection({
 
   return (
     <section
-      className="bg-[var(--primary-dark)] px-5 py-16 lg:px-8 lg:py-24"
-      id="inquiry"
+      className={`relative overflow-hidden bg-[var(--catalog-green-dark)] px-5 py-20 lg:px-8 lg:py-32 ${catalogMode ? "border-t border-white/10" : ""}`}
+      id={sectionId}
     >
-      <div className="mx-auto grid max-w-[1200px] gap-8 lg:grid-cols-[0.35fr_0.65fr] lg:gap-12">
+      {catalogMode ? <span aria-hidden="true" className="en pointer-events-none absolute right-[-2%] bottom-[-2%] text-[clamp(7rem,18vw,17rem)] font-bold leading-none text-white/[0.025]">CONTACT</span> : null}
+      {sectionId !== "inquiry" ? <span aria-hidden="true" id="inquiry" /> : null}
+      <div className="relative mx-auto grid max-w-[1280px] gap-12 lg:grid-cols-[0.36fr_0.64fr] lg:gap-16">
         <div className="order-2 lg:order-1">
           <p className="en text-xs font-bold uppercase tracking-[0.18em] text-[var(--accent-gold)]">
             Inquiry
           </p>
-          <h2 className="mt-3 text-3xl font-extrabold text-white lg:text-4xl">
-            견적 및 문의
+          <h2 className="mt-5 text-[clamp(2.7rem,5vw,4.8rem)] font-extrabold leading-[1.05] tracking-[-0.045em] text-[var(--catalog-cream)]">
+            {catalogMode ? "견적 및 적용 검토 문의" : "견적 및 문의"}
           </h2>
-          <p className="mt-4 text-sm leading-7 text-white/68">
-            문의 유형에 맞는 항목만 작성해 주세요. 담당자가 문의 내용을 확인한
-            후 연락드립니다.
+          <p className="mt-6 text-base leading-8 text-white/62">
+            {catalogMode
+              ? "아래 정보를 보내주시면 화물과 운용조건을 기준으로 적용 가능한 제품군을 검토합니다."
+              : "문의 유형에 맞는 항목만 작성해 주세요. 담당자가 문의 내용을 확인한 후 연락드립니다."}
           </p>
+
+          {catalogMode ? <dl className="mt-10 grid gap-6 border-y border-white/15 py-7 text-base"><div><dt className="en text-xs font-bold tracking-[0.16em] text-[var(--catalog-gold)]">PHONE</dt><dd className="number mt-2 text-xl font-bold text-[var(--catalog-cream)]"><a href={phoneHref}>{phone}</a></dd></div><div><dt className="en text-xs font-bold tracking-[0.16em] text-[var(--catalog-gold)]">EMAIL</dt><dd className="mt-2 break-all text-lg font-bold text-[var(--catalog-cream)]"><a href={`mailto:${email}`}>{email}</a></dd></div><div><dt className="en text-xs font-bold tracking-[0.16em] text-[var(--catalog-gold)]">ADDRESS</dt><dd className="mt-2 font-bold leading-7 text-[var(--catalog-cream)]">{siteConfig.contact.address}</dd></div></dl> : null}
 
           <div className="mt-8 border border-white/12 bg-white/[0.05] p-5">
             <strong className="text-sm text-[var(--accent-gold)]">
@@ -285,7 +398,7 @@ export default function InquirySection({
             </ul>
           </div>
 
-          <div className="mt-4 border border-[var(--accent-gold)] p-5 text-white">
+          {!catalogMode ? <div className="mt-4 border border-[var(--accent-gold)] p-5 text-white">
             <FileText
               aria-hidden="true"
               className="text-[var(--accent-gold)]"
@@ -299,7 +412,7 @@ export default function InquirySection({
             <div className="mt-4">
               <CatalogDownload compact location="inquiry" />
             </div>
-          </div>
+          </div> : null}
 
           {phoneHref ? (
             <a
@@ -387,7 +500,7 @@ export default function InquirySection({
             </div>
           ) : (
             <form
-              className="min-w-0 bg-white p-5 sm:p-8"
+              className={`min-w-0 p-5 sm:p-8 lg:p-10 ${catalogMode ? "bg-[rgba(247,245,239,.96)]" : "bg-white"}`}
               noValidate
               onSubmit={handleSubmit}
             >
@@ -506,7 +619,7 @@ export default function InquirySection({
               {step === 2 ? (
                 <div className="mt-6 grid gap-5 sm:grid-cols-2">
                   <label className="grid gap-2" htmlFor="phone">
-                    <span className="text-sm font-bold">전화번호 (필수)</span>
+                    <span className="text-sm font-bold">전화번호 (전화 또는 이메일 중 하나 필수)</span>
                     <input
                       aria-describedby={
                         currentErrors.phone ? "phone-error" : undefined
@@ -531,7 +644,7 @@ export default function InquirySection({
                     ) : null}
                   </label>
                   <label className="grid gap-2" htmlFor="email">
-                    <span className="text-sm font-bold">이메일 (선택)</span>
+                    <span className="text-sm font-bold">이메일 (전화 또는 이메일 중 하나 필수)</span>
                     <input
                       aria-describedby={
                         currentErrors.email ? "email-error" : undefined
@@ -555,26 +668,32 @@ export default function InquirySection({
                     ) : null}
                   </label>
                   <label className="grid gap-2" htmlFor="companyName">
-                    <span className="text-sm font-bold">회사명 (선택)</span>
+                    <span className="text-sm font-bold">회사명 (필수)</span>
                     <input
-                      className={fieldClass()}
+                      aria-describedby={currentErrors.companyName ? "company-name-error" : undefined}
+                      aria-invalid={Boolean(currentErrors.companyName)}
+                      className={fieldClass(Boolean(currentErrors.companyName))}
                       id="companyName"
                       onChange={(event) =>
                         updateField("companyName", event.target.value)
                       }
                       value={formData.companyName}
                     />
+                    {currentErrors.companyName ? <span className="text-sm font-bold text-[var(--alert)]" id="company-name-error">{currentErrors.companyName}</span> : null}
                   </label>
                   <label className="grid gap-2" htmlFor="contactPerson">
-                    <span className="text-sm font-bold">담당자명 (선택)</span>
+                    <span className="text-sm font-bold">담당자명 (필수)</span>
                     <input
-                      className={fieldClass()}
+                      aria-describedby={currentErrors.contactPerson ? "contact-person-error" : undefined}
+                      aria-invalid={Boolean(currentErrors.contactPerson)}
+                      className={fieldClass(Boolean(currentErrors.contactPerson))}
                       id="contactPerson"
                       onChange={(event) =>
                         updateField("contactPerson", event.target.value)
                       }
                       value={formData.contactPerson}
                     />
+                    {currentErrors.contactPerson ? <span className="text-sm font-bold text-[var(--alert)]" id="contact-person-error">{currentErrors.contactPerson}</span> : null}
                   </label>
                   <fieldset className="sm:col-span-2" id="responseMethod">
                     <legend className="text-sm font-bold">
@@ -702,7 +821,7 @@ export default function InquirySection({
                       </select>
                     </label>
                   ) : null}
-                  {formData.inquiryType === "consulting" ? (
+                  {!catalogMode && (formData.inquiryType === "consulting" || formData.inquiryType === "custom") ? (
                     <>
                       <label className="grid gap-2" htmlFor="cargoType">
                         <span className="text-sm font-bold">
@@ -760,18 +879,42 @@ export default function InquirySection({
                       </label>
                     </>
                   ) : null}
+                  {catalogMode ? (
+                    <div className="grid gap-8 sm:col-span-2">
+                      {catalogDetailGroups.map((group) => (
+                        <fieldset className="grid gap-5 border-t border-[var(--line)] pt-6 sm:grid-cols-2" key={group.title}>
+                          <legend className="text-lg font-extrabold">{group.title}</legend>
+                          {group.fields.map(([key, label, placeholder]) => (
+                            <label className={`grid gap-2 ${key === "loadDistribution" ? "sm:col-span-2" : ""}`} htmlFor={key} key={key}>
+                              <span className="text-sm font-bold">{label} (선택)</span>
+                              <input
+                                className={fieldClass()}
+                                id={key}
+                                inputMode={key.toLowerCase().includes("weight") || key.toLowerCase().includes("length") || key.toLowerCase().includes("width") || key.toLowerCase().includes("height") || key.toLowerCase().includes("spacing") || key.toLowerCase().includes("quantity") ? "decimal" : undefined}
+                                onChange={(event) => updateDetail(key, event.target.value)}
+                                placeholder={placeholder}
+                                value={formData.details[key] || ""}
+                              />
+                            </label>
+                          ))}
+                        </fieldset>
+                      ))}
+                    </div>
+                  ) : null}
                   <label
                     className="grid gap-2 sm:col-span-2"
                     htmlFor="message"
                   >
                     <span className="flex justify-between gap-3 text-sm font-bold">
-                      문의 내용 (선택)
+                      문의 내용 (필수)
                       <span className="font-normal text-[var(--sub-text)]">
                         {formData.message.length} / 1,500자
                       </span>
                     </span>
                     <textarea
-                      className={`${fieldClass()} min-h-36 py-3`}
+                      aria-describedby={currentErrors.message ? "message-error" : undefined}
+                      aria-invalid={Boolean(currentErrors.message)}
+                      className={`${fieldClass(Boolean(currentErrors.message))} min-h-36 py-3`}
                       id="message"
                       maxLength={1500}
                       onChange={(event) =>
@@ -779,6 +922,7 @@ export default function InquirySection({
                       }
                       value={formData.message}
                     />
+                    {currentErrors.message ? <span className="text-sm font-bold text-[var(--alert)]" id="message-error">{currentErrors.message}</span> : null}
                   </label>
                 </div>
               ) : null}
@@ -790,7 +934,7 @@ export default function InquirySection({
                       파일 첨부 (선택)
                     </label>
                     <input
-                      accept=".pdf,.jpg,.jpeg,.png,.webp,.zip"
+                      accept=".pdf,.jpg,.jpeg,.png,.webp,.docx,.xlsx,.zip"
                       className={`${fieldClass()} mt-2 py-2 file:mr-3 file:border-0 file:bg-[var(--muted-surface)] file:px-3 file:py-2`}
                       id="attachments"
                       multiple
@@ -798,7 +942,7 @@ export default function InquirySection({
                       type="file"
                     />
                     <p className="mt-2 text-xs leading-5 text-[var(--sub-text)]">
-                      PDF, JPG, PNG, WEBP, ZIP · 최대 3개 · 개당 50MB
+                      PDF, JPG, PNG, WEBP, DOCX, XLSX, ZIP · 최대 3개 · 개당 50MB
                     </p>
                     {attachmentError ? (
                       <p
@@ -859,8 +1003,8 @@ export default function InquirySection({
                       개인정보 수집 및 이용에 동의합니다. (필수)
                     </label>
                     <p className="mt-3 text-xs leading-6 text-[var(--sub-text)]">
-                      문의 확인 및 회신, 견적·기술 상담, 상담 이력 관리, 재문의
-                      대응과 고객관리를 위해 입력정보를 이용합니다. 자세한 내용은{" "}
+                      문의 대응과 추후 고객관리 목적으로 개인정보를 수집·이용합니다.
+                      보유 기준과 자세한 내용은{" "}
                       <a className="font-bold underline" href="/privacy">
                         개인정보처리방침
                       </a>

@@ -1,7 +1,7 @@
 export const inquiryTypes = [
   {
     value: "product",
-    label: "제품 정보 문의",
+    label: "제품 문의",
     description: "제품 특징, 사양, 적용 가능 여부 및 시험·인증 자료 문의",
   },
   {
@@ -11,13 +11,23 @@ export const inquiryTypes = [
   },
   {
     value: "consulting",
-    label: "적용·주문제작 상담",
-    description: "화물 조건, 랙·자동화 설비, 비규격 제품 및 맞춤 제작 상담",
+    label: "적용 검토",
+    description: "화물 조건, 랙·자동화 설비와 실제 적용 가능성 검토",
+  },
+  {
+    value: "custom",
+    label: "맞춤 제작",
+    description: "비규격 제품, 금형과 특수 구조의 설계 가능성 상담",
+  },
+  {
+    value: "technical",
+    label: "기술자료 요청",
+    description: "시험성적서, 검증 성명서와 공식 등록문서 확인 요청",
   },
   {
     value: "other",
-    label: "자료·기타 문의",
-    description: "카탈로그, 시험성적서, 유통·파트너십 및 기타 문의",
+    label: "기타",
+    description: "유통·파트너십 및 기타 문의",
   },
 ] as const;
 
@@ -100,6 +110,8 @@ export function isValidPhone(phone: string) {
 export function submitLabel(inquiryType: ContactFormData["inquiryType"]) {
   if (inquiryType === "quote") return "견적 요청";
   if (inquiryType === "consulting") return "적용 상담 요청";
+  if (inquiryType === "custom") return "맞춤 제작 상담 요청";
+  if (inquiryType === "technical") return "기술자료 요청";
   return "문의 접수";
 }
 
@@ -110,6 +122,8 @@ export function inquiryTypeLabel(value: string) {
 export type ContactFormFieldErrors = Partial<
   Record<
     | "inquiryType"
+    | "companyName"
+    | "contactPerson"
     | "phone"
     | "deliveryRegion"
     | "email"
@@ -126,14 +140,21 @@ export function getContactFormFieldErrors(data: ContactFormData) {
   if (!data.inquiryType) {
     errors.inquiryType = "문의 유형을 선택해 주세요.";
   }
-  if (!data.phone.trim()) {
-    errors.phone = "전화번호를 입력해 주세요.";
-  } else if (!isValidPhone(data.phone)) {
+  if (!data.companyName.trim()) {
+    errors.companyName = "회사명을 입력해 주세요.";
+  }
+  if (!data.contactPerson.trim()) {
+    errors.contactPerson = "담당자명을 입력해 주세요.";
+  }
+  if (!data.phone.trim() && !data.email.trim()) {
+    errors.phone = "전화번호 또는 이메일 중 하나를 입력해 주세요.";
+    errors.email = "전화번호 또는 이메일 중 하나를 입력해 주세요.";
+  } else if (data.phone.trim() && !isValidPhone(data.phone)) {
     errors.phone =
       "전화번호 형식을 확인해 주세요. 국가번호도 입력할 수 있습니다.";
   }
   if (
-    (data.inquiryType === "quote" || data.inquiryType === "consulting") &&
+    (data.inquiryType === "quote" || data.inquiryType === "consulting" || data.inquiryType === "custom") &&
     !data.details.deliveryRegion?.trim()
   ) {
     errors.deliveryRegion = "납품 지역을 선택해 주세요.";
@@ -144,7 +165,9 @@ export function getContactFormFieldErrors(data: ContactFormData) {
   if (!data.responseMethod) {
     errors.responseMethod = "연락 선호 방식을 선택해 주세요.";
   }
-  if (data.message.length > 1500) {
+  if (!data.message.trim()) {
+    errors.message = "문의 내용을 입력해 주세요.";
+  } else if (data.message.length > 1500) {
     errors.message = "문의 내용은 최대 1,500자까지 입력해 주세요.";
   }
   if (!data.privacyAgreed) {

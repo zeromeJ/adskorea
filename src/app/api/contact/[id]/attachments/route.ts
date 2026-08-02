@@ -11,6 +11,8 @@ const allowedTypes = new Set([
   "image/jpeg",
   "image/png",
   "image/webp",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 ]);
 const zipTypes = new Set([
   "",
@@ -87,7 +89,7 @@ export async function POST(request: Request, context: RouteContext) {
       return NextResponse.json(
         {
           success: false,
-          message: "PDF, JPG, PNG, WEBP, ZIP 파일만 첨부할 수 있습니다.",
+          message: "PDF, JPG, PNG, WEBP, DOCX, XLSX, ZIP 파일만 첨부할 수 있습니다.",
         },
         { status: 400 },
       );
