@@ -20,7 +20,8 @@ export default function Footer({ settings }: { settings?: FooterSettings }) {
     settings?.siteDisplayName || settings?.brandName || company.brandName;
   const email =
     settings?.primaryContactEmail || settings?.email || company.email;
-  const representativePhone = settings?.representativePhone;
+  const representativePhone =
+    settings?.representativePhone || settings?.phone || company.phone;
   const consultingPhone =
     settings?.primaryPhone || settings?.phone || company.phone;
   const address = settings?.address || company.address;
@@ -74,7 +75,7 @@ export default function Footer({ settings }: { settings?: FooterSettings }) {
           ) : null}
           {consultingPhone ? (
             <p>
-              전화 상담{" "}
+              문의 전화{" "}
               <a
                 className="font-bold text-white hover:underline"
                 href={phoneHref(consultingPhone)}

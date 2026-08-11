@@ -193,6 +193,8 @@ export async function getWebsiteContent(): Promise<CmsSiteContent | null> {
             settings.siteDisplayName || settings.brandName || "아델슨 코리아",
           primaryContactEmail:
             settings.primaryContactEmail || settings.email || undefined,
+          representativePhone:
+            settings.representativePhone || settings.phone || undefined,
           primaryPhone: settings.primaryPhone || settings.phone || undefined,
         }
       : undefined;
