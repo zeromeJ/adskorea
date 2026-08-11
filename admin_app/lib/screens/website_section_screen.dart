@@ -110,6 +110,7 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
     for (final key in const [
       'siteDisplayName',
       'primaryContactEmail',
+      'representativePhone',
       'primaryPhone',
       'brandName',
       'brandNameEn',
@@ -631,7 +632,8 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
     const fields = [
       ('siteDisplayName', '홈페이지 공식 명칭', '아델슨 코리아', 1),
       ('primaryContactEmail', '대표 이메일', '푸터·문의·개인정보 안내에 공통 사용', 1),
-      ('primaryPhone', '대표 전화번호', '예: 02-1234-5678', 1),
+      ('representativePhone', '대표 전화번호', '푸터에 표시할 대표 번호', 1),
+      ('primaryPhone', '전화상담 번호', '푸터·문의 화면의 전화상담에 사용', 1),
       ('address', '주소', '푸터에 표시할 주소', 2),
       ('legalCompanyName', '정식 법인명', '확정된 경우에만 입력', 1),
       ('representativeName', '대표자명', '확정된 경우에만 입력', 1),
@@ -655,7 +657,7 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
             const Text('사이트 기본정보',
                 style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
             const SizedBox(height: 6),
-            const Text('대표 이메일과 전화번호는 푸터 및 견적문의 전화 버튼에 반영됩니다.',
+            const Text('대표 전화번호는 푸터에만 표시되고, 전화상담 번호는 푸터 및 견적문의 전화 버튼에 반영됩니다.',
                 style: TextStyle(color: Color(0xFF667085))),
             const SizedBox(height: 12),
             Builder(builder: (context) {
@@ -708,7 +710,8 @@ class _WebsiteSectionScreenState extends State<WebsiteSectionScreen> {
                     controller: settingsControllers[field.$1],
                     keyboardType: field.$1 == 'primaryContactEmail'
                         ? TextInputType.emailAddress
-                        : field.$1 == 'primaryPhone'
+                        : field.$1 == 'primaryPhone' ||
+                                field.$1 == 'representativePhone'
                             ? TextInputType.phone
                             : field.$4 > 1
                                 ? TextInputType.multiline

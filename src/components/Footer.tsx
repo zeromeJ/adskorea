@@ -8,6 +8,7 @@ export type FooterSettings = {
   siteDisplayName?: string;
   brandName?: string;
   primaryContactEmail?: string;
+  representativePhone?: string;
   primaryPhone?: string;
   email?: string;
   phone?: string;
@@ -18,10 +19,30 @@ export default function Footer({ settings }: { settings?: FooterSettings }) {
   const brandName =
     settings?.siteDisplayName || settings?.brandName || company.brandName;
   const email =
+<<<<<<< Updated upstream
     settings?.primaryContactEmail || settings?.email || company.email;
   const phone = settings?.primaryPhone || settings?.phone || company.phone;
   const address = settings?.address || company.address;
   const phoneHref = phone ? `tel:${phone.replace(/[^+\d]/g, "")}` : "";
+=======
+    settings?.primaryContactEmail || settings?.email || siteConfig.contact.email;
+  const representativePhone = settings?.representativePhone;
+  const consultingPhone =
+    settings?.primaryPhone || settings?.phone || siteConfig.contact.phoneDisplay;
+  const address = settings?.address || siteConfig.contact.address;
+  const phoneHref = (phone: string) =>
+    `tel:${phone.replace(/[^+\d]/g, "")}`;
+  const footerItems = pathname === "/catalog"
+    ? [
+        { label: "제품", href: "#product-overview" },
+        { label: "성능", href: "#test-2025" },
+        { label: "적용사례", href: "#applications" },
+        { label: "자료", href: "#documents" },
+        { label: "회사", href: "#company" },
+        { label: "견적 문의", href: "#contact" },
+      ]
+    : [...navItems, { label: "견적 문의", href: "/#inquiry", children: [] }];
+>>>>>>> Stashed changes
 
   return (
     <footer className="bg-[var(--primary-deep)] px-5 py-12 text-white lg:px-8 lg:py-16">
@@ -57,11 +78,25 @@ export default function Footer({ settings }: { settings?: FooterSettings }) {
           <p className="en mb-3 text-xs font-bold uppercase tracking-[0.16em] text-[var(--accent-gold)]">
             Contact
           </p>
-          {phone ? (
+          {representativePhone ? (
             <p>
               대표 전화{" "}
-              <a className="font-bold text-white hover:underline" href={phoneHref}>
-                {phone}
+              <a
+                className="font-bold text-white hover:underline"
+                href={phoneHref(representativePhone)}
+              >
+                {representativePhone}
+              </a>
+            </p>
+          ) : null}
+          {consultingPhone ? (
+            <p>
+              전화 상담{" "}
+              <a
+                className="font-bold text-white hover:underline"
+                href={phoneHref(consultingPhone)}
+              >
+                {consultingPhone}
               </a>
             </p>
           ) : null}

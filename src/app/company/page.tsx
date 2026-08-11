@@ -53,7 +53,10 @@ export default async function CompanyPage() {
     ["대표자명", settings?.representativeName],
     ["사업자등록번호", settings?.businessRegistrationNumber],
     ["주소", settings?.address],
-    ["대표 전화", settings?.primaryPhone || settings?.phone],
+    [
+      "대표 전화",
+      settings?.representativePhone || settings?.primaryPhone || settings?.phone,
+    ],
     ["대표 이메일", settings?.primaryContactEmail || settings?.email],
   ].filter((item): item is [string, string] => Boolean(item[1]));
 
