@@ -12,6 +12,7 @@ export type CmsSiteContent = {
     brandNameEn?: string;
     siteDisplayName?: string;
     primaryContactEmail?: string;
+    representativePhone?: string;
     primaryPhone?: string;
     legalCompanyName?: string;
     representativeName?: string;
